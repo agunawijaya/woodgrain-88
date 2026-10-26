@@ -53,8 +53,15 @@ const VALID_MANIFEST: GameManifest = {
     cartridgeSlots: [11, 19],
   },
   controls: [{ keys: ['Space'], does: 'hop' }],
-  channels: [{ id: 'classic', title: 'Classic', description: 'Standard traffic patterns.' }],
-  supports: { daily: false, challengeLinks: false, proSwitch: false, microChallenges: false },
+  channels: [
+    {
+      id: 'classic',
+      kind: 'original',
+      title: 'Classic',
+      description: 'Standard traffic patterns.',
+    },
+  ],
+  supports: { daily: false, challengeLinks: false, microChallenges: false },
   events: [],
   versions: [VERSION_ONE, VERSION_TWO],
 };

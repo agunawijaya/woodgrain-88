@@ -6,9 +6,9 @@
  *
  * Progress comes from game events. A goal measures one metric over all play:
  * how many times an event fired, the largest value a field reached in one
- * event, or the running sum of a field. A patch earned while the Pro switch is
- * on is "gold"; one first earned as Amateur turns gold when it is reached
- * again on Pro.
+ * event, or the running sum of a field. A patch earned with the player's
+ * difficulty switch (the left one: the player sits in seat 1) on A is sewn in
+ * gold thread; one first earned on B turns gold when it is reached again on A.
  */
 import { createEmitter, type Unsubscribe } from './emitter.ts';
 import type { EventBus, GameEventSchema, StampedEvent } from './events.ts';
@@ -84,8 +84,6 @@ export interface PatchTracker {
 export interface PatchTrackerOptions {
   games: readonly { id: string; patches: readonly PatchDef[] }[];
   progress: Repository<ProgressData>;
-  /** Whether the Pro switch is on for this game right now. */
-  isPro: (gameId: string) => boolean;
   now?: () => Date;
 }
 
@@ -167,7 +165,7 @@ export function createPatchTracker(options: PatchTrackerOptions): PatchTracker {
     }
 
     const earned: PatchEarned[] = [];
-    const pro = options.isPro(event.game);
+    const pro = event.difficulty.left === 'A';
     const at = now().toISOString();
 
     options.progress.update((draft) => {

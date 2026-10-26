@@ -3,7 +3,7 @@
  * detection and bidirectional routeHash serialization.
  */
 import { describe, expect, it } from 'vitest';
-import { parseRoute, routeHash } from '../src/routes/router.ts';
+import { DEN_LIFE_SCREENS, parseRoute, routeHash } from '../src/routes/router.ts';
 
 describe('hash router', () => {
   it('parses valid route paths and query parameters while marking invalid paths as not-found', () => {
@@ -52,5 +52,46 @@ describe('hash router', () => {
     const invalidRoute = parseRoute('#/game/lane-hopper?version=Not_Ok');
     expect(invalidRoute).toEqual({ name: 'game', id: 'lane-hopper' });
     expect(routeHash(invalidRoute)).toBe('#/game/lane-hopper');
+  });
+
+  it('parses Den Life screen routes and round-trips them through routeHash', () => {
+    for (const screen of DEN_LIFE_SCREENS) {
+      const hash = `#/${screen}`;
+      const route = parseRoute(hash);
+      expect(route).toEqual({ name: screen });
+      expect(routeHash(route)).toBe(hash);
+    }
+  });
+
+  it('marks sub-paths under Den Life screens as not-found', () => {
+    expect(parseRoute('#/jacket/extra')).toEqual({
+      name: 'not-found',
+      hash: '#/jacket/extra',
+    });
+    expect(parseRoute('#/kids/extra')).toEqual({
+      name: 'not-found',
+      hash: '#/kids/extra',
+    });
+    expect(parseRoute('#/versus/extra')).toEqual({
+      name: 'not-found',
+      hash: '#/versus/extra',
+    });
+    expect(parseRoute('#/run/extra')).toEqual({
+      name: 'not-found',
+      hash: '#/run/extra',
+    });
+  });
+
+  it('preserves Power Cycle Run parameters mode and micro on play routes', () => {
+    const hash = '#/play/test-catch?mode=power-cycle-run&micro=catch-five&ch=slow-1';
+    const route = parseRoute(hash);
+    expect(route.name).toBe('play');
+    if (route.name === 'play') {
+      expect(route.id).toBe('test-catch');
+      expect(route.params.get('mode')).toBe('power-cycle-run');
+      expect(route.params.get('micro')).toBe('catch-five');
+      expect(route.params.get('ch')).toBe('slow-1');
+    }
+    expect(routeHash(route)).toBe(hash);
   });
 });

@@ -41,8 +41,8 @@ const WITH_VERSIONS: GameManifest = {
     cartridgeSlots: [1, 2],
   },
   controls: [{ keys: ['Space'], does: 'jump' }],
-  channels: [{ id: 'classic', title: 'Classic', description: 'Classic channel' }],
-  supports: { daily: false, challengeLinks: false, proSwitch: false, microChallenges: false },
+  channels: [{ id: 'classic', kind: 'original', title: 'Classic', description: 'Classic channel' }],
+  supports: { daily: false, challengeLinks: false, microChallenges: false },
   events: [],
   versions: [
     { id: 'first', label: 'First', cartridgeSlot: 1, description: 'First version' },

@@ -1,6 +1,6 @@
 # Progress
 
-Updated once at the end of each prompt. Last update: prompt 00a (owner decisions), 2026-10-26.
+Updated once at the end of each prompt. Last update: prompt 01 (Den Life), 2026-10-26.
 
 ## Foundation (prompt 00)
 
@@ -22,6 +22,24 @@ Updated once at the end of each prompt. Last update: prompt 00a (owner decisions
 | Five renames: Big Top Cannon, Shore Battery, Tank Duel, Lucky Reels, Quickdraw | done; new labels and emblems; Table 21 copy rewritten |
 | Cartridge versions instead of hidden reskins (ADR-0002 amendment) | done; kit contract, progress schema v2, picker on details and in-game settings, Counter places 31–32 |
 | Tests | 32 bridge, 125 kit, 22 Hall, 3 scripts (Vitest); 34 Playwright |
+
+## Den Life (prompt 01)
+
+| Part | Status |
+|---|---|
+| Kit: streak, versus, run, kids, patch-art, channel kinds, daily channel, emoji summary; store v3 | done; ADR-0008 and the ADR-0002 amendment |
+| Difficulty switches per seat (A hard, B easy), gold thread on A | done; Den console, `[` and `]`, pause menu, details lines |
+| The Den grows (posters, trophies, chain, lights, ON AIR, ribbon, beanbag, plaque, remote) | done; hide in Settings; "Forget my data" clears it |
+| Calendar month view, corkboard, chalkboard, door jacket, Counter celebration | done |
+| Jacket screen (drag and drop, keyboard, undo, Auto-arrange, export card), patch up close | done |
+| Kids screen and the Block Ladder; Block champion patch | done |
+| Versus Night (setup, raffle, series, crown, rematch, rivalries) | done; a Kid can take seat 2 |
+| Power Cycle Run (hold POWER or P, automatic flips, goal card, rounds, results, records) | done; opens with five games that have micro-challenges |
+| Channel dial (knob, strip, number pad, surprise) on details and game menus | done |
+| Records, Settings, results (stitched patches, lamps lit, daily share line) | done |
+| Dev showcase (`?showcase=` full, mid or new) and fixtures | done; both kept out of the build (checked) |
+| Hero frames | approved by the owner after two review rounds |
+| Tests | 32 bridge; 182 kit, 105 Hall, 3 scripts (Vitest); 59 Playwright |
 
 ## Games
 

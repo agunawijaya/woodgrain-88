@@ -45,8 +45,10 @@ the cartridge (dossier 00).
 marker, instead of being blank, so the wall reads as thirty distinct cartridges (owner-approved).
 
 **Anchors for prompt 01**: the jacket (`[data-ref="jacket"]`, empty patch places drawn), the pads
-(`[data-ref="pads"]`, Versus Night), the difficulty switches (`[data-ref="switch-1|2"]`, the Pro
-switch), the Counter lamps (`[data-ref="counter-lamps"] .lamp[data-slot]`), the calendar.
+(`[data-ref="pads"]`, Versus Night), the difficulty switches, the Counter lamps
+(`[data-ref="counter-lamps"] .lamp[data-slot]`), the calendar. Prompt 01 used them all and added
+more (the corkboard, the chalkboard, the growth slots); `docs/ARCHITECTURE.md` lists the current
+anchors, with the switches now `[data-ref="switch-left"]` and `[data-ref="switch-right"]`.
 
 ## Consequences
 

@@ -860,6 +860,258 @@
       "note": "Kit, Hall and e2e coverage for versions. Lead fixed two exactOptionalPropertyTypes errors, one test that picked the default (proved nothing), a match too slow with tall paddles, and formatting. Crew report JSON missing.",
       "startedAt": "2026-10-26T01:32:38.001Z",
       "updatedAt": "2026-10-26T01:37:50.984Z"
+    },
+    {
+      "id": "den-streak",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 557,
+      "crewTokens": {
+        "input": 152538,
+        "output": 67808,
+        "thinking": 57821,
+        "cacheRead": 1249462,
+        "total": 220346
+      },
+      "violations": 0,
+      "leadTokens": 5000,
+      "soloTokens": 25000,
+      "note": "Snow-day rule correct incl. week-spanning gaps and clock going backwards; lead fixed one lint nit and formatting.",
+      "startedAt": "2026-10-26T03:05:59.114Z",
+      "updatedAt": "2026-10-26T03:09:38.717Z"
+    },
+    {
+      "id": "den-store-v3",
+      "kind": "data",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 568.8,
+      "crewTokens": {
+        "input": 164362,
+        "output": 73583,
+        "thinking": 47308,
+        "cacheRead": 1965411,
+        "total": 237945
+      },
+      "violations": 0,
+      "leadTokens": 7000,
+      "soloTokens": 40000,
+      "note": "Settings v2 and progress v3 with every sanitiser rule and a full round trip; clean first round.",
+      "startedAt": "2026-10-26T03:06:09.327Z",
+      "updatedAt": "2026-10-26T03:09:38.611Z"
+    },
+    {
+      "id": "den-versus",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 564.6,
+      "crewTokens": {
+        "input": 158399,
+        "output": 62133,
+        "thinking": 50747,
+        "cacheRead": 1731293,
+        "total": 220532
+      },
+      "violations": 0,
+      "leadTokens": 6000,
+      "soloTokens": 25000,
+      "note": "Series state machine and rivalry records; lead fixed an unchecked index, an unused variable and test imports.",
+      "startedAt": "2026-10-26T03:06:12.042Z",
+      "updatedAt": "2026-10-26T03:09:38.826Z"
+    },
+    {
+      "id": "den-kids",
+      "kind": "ai",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 382.5,
+      "crewTokens": {
+        "input": 127094,
+        "output": 47509,
+        "thinking": 30880,
+        "cacheRead": 1073670,
+        "total": 174603
+      },
+      "violations": 0,
+      "leadTokens": 4000,
+      "soloTokens": 18000,
+      "note": "aiSettings, round error swing, records and Block Ladder exactly to spec; roster untouched; only formatting fixed.",
+      "startedAt": "2026-10-26T03:12:42.550Z",
+      "updatedAt": "2026-10-26T03:13:27.400Z"
+    },
+    {
+      "id": "den-run-daily",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 557.3,
+      "crewTokens": {
+        "input": 274862,
+        "output": 65382,
+        "thinking": 52772,
+        "cacheRead": 2312465,
+        "total": 340244
+      },
+      "violations": 0,
+      "leadTokens": 6000,
+      "soloTokens": 30000,
+      "note": "Run scheduler, scoring, timings, share lines and daily first-run rule correct; one wrong test expectation (tenth place), strict-index test fixes and a ??= nit fixed by lead.",
+      "startedAt": "2026-10-26T03:15:43.481Z",
+      "updatedAt": "2026-10-26T03:19:33.755Z"
+    },
+    {
+      "id": "den-showcase",
+      "kind": "data",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 529.6,
+      "crewTokens": {
+        "input": 204263,
+        "output": 61211,
+        "thinking": 45645,
+        "cacheRead": 3416174,
+        "total": 265474
+      },
+      "violations": 0,
+      "leadTokens": 6000,
+      "soloTokens": 30000,
+      "note": "Deterministic full/mid/new profiles with synthetic patches; lead fixed an invalid run mode in records and taught growth facts a playable override for the showcase.",
+      "startedAt": "2026-10-26T03:25:42.916Z",
+      "updatedAt": "2026-10-26T03:31:48.545Z"
+    },
+    {
+      "id": "den-fixtures",
+      "kind": "plumbing",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 605.1,
+      "crewTokens": {
+        "input": 219780,
+        "output": 68985,
+        "thinking": 44562,
+        "cacheRead": 3434115,
+        "total": 288765
+      },
+      "violations": 0,
+      "leadTokens": 5000,
+      "soloTokens": 40000,
+      "note": "Paddles updated, turn game with kid-driven bot, catch game with 30 grouped channels and three micro-challenges, virtual run games; lead fixed two strict-type errors and one prefer-const.",
+      "startedAt": "2026-10-26T03:26:53.418Z",
+      "updatedAt": "2026-10-26T03:31:48.451Z"
+    },
+    {
+      "id": "den-jacket-arrange",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 575.9,
+      "crewTokens": {
+        "input": 199437,
+        "output": 63562,
+        "thinking": 47653,
+        "cacheRead": 2781640,
+        "total": 262999
+      },
+      "violations": 0,
+      "leadTokens": 16000,
+      "soloTokens": 38000,
+      "note": "Logic correct; lead rewrote arrange.ts for readability (minBy, withReplaced), changed nudge scoring to weight sideways distance, fixed two tests whose expectations contradicted the spec",
+      "startedAt": "2026-10-26T03:47:54.666Z",
+      "updatedAt": "2026-10-26T03:50:19.606Z"
+    },
+    {
+      "id": "den-channel-dial",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 811.9,
+      "crewTokens": {
+        "input": 181694,
+        "output": 86801,
+        "thinking": 65136,
+        "cacheRead": 2484778,
+        "total": 268495
+      },
+      "violations": 0,
+      "leadTokens": 14000,
+      "soloTokens": 30000,
+      "note": "Tests thorough and passing; lead rewrote the reducer (shared select/stay helpers, one typed-number resolver) and fixed lint/prettier",
+      "startedAt": "2026-10-26T07:55:12.533Z",
+      "updatedAt": "2026-10-26T07:56:43.093Z"
+    },
+    {
+      "id": "den-docs",
+      "kind": "docs",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 537.1,
+      "crewTokens": {
+        "input": 263978,
+        "output": 34440,
+        "thinking": 23547,
+        "cacheRead": 6759149,
+        "total": 298418
+      },
+      "violations": 0,
+      "leadTokens": 12000,
+      "soloTokens": 26000,
+      "note": "Good structure and mostly accurate; lead fixed facts (no leaderboards, daily pick, champion patch, corkboard vs ladder), softened wording, replaced an invented code excerpt with a labelled outline",
+      "startedAt": "2026-10-26T08:24:38.806Z",
+      "updatedAt": "2026-10-26T08:27:36.482Z"
+    },
+    {
+      "id": "den-hall-tests",
+      "kind": "tests",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 496.6,
+      "crewTokens": {
+        "input": 218996,
+        "output": 48501,
+        "thinking": 36427,
+        "cacheRead": 3645888,
+        "total": 267497
+      },
+      "violations": 0,
+      "leadTokens": 7000,
+      "soloTokens": 24000,
+      "note": "Solid tests; found a real bug (newLamps always empty since patches land before the result); lead changed the API to take litBefore, fixed an invalid run mode, lint and format",
+      "startedAt": "2026-10-26T08:30:51.914Z",
+      "updatedAt": "2026-10-26T08:32:58.385Z"
+    },
+    {
+      "id": "den-e2e",
+      "kind": "tests",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 562.1,
+      "crewTokens": {
+        "input": 252489,
+        "output": 45924,
+        "thinking": 35738,
+        "cacheRead": 5642415,
+        "total": 298413
+      },
+      "violations": 0,
+      "leadTokens": 22000,
+      "soloTokens": 45000,
+      "note": "Specs well aimed and found three real app bugs (Versus games all draws when a Kid reports won only, Kid results lost the same way, undo losing focus); lead fixed those, fixed four test assumptions (optional leave confirmation, locate by data-key, drop on a free spot after scrolling, series length), formatting",
+      "startedAt": "2026-10-26T08:32:28.182Z",
+      "updatedAt": "2026-10-26T08:53:50.372Z"
     }
   ]
 }

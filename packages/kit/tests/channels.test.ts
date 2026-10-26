@@ -9,21 +9,25 @@ import {
   validateChannels,
 } from '../src/channels.ts';
 import type { ProgressData } from '../src/store/types.ts';
+import { emptyDenLife } from '../src/store/schema.ts';
 import { fakeRepo } from './helpers/fake-repo.ts';
 
 const TANK_CHANNELS: readonly ChannelDef[] = [
   {
     id: 'open-field',
+    kind: 'original',
     title: 'Open Field',
     description: 'Clear arena with long sightlines and standard shells.',
   },
   {
     id: 'billiard-walls',
+    kind: 'original',
     title: 'Billiard Walls',
     description: 'Shots bank off walls before they hit the opposing tank.',
   },
   {
     id: 'fog-bank',
+    kind: 'original',
     title: 'Fog Bank',
     description: 'Opponents appear briefly when they fire or move at top speed.',
   },
@@ -31,7 +35,7 @@ const TANK_CHANNELS: readonly ChannelDef[] = [
 
 describe('createChannelRegistry', () => {
   it('lists channels in manifest order with EVERY_CHANNEL_OPEN by default', () => {
-    const progress = fakeRepo<ProgressData>({ games: {} });
+    const progress = fakeRepo<ProgressData>({ games: {}, den: emptyDenLife() });
     const registry = createChannelRegistry({
       games: [{ id: 'tank-duel', channels: TANK_CHANNELS }],
       progress,
@@ -52,7 +56,7 @@ describe('createChannelRegistry', () => {
   });
 
   it('handles unknown games, unknown channels, and games with no channels', () => {
-    const progress = fakeRepo<ProgressData>({ games: {} });
+    const progress = fakeRepo<ProgressData>({ games: {}, den: emptyDenLife() });
     const registry = createChannelRegistry({
       games: [
         { id: 'tank-duel', channels: TANK_CHANNELS },
@@ -72,7 +76,7 @@ describe('createChannelRegistry', () => {
   });
 
   it('evaluates custom unlock rules and persisted unlocks in progress', () => {
-    const progress = fakeRepo<ProgressData>({ games: {} });
+    const progress = fakeRepo<ProgressData>({ games: {}, den: emptyDenLife() });
     const fixedNow = () => new Date('2026-10-25T19:00:00.000Z');
     const registry = createChannelRegistry({
       games: [{ id: 'tank-duel', channels: TANK_CHANNELS }],
@@ -111,24 +115,27 @@ describe('validateChannels', () => {
 
     const tooMany: ChannelDef[] = Array.from({ length: MAX_CHANNELS + 1 }, (_, i) => ({
       id: `ch-${i + 1}`,
+      kind: 'original',
       title: `Channel ${i + 1}`,
       description: 'Valid description.',
     }));
     expect(validateChannels(tooMany).length).toBeGreaterThan(0);
 
     const invalidItems: ChannelDef[] = [
-      { id: 'Bad_Id', title: 'Bad Id', description: 'Non-kebab id.' },
-      { id: 'dup-id', title: 'First', description: 'First with id.' },
-      { id: 'dup-id', title: 'Second', description: 'Duplicate id.' },
-      { id: 'empty-title', title: '', description: 'Valid description.' },
+      { id: 'Bad_Id', kind: 'original', title: 'Bad Id', description: 'Non-kebab id.' },
+      { id: 'dup-id', kind: 'original', title: 'First', description: 'First with id.' },
+      { id: 'dup-id', kind: 'original', title: 'Second', description: 'Duplicate id.' },
+      { id: 'empty-title', kind: 'original', title: '', description: 'Valid description.' },
       {
         id: 'long-title',
+        kind: 'original',
         title: 'This Channel Title Is Definitely Too Long',
         description: 'Valid description.',
       },
-      { id: 'empty-desc', title: 'Empty Desc', description: '' },
+      { id: 'empty-desc', kind: 'original', title: 'Empty Desc', description: '' },
       {
         id: 'long-desc',
+        kind: 'original',
         title: 'Long Desc',
         description:
           'This channel description exceeds ninety characters so the validator will reject it right away.',

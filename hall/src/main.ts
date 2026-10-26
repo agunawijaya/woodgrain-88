@@ -11,11 +11,23 @@ import './styles/base.css';
 import './styles/den.css';
 import './styles/chrome.css';
 import './styles/pages.css';
+import './styles/den-life.css';
 
 import { boot } from './app/boot.ts';
 
+async function start(root: HTMLElement): Promise<void> {
+  // Dev only: ?showcase=full|mid|new boots on a generated profile. Production
+  // builds drop this branch, and the showcase with it.
+  if (import.meta.env.DEV) {
+    const { showcaseFromUrl } = await import('./dev/showcase-boot.ts');
+    const showcase = showcaseFromUrl(location.search, []);
+    if (showcase) return boot(root, [], showcase);
+  }
+  boot(root);
+}
+
 const root = document.getElementById('app');
-if (root) boot(root);
+if (root) void start(root);
 
 // Offline play after the first visit; only the built site has a worker to register.
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {

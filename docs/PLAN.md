@@ -117,8 +117,8 @@ Everything is earned by playing, shown upfront, and finishable. Nothing is bough
 | **Forgiving streak** | Calendar ticks; one automatic "snow day" per week; a missed day leaves a gap, never a reset message | Habit without guilt |
 | **Patches** | Every game has Club / Pro / Legend patches with published thresholds, plus one secret | Clear goals per game |
 | **The Jacket** | Patches are sewn onto a denim jacket you arrange by drag and drop; export as an SVG card | A collection that shows taste |
-| **Pro switch** | The console's two difficulty switches become Amateur / Pro per game; Pro patches get gold thread | Mastery |
-| **Channels** | Each game has 4–8 curated variations (a nod to "Game 1–27" on the originals); two open, the rest open by playing | Variety without menus of numbers |
+| **Difficulty switches** | The console's two switches, left for seat 1 and right for seat 2, A hard and B easy as on the original; each game says what A means; patches earned on A are sewn in gold thread | Mastery |
+| **Channels** | Every variation of the original program is a channel, open from the first play ("Game 1–27"); Remix channels are earned with a patch; tuned on a TV dial with a number pad | Variety without menus of numbers |
 | **Power Cycle Run** | Meta-mode: five random games, 45 seconds each, one micro-goal each; daily seeded run | The thread that ties 30 games together |
 | **Versus Night** | Two players on one machine, best of three across random duel games; bots fill a missing seat | Couch play, the soul of the console |
 | **The Neighbourhood Kids** | One cast of bot rivals shared by every game (aggressive Dee, careful Moss, chaotic Pip, slow-but-perfect Grandpa Lou, ...) with code-drawn avatars | Personality across the collection |
@@ -176,8 +176,8 @@ can see the savings.
 ```mermaid
 flowchart TD
     P00["00 Foundation<br/>crew bridge · dossiers · kit · contract · The Den"] --> P01["01 Den Life<br/>patches, jacket, channels, runs, Versus Night, the Kids"]
-    P01 --> P02["02 Workbench<br/>packages/arena + packages/board + packages/sport"]
-    P02 --> W1["Wave 1 pilot<br/>Tank Duel · Hot & Cold"]
+    P01 --> P02["02 Tank Duel (pilot)<br/>+ packages/arena"]
+    P02 --> W1["Wave 1<br/>Hot & Cold · Trailblaze"]
     W1 --> W2["Wave 2 duels<br/>Trailblaze · Gravity Duel · Quickdraw"]
     W2 --> W3["Wave 3 brain<br/>Quad Cube · Disc Duel · Crown Jump"]
     W3 --> W4["Wave 4 arcade<br/>Lane Hopper · Big Top Cannon · Drop Zone"]

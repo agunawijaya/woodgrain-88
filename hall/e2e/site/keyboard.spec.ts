@@ -15,8 +15,8 @@ test.describe('Den keyboard navigation', () => {
     const tv = page.locator('[data-ref="tv"]');
     const power = page.locator('[data-ref="power"]');
     const reset = page.locator('[data-ref="reset"]');
-    const switch1 = page.locator('[data-ref="switch-1"]');
-    const switch2 = page.locator('[data-ref="switch-2"]');
+    const switch1 = page.locator('[data-ref="switch-left"]');
+    const switch2 = page.locator('[data-ref="switch-right"]');
     const firstCartridge = page.locator('.cartridge').first();
 
     // The top bar comes first; tab through it until the TV takes focus.
@@ -30,7 +30,7 @@ test.describe('Den keyboard navigation', () => {
     await page.keyboard.press('Tab');
     await expect(power).toBeFocused();
 
-    // After console controls (RESET, switch-1, switch-2), Tab reaches the first wall cartridge
+    // After the console's controls (RESET and the two difficulty switches), Tab reaches the first wall cartridge
     await page.keyboard.press('Tab');
     await expect(reset).toBeFocused();
     await page.keyboard.press('Tab');

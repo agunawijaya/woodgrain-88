@@ -88,6 +88,21 @@ button.topbar-chip:hover {
   font-weight: 400;
 }
 
+.topbar-modes {
+  display: flex;
+  gap: 6px;
+}
+
+.topbar-chip--mode {
+  font-weight: 400;
+  text-decoration: none;
+  color: inherit;
+}
+
+.topbar-chip--mode:hover {
+  border-color: var(--ink-faint);
+}
+
 .topbar-chip-label {
   color: var(--ink-soft);
   font-size: 13px;
@@ -155,6 +170,19 @@ button.topbar-chip:hover {
 
 @media (max-width: 900px) {
   .topbar-chip--daily .topbar-chip-label {
+    display: none;
+  }
+}
+
+/* At 1280 px the mode chips keep only their names. */
+@media (max-width: 1360px) {
+  .topbar-chip--mode strong {
+    display: none;
+  }
+}
+
+@media (max-width: 1040px) {
+  .topbar-modes {
     display: none;
   }
 }

@@ -240,3 +240,24 @@ export function downloadText(fileName: string, text: string, mimeType: string): 
   // leave the browser with nothing to save.
   setTimeout(() => URL.revokeObjectURL(url), BLOB_URL_LIFETIME_MS);
 }
+
+/** The most emoji a game may put in a share line's summary. */
+export const MAX_SUMMARY_EMOJI = 12;
+
+const PICTOGRAPH = /^\p{Extended_Pictographic}/u;
+const KEYCAP_OR_FLAG = /^(?:[#*0-9]\uFE0F?\u20E3|\p{Regional_Indicator}{2})$/u;
+const COLOURED_SQUARE_OR_CIRCLE = /^[\u{1F7E0}-\u{1F7EB}\u2B1B\u2B1C\u26AA\u26AB]/u;
+
+/**
+ * Splits a game's emoji summary into single emoji (grapheme clusters), or
+ * returns null when it holds anything that is not an emoji or more than
+ * MAX_SUMMARY_EMOJI of them. Share lines must never carry text a player typed.
+ */
+export function emojiSummary(text: string): string[] | null {
+  const segments = [...new Intl.Segmenter('en', { granularity: 'grapheme' }).segment(text)].map((part) => part.segment);
+  if (segments.length === 0 || segments.length > MAX_SUMMARY_EMOJI) return null;
+  const allEmoji = segments.every(
+    (segment) => PICTOGRAPH.test(segment) || KEYCAP_OR_FLAG.test(segment) || COLOURED_SQUARE_OR_CIRCLE.test(segment),
+  );
+  return allEmoji ? segments : null;
+}

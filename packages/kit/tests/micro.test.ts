@@ -3,6 +3,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import type { StampedEvent } from '../src/events.ts';
+import { EASY_SWITCHES } from '../src/types.ts';
 import {
   briefFor,
   MICRO_DEFAULT_SECONDS,
@@ -27,6 +28,7 @@ function makeEvent(partial: Partial<StampedEvent> & { type: string }, seq = 1): 
     game: partial.game ?? 'tank-duel',
     mode: partial.mode ?? 'power-cycle-run',
     channel: partial.channel ?? 'open-field',
+    difficulty: partial.difficulty ?? EASY_SWITCHES,
     at: partial.at ?? '2026-10-25T21:00:00.000Z',
     seq,
     type: partial.type,

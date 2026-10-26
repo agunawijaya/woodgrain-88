@@ -11,7 +11,14 @@ export type Route =
   | { name: 'play'; id: string; params: URLSearchParams }
   | { name: 'records' }
   | { name: 'about' }
+  | { name: DenLifeScreen }
   | { name: 'not-found'; hash: string };
+
+/** Den Life's full-screen rooms, each one word in the hash: #/jacket, #/kids, #/versus, #/run. */
+export const DEN_LIFE_SCREENS = ['jacket', 'kids', 'versus', 'run'] as const;
+export type DenLifeScreen = (typeof DEN_LIFE_SCREENS)[number];
+
+const isDenLifeScreen = (word: string | undefined): word is DenLifeScreen => DEN_LIFE_SCREENS.some((screen) => screen === word);
 
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -24,6 +31,7 @@ export function parseRoute(hash: string): Route {
   if (parts.length === 1 && head === 'list') return { name: 'list' };
   if (parts.length === 1 && head === 'records') return { name: 'records' };
   if (parts.length === 1 && head === 'about') return { name: 'about' };
+  if (parts.length === 1 && isDenLifeScreen(head)) return { name: head };
   if (parts.length === 2 && id !== undefined && ID.test(id)) {
     if (head === 'game') {
       const version = new URLSearchParams(query).get('version');
@@ -44,6 +52,11 @@ export function routeHash(route: Route): string {
       return '#/records';
     case 'about':
       return '#/about';
+    case 'jacket':
+    case 'kids':
+    case 'versus':
+    case 'run':
+      return `#/${route.name}`;
     case 'game':
       return `#/game/${route.id}${route.version ? `?version=${route.version}` : ''}`;
     case 'play': {

@@ -1,10 +1,11 @@
 /**
  * The bar across the top of every Hall page: the logo (a tiny woodgrain
- * console), your profile chip, today's Power Cycle, the Den / list switch,
- * and the appearance, sound and settings buttons. Light / Dark / System lives
+ * console), your profile chip, today's Power Cycle, the two Den Life modes
+ * (Power Cycle Run and Versus Night), the Den / list switch, and the
+ * appearance, sound and settings buttons. Light / Dark / System lives
  * in settings; the sun-and-moon button here flips between day and night.
  */
-import { dailyNumber, powerCycleOfTheDay } from '@woodgrain-88/kit';
+import { canPlanRun, dailyNumber, powerCycleOfTheDay } from '@woodgrain-88/kit';
 import type { Services } from '../app/services.ts';
 import { escapeXml } from '../den/svg.ts';
 
@@ -61,6 +62,10 @@ export function createTopBar(options: TopBarOptions): TopBar {
       `<a class="topbar-logo" href="#/" aria-label="Woodgrain '88, back to the Den">${LOGO}<span class="topbar-logo-text">Woodgrain <em>'88</em></span></a>` +
       `<button type="button" class="topbar-chip" data-action="profile">${avatarDot(profile.avatar.hue)}<span>${escapeXml(profile.displayName)}</span></button>` +
       `<span class="topbar-chip topbar-chip--daily"><span class="topbar-chip-label">Power Cycle #${dailyNumber(today)}</span><strong>${pick ? escapeXml(pick.title) : 'first game soon'}</strong></span>` +
+      `<nav class="topbar-modes" aria-label="Modes">` +
+      `<a class="topbar-chip topbar-chip--mode" href="#/run"><span class="topbar-chip-label">Power Cycle Run</span><strong>${canPlanRun(services.denLife.runCandidates()) ? 'five games, 45 s' : 'opens with five games'}</strong></a>` +
+      `<a class="topbar-chip topbar-chip--mode" href="#/versus"><span class="topbar-chip-label">Versus Night</span><strong>${services.versusNight.series() ? 'series on' : 'two players'}</strong></a>` +
+      `</nav>` +
       `<span class="topbar-spacer"></span>` +
       `<nav class="topbar-links" aria-label="Pages"><a href="#/records">Records</a><a href="#/about">About</a></nav>` +
       `<div class="topbar-switch" role="group" aria-label="View">` +
@@ -112,7 +117,12 @@ export function createTopBar(options: TopBarOptions): TopBar {
     }
   });
 
-  const stops = [services.settings.onChange(render), services.settings.onAppearance(render), services.repos.profile.onChange(render)];
+  const stops = [
+    services.settings.onChange(render),
+    services.settings.onAppearance(render),
+    services.repos.profile.onChange(render),
+    services.versusNight.onChange(render),
+  ];
   render();
 
   return {

@@ -1,8 +1,9 @@
 /**
  * Starts the Hall: services, the live appearance on <html>, the top bar, and
  * the router that swaps between The Den, the Label Wall list, a game, the
- * Records and About pages. The real site and the test harness both boot
- * through here; only the harness passes registry overrides.
+ * Records and About pages and Den Life's screens. The real site and the test
+ * harness both boot through here; only the harness passes registry
+ * overrides, and only the dev showcase passes services of its own.
  */
 import { VERSION_SETTING, type GameEntry, type GameManifest } from '@woodgrain-88/kit';
 import { openDetails } from '../chrome/details.ts';
@@ -10,13 +11,18 @@ import type { Dialog } from '../chrome/dialog.ts';
 import { openProfilePanel, openShortcuts } from '../chrome/profile-panel.ts';
 import { openSettingsPanel } from '../chrome/settings-panel.ts';
 import { createTopBar } from '../chrome/topbar.ts';
+import { openCalendar } from '../den/calendar-view.ts';
 import { createDenView, type DenView } from '../den/den-view.ts';
+import { createJacketView } from '../jacket/jacket-view.ts';
+import { createKidsView } from '../kids/kids-view.ts';
+import { createVersusView } from '../versus/versus-view.ts';
 import { createListView, type ListView } from '../list/list-view.ts';
 import { createAboutPage, type AboutPage } from '../pages/about.ts';
 import { createRecordsPage, type RecordsPage } from '../pages/records.ts';
 import { runFromParams } from '../play/run-info.ts';
 import { startPlaySession, type PlaySession } from '../play/session.ts';
 import { createRouter, type Route } from '../routes/router.ts';
+import { createRunOverlay, type RunOverlay } from '../run/run-overlay.ts';
 import { createServices } from './services.ts';
 
 const NARROW_QUERY = '(max-width: 900px)';
@@ -26,9 +32,10 @@ interface Page {
   dispose(): void;
 }
 
-export function boot(root: HTMLElement, overrides: readonly GameEntry[] = []): void {
-  const services = createServices(overrides);
+export function boot(root: HTMLElement, overrides: readonly GameEntry[] = [], services = createServices(overrides)): void {
   const { settings } = services;
+  // Patches and micro-challenges of every playable game, for growth, the jacket and the run.
+  void services.denLife.loadGameData();
   const html = document.documentElement;
   const applyAppearance = () => {
     html.dataset.appearance = settings.appearance();
@@ -49,6 +56,7 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = []): v
   let list: ListView | null = null;
   let page: (RecordsPage | AboutPage | Page) | null = null;
   let session: PlaySession | null = null;
+  let run: RunOverlay | null = null;
   let details: Dialog | null = null;
   let currentHash = location.hash || '#/';
   let restoring = false;
@@ -78,6 +86,9 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = []): v
 
   const goToGame = (id: string, version?: string) =>
     router.go(version ? { name: 'game', id, version } : { name: 'game', id });
+  // Straight into play on a channel the dial picked.
+  const playChannel = (id: string, version: string | undefined, channel: string) =>
+    router.go({ name: 'play', id, params: new URLSearchParams({ ch: channel, ...(version ? { version } : {}) }) });
 
   const clearViews = (keep: 'den' | 'list' | 'none') => {
     if (keep !== 'den') {
@@ -100,7 +111,15 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = []): v
         onOpenGame: goToGame,
         onOpenList: () => router.go({ name: 'list' }),
         onShowShortcuts: openShortcuts,
-        onOpenProfile: () => openProfilePanel(services),
+        onOpenJacket: () => router.go({ name: 'jacket' }),
+        onOpenKids: () => router.go({ name: 'kids' }),
+        onOpenVersus: () => router.go({ name: 'versus' }),
+        onStartRun: () => router.go({ name: 'run' }),
+        onOpenCalendar: () =>
+          openCalendar({
+            services,
+            onPlayDaily: (id, channel) => router.go({ name: 'play', id, params: new URLSearchParams({ mode: 'daily', ch: channel }) }),
+          }),
       });
       viewHost.append(den.element);
     }
@@ -150,7 +169,7 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = []): v
         services,
         entry,
         ...(route.name === 'game' && route.version ? { version: route.version } : {}),
-        onPlay: goToGame,
+        onPlay: (id, version, channel) => (channel ? playChannel(id, version, channel) : goToGame(id, version)),
         onClose: () => {
           details = null;
           if (location.hash.startsWith(`#/game/${id}`) || location.hash.startsWith(`#/play/${id}`)) {
@@ -172,7 +191,11 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = []): v
       services,
       entry,
       run: runFromParams(entry.manifest, params, location.hash, new Date(), savedVersion),
+      micro: params.get('micro'),
       onBackToHall: () => router.go({ name: 'den' }),
+      onRoundOver: () => router.go({ name: 'run' }),
+      onBackToVersus: () => router.go({ name: 'versus' }),
+      onSwitchChannel: (channel) => playChannel(id, route.name === 'play' ? (route.params.get('version') ?? undefined) : undefined, channel),
       onOpenSettings: () => openSettings(entry.manifest),
     });
     viewHost.append(session.element);
@@ -196,6 +219,10 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = []): v
     currentHash = location.hash || '#/';
     // Details live at #/game/<id>; any other route (Back included) closes them.
     details?.close();
+    if (route.name !== 'run') {
+      run?.dispose();
+      run = null;
+    }
     switch (route.name) {
       case 'den':
         showDen();
@@ -203,6 +230,37 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = []): v
         break;
       case 'list':
         showList();
+        break;
+      case 'run':
+        showDen();
+        if (den && !run) {
+          run = createRunOverlay({
+            services,
+            den,
+            onPlayRound: (round) =>
+              router.go({
+                name: 'play',
+                id: round.game,
+                params: new URLSearchParams({ mode: 'power-cycle-run', micro: round.challenge.id, ch: round.challenge.channel }),
+              }),
+            onExit: () => router.go({ name: 'den' }),
+          });
+        }
+        break;
+      case 'jacket':
+        showPage(() => createJacketView({ services, onBack: () => router.go({ name: 'den' }) }));
+        break;
+      case 'kids':
+        showPage(() => createKidsView({ services, onBack: () => router.go({ name: 'den' }) }));
+        break;
+      case 'versus':
+        showPage(() =>
+          createVersusView({
+            services,
+            onBack: () => router.go({ name: 'den' }),
+            onPlay: (id) => router.go({ name: 'play', id, params: new URLSearchParams({ mode: 'versus-night' }) }),
+          }),
+        );
         break;
       case 'records':
         showPage(() => createRecordsPage({ services, onOpenSettings: openSettings }));

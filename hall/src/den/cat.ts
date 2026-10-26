@@ -252,8 +252,9 @@ function head(): string {
   );
 }
 
-export function cat(): string {
-  const { x, y, width } = LAYOUT.cat;
+/** The cat at `rect`: by the first beanbag, or curled on the second once it arrives. */
+export function cat(rect: { x: number; y: number; width: number } = LAYOUT.cat): string {
+  const { x, y, width } = rect;
   const scale = width / 180;
   return (
     `<g class="cat" aria-hidden="true" transform="translate(${x} ${y}) scale(${n(scale)})">` +

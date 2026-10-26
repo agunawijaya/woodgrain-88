@@ -1,23 +1,33 @@
 /**
- * Channels: each game's curated variations, a nod to the numbered game
- * variations of the original cartridges ("Game 1–27"), presented as TV
- * channels you tune into rather than a menu of numbers.
+ * Channels: a game's variations, tuned like TV channels rather than picked
+ * from a menu of numbers. Every variation of the original program is a
+ * channel and open from the first play, as on the cartridge ("Game 1–27").
+ * Remix channels are rule sets we design per game; each names the patch that
+ * opens it.
  *
  * A channel id is stable forever: records, challenge links and progress are
- * keyed by it. Whether a channel is open is data; prompt 01 supplies the
- * unlock rule, and until then every channel is open.
+ * keyed by it.
  */
 import type { Repository } from './store/repos.ts';
 import { emptyGameProgress } from './store/schema.ts';
 import type { GameProgressData, ProgressData } from './store/types.ts';
 
+export type ChannelKind = 'original' | 'remix';
+
 export interface ChannelDef {
   /** kebab-case, unique within the game, never renamed. */
   id: string;
+  kind: ChannelKind;
   /** At most 24 characters. */
   title: string;
   /** One line, at most 90 characters. */
   description: string;
+  /** For games with many variations: the strip heading it sits under, e.g. "Biplanes". At most 20 characters. */
+  group?: string;
+  /** An original channel's variation number(s) on the cartridge, so details can say "Game 14 on the cartridge". */
+  originalGame?: readonly number[];
+  /** A remix channel's opening patch: the id of one of the game's own patches. */
+  unlockedBy?: string;
 }
 
 export interface ChannelState extends ChannelDef {
@@ -26,7 +36,7 @@ export interface ChannelState extends ChannelDef {
   index: number;
 }
 
-/** Decides whether a channel is open. Prompt 01 replaces the default. */
+/** Decides whether a channel is open; recorded unlocks count as open regardless. */
 export type UnlockRule = (
   gameId: string,
   channel: ChannelDef,
@@ -34,9 +44,18 @@ export type UnlockRule = (
   progress: GameProgressData | undefined,
 ) => boolean;
 
-export const EVERY_CHANNEL_OPEN: UnlockRule = () => true;
+/** Originals are always open; a remix opens once its patch has been earned. */
+export const ORIGINALS_OPEN_REMIX_BY_PATCH: UnlockRule = (_gameId, channel, _index, progress) =>
+  channel.kind === 'original' ||
+  (channel.unlockedBy !== undefined && Boolean(progress?.patches[channel.unlockedBy]?.earnedAt));
 
-export const MAX_CHANNELS = 8;
+/**
+ * The largest original offers 36 selectable variations (nine rule sets in four
+ * mazes) and two others 27; 64 leaves room for a full set of originals plus a
+ * dozen remixes while keeping the channel picker one screen tall.
+ */
+export const MAX_CHANNELS = 64;
+const MAX_GROUP_LENGTH = 20;
 
 export interface ChannelRegistry {
   /** The game's channels in manifest order with their unlock state; [] for an unknown game. */
@@ -65,7 +84,7 @@ const MAX_DESCRIPTION_LENGTH = 90;
  * unlock recorded for it.
  */
 export function createChannelRegistry(options: ChannelRegistryOptions): ChannelRegistry {
-  const rule = options.rule ?? EVERY_CHANNEL_OPEN;
+  const rule = options.rule ?? ORIGINALS_OPEN_REMIX_BY_PATCH;
   const now = options.now ?? (() => new Date());
   const gamesMap = new Map<string, readonly ChannelDef[]>(
     options.games.map((game) => [game.id, game.channels]),
@@ -127,12 +146,19 @@ export function createChannelRegistry(options: ChannelRegistryOptions): ChannelR
   };
 }
 
-/** Problems with a game's channel list: count 1–MAX_CHANNELS, ids kebab-case and unique, lengths. */
+/**
+ * Problems with a game's channel list: count 1–MAX_CHANNELS with at least one
+ * original, ids kebab-case and unique, lengths, and the kind rules (an
+ * original never needs unlocking; a remix always names its patch).
+ */
 export function validateChannels(channels: readonly ChannelDef[]): string[] {
   const problems: string[] = [];
 
   if (channels.length < 1 || channels.length > MAX_CHANNELS) {
     problems.push(`Channel count must be between 1 and ${MAX_CHANNELS}, got ${channels.length}.`);
+  }
+  if (!channels.some((channel) => channel.kind === 'original')) {
+    problems.push('At least one channel must be an original variation.');
   }
 
   const seen = new Set<string>();
@@ -156,7 +182,39 @@ export function validateChannels(channels: readonly ChannelDef[]): string[] {
         `Channel "${channel.id}" description must be 1–${MAX_DESCRIPTION_LENGTH} characters.`,
       );
     }
+    problems.push(...kindProblems(channel));
   }
 
   return problems;
+}
+
+function kindProblems(channel: ChannelDef): string[] {
+  const problems: string[] = [];
+  if (channel.group !== undefined && (channel.group.trim().length < 1 || channel.group.length > MAX_GROUP_LENGTH)) {
+    problems.push(`Channel "${channel.id}" group must be 1–${MAX_GROUP_LENGTH} characters.`);
+  }
+  if (channel.kind === 'original') {
+    if (channel.unlockedBy !== undefined) problems.push(`Original channel "${channel.id}" cannot need unlocking.`);
+    if (channel.originalGame?.some((game) => !Number.isInteger(game) || game < 1 || game > MAX_CHANNELS)) {
+      problems.push(`Channel "${channel.id}" originalGame numbers must be whole numbers 1–${MAX_CHANNELS}.`);
+    }
+  } else {
+    if (channel.unlockedBy === undefined || !KEBAB_ID_RE.test(channel.unlockedBy)) {
+      problems.push(`Remix channel "${channel.id}" must name the patch that opens it.`);
+    }
+    if (channel.originalGame !== undefined) problems.push(`Remix channel "${channel.id}" has no original game number.`);
+  }
+  return problems;
+}
+
+/** A game's remix channels must each be opened by one of its own patches. */
+export function validateRemixUnlocks(channels: readonly ChannelDef[], patchIds: readonly string[]): string[] {
+  return channels
+    .filter((channel) => channel.kind === 'remix' && channel.unlockedBy !== undefined && !patchIds.includes(channel.unlockedBy))
+    .map((channel) => `Remix channel "${channel.id}" names unknown patch "${channel.unlockedBy ?? ''}".`);
+}
+
+/** A channel's number on the dial: 1 for the first in the manifest's order, 0 if the id is unknown. */
+export function channelNumber(channels: readonly ChannelDef[], id: string): number {
+  return channels.findIndex((channel) => channel.id === id) + 1;
 }

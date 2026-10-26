@@ -2,7 +2,7 @@
  * Tests for the Counter's slot cycle: 32-place wrapping, step sequence generation,
  * version places, digit formatting and deterministic daily game selection.
  */
-import { powerCycleOfTheDay, type ProgressData } from '@woodgrain-88/kit';
+import { powerCycleOfTheDay, type ProgressData, emptyDenLife } from '@woodgrain-88/kit';
 import { describe, expect, it } from 'vitest';
 import {
   counterDigits,
@@ -100,7 +100,7 @@ describe('slot cycling and counter', () => {
     expect(overridden32?.version?.id).toBe('hack');
   });
 
-  it('lights a version place only by its own versionsFinished entry and unversioned place once plays > 0', () => {
+  it('lights places 1–30 with a first patch, and 31–32 only with their own version finished', () => {
     const places = counterPlaces(createRegistry().manifests);
     const place1 = places.find((p) => p.slot === 1);
     const place11 = places.find((p) => p.slot === 11);
@@ -110,39 +110,46 @@ describe('slot cycling and counter', () => {
       throw new Error('Expected places 1, 11, and 31 to exist');
     }
 
-    const noPlays = () => 0;
-    const hasPlays = () => 3;
+    const earned = { value: 1, earnedAt: '2026-10-25T12:00:00Z', gold: false };
+    const gameWith = (
+      patches: ProgressData['games'][string]['patches'],
+      versionsFinished: Record<string, string> = {},
+    ) => ({
+      patches,
+      channels: {},
+      firstPlayedAt: '2026-10-25T12:00:00Z',
+      versionsFinished,
+    });
 
-    // A game without versions is lit once plays > 0
-    const emptyProgress: ProgressData = { games: {} };
-    expect(placeFinished(place1, emptyProgress, noPlays)).toBe(false);
-    expect(placeFinished(place1, emptyProgress, hasPlays)).toBe(true);
+    // Places 1–30 light with the game's first patch, not with plays.
+    const empty: ProgressData = { games: {}, den: emptyDenLife() };
+    expect(placeFinished(place1, empty)).toBe(false);
+    const firstPatch: ProgressData = {
+      games: { [place1.manifest.id]: gameWith({ club: earned }) },
+      den: emptyDenLife(),
+    };
+    expect(placeFinished(place1, firstPatch)).toBe(true);
+    const inProgressOnly: ProgressData = {
+      games: {
+        [place1.manifest.id]: gameWith({ club: { value: 1, earnedAt: null, gold: false } }),
+      },
+      den: emptyDenLife(),
+    };
+    expect(placeFinished(place1, inProgressOnly)).toBe(false);
 
-    // A version place is lit only by its own versionsFinished entry (not the other version's)
+    // A merged game's own place follows the patch rule too; finishing a version does not light it.
     const chickenFinished: ProgressData = {
-      games: {
-        'lane-hopper': {
-          patches: {},
-          channels: {},
-          firstPlayedAt: '2026-10-25T12:00:00Z',
-          versionsFinished: { chicken: '2026-10-25T12:00:00Z' },
-        },
-      },
+      games: { 'lane-hopper': gameWith({}, { chicken: '2026-10-25T12:00:00Z' }) },
+      den: emptyDenLife(),
     };
-    expect(placeFinished(place11, chickenFinished, hasPlays)).toBe(true);
-    expect(placeFinished(place31, chickenFinished, hasPlays)).toBe(false);
+    expect(placeFinished(place11, chickenFinished)).toBe(false);
+    expect(placeFinished(place31, chickenFinished)).toBe(false);
 
+    // Place 31 lights only with its own version finished.
     const rabbitFinished: ProgressData = {
-      games: {
-        'lane-hopper': {
-          patches: {},
-          channels: {},
-          firstPlayedAt: '2026-10-25T12:00:00Z',
-          versionsFinished: { rabbit: '2026-10-25T12:00:00Z' },
-        },
-      },
+      games: { 'lane-hopper': gameWith({}, { rabbit: '2026-10-25T12:00:00Z' }) },
+      den: emptyDenLife(),
     };
-    expect(placeFinished(place11, rabbitFinished, hasPlays)).toBe(false);
-    expect(placeFinished(place31, rabbitFinished, hasPlays)).toBe(true);
+    expect(placeFinished(place31, rabbitFinished)).toBe(true);
   });
 });

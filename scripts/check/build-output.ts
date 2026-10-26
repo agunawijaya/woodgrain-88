@@ -1,6 +1,7 @@
 /**
  * Checks on the built site (hall/dist): no network URLs in shipped code (the
- * site never fetches anything) and no trace of the test-only fake game.
+ * site never fetches anything), no trace of the test-only fixture games, and
+ * no trace of the dev showcase.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -38,12 +39,32 @@ export function checkNetworkUrls(): Problem[] {
   return problems;
 }
 
+/** The fixtures' ids and titles (hall/tests/fixtures, FIXTURE_IDS); `test-catch` also covers the five run copies. */
+const FIXTURE_TRACES = [
+  'test-paddles',
+  'Test Paddles',
+  'test-grid',
+  'Test Grid',
+  'test-catch',
+  'Test Catch',
+];
+/** The showcase's URL parameter and its made-up run goals only exist in dev builds. */
+const SHOWCASE_TRACES = ['showcase', 'Survive the whole 45 seconds'];
+
 export function checkFixtureNotShipped(): Problem[] {
   const problems: Problem[] = [];
   for (const path of builtFiles()) {
     const text = readFileSync(path, 'utf8');
-    if (text.includes('test-paddles') || text.includes('Test Paddles')) {
-      problems.push({ file: repoPath(path), message: 'contains the test-only fake game' });
+    for (const trace of FIXTURE_TRACES) {
+      if (text.includes(trace))
+        problems.push({
+          file: repoPath(path),
+          message: `contains the test-only fixture "${trace}"`,
+        });
+    }
+    for (const trace of SHOWCASE_TRACES) {
+      if (text.includes(trace))
+        problems.push({ file: repoPath(path), message: `contains the dev showcase ("${trace}")` });
     }
   }
   if (existsSync(join(DIST, 'harness.html'))) {

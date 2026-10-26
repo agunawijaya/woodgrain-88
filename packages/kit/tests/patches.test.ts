@@ -10,7 +10,11 @@ import {
   validatePatches,
 } from '../src/patches.ts';
 import type { EventLogData, ProgressData } from '../src/store/types.ts';
+import { emptyDenLife } from '../src/store/schema.ts';
+import { EASY_SWITCHES, type DifficultySwitches } from '../src/types.ts';
 import { fakeRepo } from './helpers/fake-repo.ts';
+
+const LEFT_ON_A: DifficultySwitches = { left: 'A', right: 'B' };
 
 const EVENT_SCHEMAS: readonly GameEventSchema[] = [
   { type: 'hit', description: 'Opponent hit.', fields: { points: 'number', tag: 'string' } },
@@ -71,6 +75,7 @@ function stamp(partial: Partial<StampedEvent> & { type: string }, seq = 1): Stam
     channel: partial.channel ?? 'open-field',
     at: partial.at ?? '2026-10-25T20:00:00.000Z',
     seq,
+    difficulty: partial.difficulty ?? EASY_SWITCHES,
     type: partial.type,
     ...(partial.data !== undefined ? { data: partial.data } : {}),
   };
@@ -78,12 +83,11 @@ function stamp(partial: Partial<StampedEvent> & { type: string }, seq = 1): Stam
 
 describe('createPatchTracker', () => {
   it('ignores unknown games and earns a sum patch exactly when crossing the target', () => {
-    const progress = fakeRepo<ProgressData>({ games: {} });
+    const progress = fakeRepo<ProgressData>({ games: {}, den: emptyDenLife() });
     const earnedLog: PatchEarned[] = [];
     const tracker = createPatchTracker({
       games: [{ id: 'tank-duel', patches: PATCHES }],
       progress,
-      isPro: () => false,
       now: () => new Date('2026-10-25T20:00:00.000Z'),
     });
 
@@ -126,20 +130,37 @@ describe('createPatchTracker', () => {
   });
 
   it('filters max patches by channel and mode and ignores non-matching events', () => {
-    const progress = fakeRepo<ProgressData>({ games: {} });
+    const progress = fakeRepo<ProgressData>({ games: {}, den: emptyDenLife() });
     const tracker = createPatchTracker({
       games: [{ id: 'tank-duel', patches: PATCHES }],
       progress,
-      isPro: () => true,
       now: () => new Date('2026-10-25T20:00:00.000Z'),
     });
 
     // Wrong channel or wrong mode should not update the max patch.
     tracker.handle(
-      stamp({ type: 'combo', channel: 'open-field', mode: 'daily', data: { chain: 8 } }, 1),
+      stamp(
+        {
+          difficulty: LEFT_ON_A,
+          type: 'combo',
+          channel: 'open-field',
+          mode: 'daily',
+          data: { chain: 8 },
+        },
+        1,
+      ),
     );
     tracker.handle(
-      stamp({ type: 'combo', channel: 'billiard-walls', mode: 'normal', data: { chain: 8 } }, 2),
+      stamp(
+        {
+          difficulty: LEFT_ON_A,
+          type: 'combo',
+          channel: 'billiard-walls',
+          mode: 'normal',
+          data: { chain: 8 },
+        },
+        2,
+      ),
     );
 
     const before = tracker.status('tank-duel').find((s) => s.def.id === 'daily-billiard-ace');
@@ -148,17 +169,37 @@ describe('createPatchTracker', () => {
 
     // Matching channel and mode with chain 3 updates value to 3 (progress 0.6).
     tracker.handle(
-      stamp({ type: 'combo', channel: 'billiard-walls', mode: 'daily', data: { chain: 3 } }, 3),
+      stamp(
+        {
+          difficulty: LEFT_ON_A,
+          type: 'combo',
+          channel: 'billiard-walls',
+          mode: 'daily',
+          data: { chain: 3 },
+        },
+        3,
+      ),
     );
     // Missing field leaves max unchanged at 3.
-    tracker.handle(stamp({ type: 'combo', channel: 'billiard-walls', mode: 'daily' }, 4));
+    tracker.handle(
+      stamp({ difficulty: LEFT_ON_A, type: 'combo', channel: 'billiard-walls', mode: 'daily' }, 4),
+    );
     const mid = tracker.status('tank-duel').find((s) => s.def.id === 'daily-billiard-ace');
     expect(mid?.value).toBe(3);
     expect(mid?.progress).toBeCloseTo(0.6);
 
     // Reaching chain 6 in matching channel and mode earns the patch in gold.
     const earned = tracker.handle(
-      stamp({ type: 'combo', channel: 'billiard-walls', mode: 'daily', data: { chain: 6 } }, 5),
+      stamp(
+        {
+          difficulty: LEFT_ON_A,
+          type: 'combo',
+          channel: 'billiard-walls',
+          mode: 'daily',
+          data: { chain: 6 },
+        },
+        5,
+      ),
     );
     expect(earned).toEqual([
       {
@@ -171,32 +212,31 @@ describe('createPatchTracker', () => {
     ]);
   });
 
-  it('upgrades an amateur-earned patch to gold when reached again on Pro and metric changes', () => {
-    const progress = fakeRepo<ProgressData>({ games: {} });
-    let proMode = false;
+  it('turns a patch earned on B gold when it is reached again on A and the metric changes', () => {
+    const progress = fakeRepo<ProgressData>({ games: {}, den: emptyDenLife() });
     let clockIso = '2026-10-25T20:00:00.000Z';
     const tracker = createPatchTracker({
       games: [{ id: 'tank-duel', patches: PATCHES }],
       progress,
-      isPro: () => proMode,
       now: () => new Date(clockIso),
     });
 
-    // Earn point-collector on Amateur.
+    // Earn point-collector on B.
     const firstEarn = tracker.handle(stamp({ type: 'hit', data: { points: 100 } }, 1));
     expect(firstEarn).toHaveLength(1);
     expect(firstEarn[0]?.gold).toBe(false);
     expect(firstEarn[0]?.upgradedToGold).toBe(false);
 
-    // Turn Pro on. An event that does not change the sum metric must not upgrade it
+    // Flip the left switch to A. An event that does not change the sum metric must not upgrade it
     // (it does complete the separate count patch, which is not under test here).
-    proMode = true;
     clockIso = '2026-10-25T20:05:00.000Z';
-    const unchanged = tracker.handle(stamp({ type: 'hit' }, 2));
+    const unchanged = tracker.handle(stamp({ type: 'hit', difficulty: LEFT_ON_A }, 2));
     expect(unchanged.filter((e) => e.patch.id === 'point-collector')).toEqual([]);
 
     // Now an event that changes the sum metric while at/above target upgrades it to gold.
-    const upgraded = tracker.handle(stamp({ type: 'hit', data: { points: 10 } }, 3));
+    const upgraded = tracker.handle(
+      stamp({ type: 'hit', difficulty: LEFT_ON_A, data: { points: 10 } }, 3),
+    );
     expect(upgraded.find((e) => e.patch.id === 'point-collector')).toEqual({
       game: 'tank-duel',
       patch: PATCHES[1],
@@ -206,15 +246,16 @@ describe('createPatchTracker', () => {
     });
 
     // Further events do not re-trigger gold.
-    expect(tracker.handle(stamp({ type: 'hit', data: { points: 20 } }, 4))).toEqual([]);
+    expect(
+      tracker.handle(stamp({ type: 'hit', difficulty: LEFT_ON_A, data: { points: 20 } }, 4)),
+    ).toEqual([]);
   });
 
   it('shows a secret patch hint before earning and its description after earning', () => {
-    const progress = fakeRepo<ProgressData>({ games: {} });
+    const progress = fakeRepo<ProgressData>({ games: {}, den: emptyDenLife() });
     const tracker = createPatchTracker({
       games: [{ id: 'tank-duel', patches: PATCHES }],
       progress,
-      isPro: () => false,
       now: () => new Date('2026-10-25T20:00:00.000Z'),
     });
 
@@ -231,7 +272,7 @@ describe('createPatchTracker', () => {
   });
 
   it('connects to an EventBus and unsubscribes cleanly', () => {
-    const progress = fakeRepo<ProgressData>({ games: {} });
+    const progress = fakeRepo<ProgressData>({ games: {}, den: emptyDenLife() });
     const eventLog = fakeRepo<EventLogData>({ sessions: [] });
     const bus = createEventBus({
       eventLog,
@@ -243,12 +284,16 @@ describe('createPatchTracker', () => {
     const tracker = createPatchTracker({
       games: [{ id: 'tank-duel', patches: PATCHES }],
       progress,
-      isPro: () => false,
       now: () => new Date('2026-10-25T20:00:00.000Z'),
     });
 
     const disconnect = tracker.connect(bus);
-    bus.beginSession({ game: 'tank-duel', mode: 'normal', channel: 'open-field' });
+    bus.beginSession({
+      game: 'tank-duel',
+      mode: 'normal',
+      channel: 'open-field',
+      difficulty: EASY_SWITCHES,
+    });
     bus.emit({ type: 'hit' });
     expect(tracker.status('tank-duel')[0]?.value).toBe(1);
 

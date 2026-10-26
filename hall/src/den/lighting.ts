@@ -135,6 +135,8 @@ export function nightlight(): string {
     `<g class="tv-light" style="mix-blend-mode: screen"><rect x="-3200" y="-2400" width="8000" height="5600" fill="url(#den-tv-glow)"/></g>` +
     `<g style="mix-blend-mode: screen"><rect x="-3200" y="-2400" width="8000" height="5600" fill="url(#den-lamp-pool)"/></g>` +
     `<g style="mix-blend-mode: screen">${strips}</g>` +
+    // Earned lights (string lights, the ON AIR sign) glow here, after dark only.
+    `<g data-growth-slot="glow" style="mix-blend-mode: screen"></g>` +
     `</g>`
   );
 }

@@ -5,7 +5,7 @@
  * All colours come from the --den-* tokens, so day and night are both
  * designed in tokens.css and switch live.
  */
-import { FLOOR_Y, LAYOUT } from './geometry.ts';
+import { FLOOR_Y, LAYOUT, type Rect } from './geometry.ts';
 import { n, roundedRectPath, shagPath, woodgrainPath } from './svg.ts';
 
 const FAR = { left: -3200, right: 4800, top: -2400, bottom: 3200 };
@@ -40,6 +40,16 @@ export function roomDefs(): string {
     <linearGradient id="den-sky" x1="0" y1="${LAYOUT.window.y}" x2="0" y2="${LAYOUT.window.y + LAYOUT.window.height}" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="var(--den-sky-top)"/>
       <stop offset="1" stop-color="var(--den-sky-bottom)"/>
+    </linearGradient>
+    <clipPath id="den-beanbag-clip"><path d="M14 170C-2 150 4 112 28 92C46 76 58 46 88 26C112 8 150 2 182 10C214 18 236 44 246 72C262 96 292 124 286 154C282 172 262 180 238 180Q214 186 188 182Q150 187 112 183Q76 187 46 182Q26 180 14 170Z"/></clipPath>
+    <radialGradient id="den-beanbag-dent" cx="0.55" cy="0.25" r="0.75">
+      <stop offset="0" stop-color="#3b2a08" stop-opacity="0.42"/>
+      <stop offset="0.5" stop-color="#3b2a08" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#3b2a08" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="den-beanbag-floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.3"/>
     </linearGradient>
     <radialGradient id="den-beanbag-shade" cx="0.42" cy="0.32" r="0.75">
       <stop offset="0" stop-color="#fff" stop-opacity="0.22"/>
@@ -150,23 +160,17 @@ function door(): string {
   );
 }
 
-/** The denim jacket on a hanger hooked over the door. Prompt 01 sews patches on it. */
+/** The denim jacket on a hanger hooked over the door, wearing the patches sewn on its front. */
 export function jacket(): string {
   const { x, y, width } = LAYOUT.jacket;
   const cx = x + width / 2;
   const top = y;
   const doorTop = LAYOUT.door.y + 12;
   const shoulder = { dx: 56, dy: 24 };
-  // One continuous hanger: hook over the door's top edge, a short neck, two arms and the bar.
-  const hanger =
-    `M${cx + 13} ${doorTop + 10}` +
-    `C${cx + 13} ${doorTop - 4} ${cx} ${doorTop - 6} ${cx} ${doorTop + 8}` +
-    `V${top - 6}` +
-    `L${cx + shoulder.dx} ${top + shoulder.dy}` +
-    `Q${cx + shoulder.dx + 5} ${top + shoulder.dy + 3} ${cx + shoulder.dx - 2} ${top + shoulder.dy + 5}` +
-    `H${cx - shoulder.dx + 2}` +
-    `Q${cx - shoulder.dx - 5} ${top + shoulder.dy + 3} ${cx - shoulder.dx} ${top + shoulder.dy}` +
-    `L${cx} ${top - 6}`;
+  // The wire hanger: a hook over the door's top edge and a neck down into the
+  // collar. Its arms are inside the jacket, under the shoulders, so all that
+  // shows of them is where they cross the open collar (drawn further down).
+  const hanger = `M${cx + 13} ${doorTop + 10}C${cx + 13} ${doorTop - 4} ${cx} ${doorTop - 6} ${cx} ${doorTop + 8}V${top + 6}`;
   // The jacket hangs from the hanger's arms: its shoulder seams follow them.
   const body =
     `M${cx - 14} ${top + 2}` +
@@ -190,8 +194,9 @@ export function jacket(): string {
     `<path d="${body}" fill="var(--den-denim)"/>` +
     `<path d="${body}" fill="url(#den-denim-shade)"/>` +
     `<path d="${lining}" fill="#1f3550"/>` +
-    // The hanger's neck and arm roots, seen inside the open collar.
-    `<path d="M${cx} ${top - 6}V${top + 8}M${cx} ${top - 6}L${cx - 13} ${top + 2}M${cx} ${top - 6}L${cx + 13} ${top + 2}" fill="none" stroke="var(--den-chrome-dark)" stroke-width="3.2" stroke-linecap="round"/>` +
+    // Inside the open collar: the hanger's neck meeting its two arms, which run
+    // on under the shoulders, a little below the shoulder line.
+    `<path d="M${cx} ${top - 2}V${top + 6}M${cx - 14} ${top + 13.8}L${cx} ${top + 6}L${cx + 14} ${top + 13.8}" fill="none" stroke="var(--den-chrome-dark)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>` +
     `<path d="M${cx - shoulder.dx - 4} ${top + shoulder.dy + 2}L${cx - 14} ${top + 2}M${cx + shoulder.dx + 4} ${top + shoulder.dy + 2}L${cx + 14} ${top + 2}" ${stitch}/>` +
     `<path d="M${cx} ${top + 64}V${top + 228}" stroke="var(--den-denim-dark)" stroke-width="2.5"/>` +
     `<path d="M${cx - 4} ${top + 64}V${top + 226}M${cx + 4} ${top + 64}V${top + 226}" ${stitch}/>` +
@@ -201,31 +206,25 @@ export function jacket(): string {
     [0, 1, 2, 3, 4].map((i) => `<circle cx="${cx + 7}" cy="${top + 90 + i * 30}" r="3" fill="var(--den-chrome)"/>`).join('') +
     `<path d="${collarLeft}" fill="var(--den-denim-dark)"/>` +
     `<path d="${collarRight}" fill="var(--den-denim-dark)"/>` +
-    // Empty patch places, waiting for prompt 01.
-    `<g class="patch-places" opacity="0.5">` +
-    `<circle cx="${cx - 34}" cy="${top + 150}" r="15" fill="none" stroke="var(--den-stitch)" stroke-width="1.2" stroke-dasharray="2 3"/>` +
-    `<rect x="${cx + 18}" y="${top + 136}" width="30" height="26" rx="5" fill="none" stroke="var(--den-stitch)" stroke-width="1.2" stroke-dasharray="2 3"/>` +
-    `</g>` +
+    // The patches sewn on the front of the jacket, small, filled in by the Den view.
+    `<g data-ref="jacket-patches"></g>` +
+    // A glint on the shoulder while there are patches the player has not looked at yet.
+    `<path class="jacket-glint" d="M${cx + 40} ${top + 30}l2.2 6.8 6.8 2.2-6.8 2.2-2.2 6.8-2.2-6.8-6.8-2.2 6.8-2.2Z" fill="#fff8dc"/>` +
     `</g>`
   );
 }
 
-export interface CalendarRefs {
-  month: string;
-  day: string;
-  daily: string;
-}
+/** The calendar's picture; the day grid starts below it. */
+export const CALENDAR_PHOTO_HEIGHT = 52;
 
-/** The wall calendar; its text is filled in by the Den view from the daily clock. */
+/**
+ * The wall calendar. Its page is filled in by the Den view: the month, today's
+ * date, a day grid with the streak ticked off (Den Life), the streak sticker in
+ * the photo's corner and today's daily number and channel along the bottom.
+ */
 export function calendar(): string {
   const { x, y, width, height } = LAYOUT.calendar;
-  const photoH = 62;
-  let grid = '';
-  for (let row = 0; row < 4; row++) {
-    for (let col = 0; col < 7; col++) {
-      grid += `<rect x="${n(x + 8 + col * 11)}" y="${n(y + photoH + 44 + row * 9)}" width="8" height="6" rx="1" fill="var(--den-trim)" opacity="0.12"/>`;
-    }
-  }
+  const photoH = CALENDAR_PHOTO_HEIGHT;
   return (
     `<g class="calendar">` +
     `<circle cx="${x + width / 2}" cy="${y - 10}" r="2.5" fill="var(--den-chrome-dark)"/>` +
@@ -236,46 +235,92 @@ export function calendar(): string {
     `<rect x="${x + 6}" y="${y + 6}" width="${width - 12}" height="${photoH}" fill="#f6b04f"/>` +
     `<rect x="${x + 6}" y="${y + 6}" width="${width - 12}" height="${photoH * 0.45}" fill="#e2733a"/>` +
     `<rect x="${x + 6}" y="${y + 6}" width="${width - 12}" height="${photoH * 0.2}" fill="#b8433a"/>` +
-    `<circle cx="${x + width / 2 + 8}" cy="${y + 46}" r="13" fill="#ffe7a8"/>` +
-    `<path d="M${x + 6} ${y + photoH + 6}V${y + 50}q20 -16 40 -2q16 -12 40 0V${y + photoH + 6}Z" fill="#7a3b4a"/>` +
-    `<path d="M${x + 6} ${y + photoH + 6}V${y + 58}q26 -10 50 0q14 -6 30 2V${y + photoH + 6}Z" fill="#4c2a3c"/>` +
+    `<circle cx="${x + width / 2 + 8}" cy="${y + photoH * 0.68}" r="11" fill="#ffe7a8"/>` +
+    `<path d="M${x + 6} ${y + photoH + 6}V${y + photoH * 0.78}q20 -14 40 -2q16 -10 40 0V${y + photoH + 6}Z" fill="#7a3b4a"/>` +
+    `<path d="M${x + 6} ${y + photoH + 6}V${y + photoH * 0.9}q26 -8 50 0q14 -5 30 2V${y + photoH + 6}Z" fill="#4c2a3c"/>` +
     `<path d="M${x + 4} ${y + photoH + 10}h${width - 8}" stroke="var(--den-chrome-dark)" stroke-width="2" stroke-dasharray="2 3"/>` +
+    `<g data-ref="calendar-streak"></g>` +
     // The spaces between the date lines never render; they keep the words
     // apart for tools that read the calendar in order.
-    `<text data-ref="calendar-month" x="${x + 8}" y="${y + photoH + 26}" fill="var(--den-trim)" font-family="var(--font-label)" font-weight="800" font-size="12" letter-spacing="0.6"></text> ` +
-    `<text data-ref="calendar-day" x="${x + width - 8}" y="${y + photoH + 30}" text-anchor="end" fill="#b8433a" font-family="var(--font-display)" font-weight="700" font-size="22"></text> ` +
-    grid +
+    `<text data-ref="calendar-month" x="${x + 7}" y="${y + photoH + 24}" fill="var(--den-trim)" font-family="var(--font-label)" font-weight="800" font-size="11" letter-spacing="0.6"></text> ` +
+    `<text data-ref="calendar-day" x="${x + width - 7}" y="${y + photoH + 27}" text-anchor="end" fill="#b8433a" font-family="var(--font-display)" font-weight="700" font-size="19"></text> ` +
+    `<g data-ref="calendar-grid"></g>` +
     ` ` +
-    `<text data-ref="calendar-daily" x="${x + width / 2}" y="${y + height - 6}" text-anchor="middle" fill="var(--den-trim)" font-family="var(--font-hand)" font-size="11"></text>` +
+    `<text data-ref="calendar-daily" x="${x + width / 2}" y="${y + height - 5}" text-anchor="middle" fill="var(--den-trim)" font-family="var(--font-hand)" font-size="10.5"></text>` +
     `</g>`
   );
 }
 
-function beanbag(): string {
-  const { x, y, width, height } = LAYOUT.beanbag;
+/**
+ * A slouched teardrop beanbag in mustard canvas. It is sewn from tall panels
+ * that meet at a round cap on top, so the seams read like lines of longitude
+ * bending round its belly; someone has sat in it, leaving a dent with creases
+ * running out of it, and the fabric bunches where it meets the carpet.
+ * Drawn in its own 290×182 box; the first one sits at LAYOUT.beanbag, and a
+ * second, teal one arrives with ten Versus Night series.
+ */
+export function beanbag(rect: Rect = LAYOUT.beanbag, tone: { fill: string; dark: string } = MUSTARD): string {
+  const { x, y, width } = rect;
+  const scale = width / 290;
   const shape =
-    `M${x + 24} ${y + height - 14}` +
-    `C${x - 8} ${y + height - 40} ${x + 6} ${y + 92} ${x + 46} ${y + 70}` +
-    `C${x + 70} ${y + 56} ${x + 82} ${y + 16} ${x + 128} ${y + 10}` +
-    `C${x + 178} ${y + 4} ${x + 214} ${y + 30} ${x + 232} ${y + 62}` +
-    `C${x + width + 4} ${y + 92} ${x + width + 6} ${y + height - 34} ${x + width - 30} ${y + height - 10}` +
-    `Q${x + width / 2} ${y + height + 6} ${x + 24} ${y + height - 14}Z`;
-  const seat = `M${x + 70} ${y + 96}C${x + 110} ${y + 74} ${x + 186} ${y + 74} ${x + 232} ${y + 100}C${x + 200} ${y + 132} ${x + 108} ${y + 134} ${x + 70} ${y + 96}Z`;
-  let ribs = '';
-  for (let i = 0; i < 22; i++) {
-    const rx = x + 26 + i * 11.5;
-    const lift = Math.sin((i / 21) * Math.PI) * 64;
-    ribs += `M${n(rx)} ${y + height - 12}Q${n(rx + 4)} ${n(y + height - 60 - lift)} ${n(rx + 2)} ${n(y + 120 - lift)}`;
-  }
+    'M14 170C-2 150 4 112 28 92C46 76 58 46 88 26C112 8 150 2 182 10C214 18 236 44 246 72' +
+    'C262 96 292 124 286 154C282 172 262 180 238 180Q214 186 188 182Q150 187 112 183Q76 187 46 182Q26 180 14 170Z';
+  // The round cap where the panels meet, tipped back a little; it sits just
+  // under the crest of the bag, and is clipped to the bag so it never shows outside it.
+  const cap = 'M120 19C130 9 172 7 184 16C172 25 132 27 120 19Z';
+  // Panel seams from the cap down to the floor; the middle two disappear into the dent.
+  const seams = [
+    'M122 20C96 38 64 72 52 108C44 132 42 154 46 180',
+    'M140 25C132 36 124 48 118 62',
+    'M166 24C180 34 192 46 202 58',
+    'M182 17C220 38 256 74 266 108C272 132 272 152 266 176',
+    'M120 112C116 136 116 160 120 184',
+    'M214 108C220 132 222 156 218 182',
+  ];
+  // Where somebody sat: a dent pushed into the front of the bag.
+  const dent = 'M78 90C92 66 136 52 182 54C218 56 244 70 252 92C238 110 196 118 150 116C114 114 88 106 78 90Z';
+  const lip = 'M92 100C124 114 204 114 238 100';
+  // Creases running out of the dent, each a shadow with a lit ridge beside it.
+  const creases = [
+    ['M96 98C88 112 76 122 62 128', 'M100 101C92 115 80 126 66 132'],
+    ['M138 108C136 122 130 134 120 144', 'M142 109C141 124 135 137 125 147'],
+    ['M196 108C202 120 206 132 204 146', 'M200 107C207 119 211 132 209 147'],
+    ['M236 96C248 106 258 118 262 132', 'M239 100C250 110 259 122 263 136'],
+  ];
+  // Fabric bunching on the carpet.
+  const floorFolds = 'M28 166Q38 158 52 164M70 176Q84 166 98 174M176 178Q192 168 208 176M240 170Q254 162 268 166';
+  const seamMarkup = seams
+    .map(
+      (d) =>
+        `<path d="${d}" fill="none" stroke="${tone.dark}" stroke-width="2.2" stroke-linecap="round" opacity="0.55"/>` +
+        `<path d="${d}" transform="translate(2 0)" fill="none" stroke="#fff" stroke-width="0.9" stroke-dasharray="2.4 2.6" stroke-linecap="round" opacity="0.35"/>`,
+    )
+    .join('');
+  const creaseMarkup = creases
+    .map(
+      ([shadow, ridge]) =>
+        `<path d="${shadow}" fill="none" stroke="${tone.dark}" stroke-width="3" stroke-linecap="round" opacity="0.4"/>` +
+        `<path d="${ridge}" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity="0.2"/>`,
+    )
+    .join('');
   return (
-    `<g class="beanbag">` +
-    `<ellipse cx="${x + width / 2}" cy="${y + height - 6}" rx="${width / 2 + 4}" ry="14" fill="#000" opacity="0.32"/>` +
-    `<path d="${shape}" fill="var(--den-beanbag)"/>` +
-    `<path d="${ribs}" fill="none" stroke="var(--den-beanbag-dark)" stroke-width="1.4" opacity="0.35"/>` +
-    `<path d="${seat}" fill="var(--den-beanbag-dark)" opacity="0.55"/>` +
-    `<path d="M${x + 84} ${y + 92}C${x + 120} ${y + 80} ${x + 180} ${y + 80} ${x + 218} ${y + 96}" fill="none" stroke="#fff" stroke-opacity="0.18" stroke-width="3" stroke-linecap="round"/>` +
-    `<path d="M${x + 40} ${y + height - 40}C${x + 60} ${y + height - 20} ${x + 120} ${y + height - 12} ${x + 160} ${y + height - 12}" fill="none" stroke="var(--den-beanbag-dark)" stroke-width="3" stroke-linecap="round" opacity="0.5"/>` +
+    `<g class="beanbag" transform="translate(${x} ${y}) scale(${n(scale)})">` +
+    `<ellipse cx="148" cy="178" rx="150" ry="13" fill="#000" opacity="0.32"/>` +
+    `<path d="${shape}" fill="${tone.fill}"/>` +
     `<path d="${shape}" fill="url(#den-beanbag-shade)"/>` +
+    `<g clip-path="url(#den-beanbag-clip)">` +
+    seamMarkup +
+    `<path d="${dent}" fill="url(#den-beanbag-dent)"/>` +
+    `<path d="${lip}" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity="0.18"/>` +
+    creaseMarkup +
+    `<path d="${floorFolds}" fill="none" stroke="${tone.dark}" stroke-width="2.4" stroke-linecap="round" opacity="0.45"/>` +
+    `<rect x="0" y="120" width="290" height="70" fill="url(#den-beanbag-floor)"/>` +
+    `<path d="${cap}" fill="${tone.dark}" opacity="0.35"/>` +
+    `<path d="${cap}" fill="none" stroke="#fff" stroke-width="0.9" stroke-dasharray="2.4 2.6" opacity="0.4"/>` +
+    `</g>` +
+    // A soft sheen where the window light rolls over the shoulder.
+    `<path d="M70 52C88 30 120 16 152 14" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity="0.16"/>` +
+    `<path d="M232 56C246 74 256 92 262 110" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="0.1"/>` +
     `</g>`
   );
 }
@@ -361,6 +406,9 @@ export function wallClock(): string {
 export function roomBack(): string {
   return wall() + carpet() + rug() + blinds() + door() + wallClock();
 }
+
+const MUSTARD = { fill: 'var(--den-beanbag)', dark: 'var(--den-beanbag-dark)' };
+export const TEAL_BEANBAG = { fill: 'var(--den-beanbag-2)', dark: 'var(--den-beanbag-2-dark)' };
 
 export function roomFront(): string {
   return beanbag();

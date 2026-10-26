@@ -27,8 +27,8 @@ A game is two things:
 
 Everything a running game needs arrives through `GameContext`: the run (mode, seed, channel,
 daily number, micro brief, challenge), a seeded RNG, two-seat input, audio, settings (appearance,
-motion, shake, CRT, colour-blind hints, a per-game namespace), the Pro switch (reported, rules in
-prompt 01), a versioned save slot, patch status, records, `createLoop` (loops the chrome pauses),
+motion, shake, CRT, colour-blind hints, a per-game namespace), the difficulty switches (per seat,
+see the prompt 01 amendment below), a versioned save slot, patch status, records, `createLoop` (loops the chrome pauses),
 `emit`, `reportResult`, sharing, `setView`, `setPauseItems`, `requestPause`, `openSettings`,
 `openHowToPlay`, `backToHall`, `forgetGameData`.
 
@@ -83,3 +83,22 @@ Pier Derby has `derby` (26) and `hack` (15).
 - **Validation.** `validateManifest` checks the versions (two or more, kebab-case and unique ids,
   label and description lengths, each `cartridgeSlot` one of `inspiredBy.cartridgeSlots` and used
   once); `validateRegistry` checks that no cartridge slot belongs to two games' versions.
+
+## Amendment, 2026-10-26 (prompt 01): difficulty switches, emoji summary, channel kinds
+
+- **Difficulty.** `GameContext.proSwitch` is replaced by `GameContext.difficulty`:
+  `get(): { left: 'A' | 'B', right: 'A' | 'B' }` and `onChange(listener)`. Left is seat 1, right is
+  seat 2; A is hard, as on the console. A manifest may declare `difficulty: { left: { a, b },
+right?: { a, b }, liveChange }` with one line (1–60 characters) per position; the details panel
+  prints "A: … B: …" per switch. When `liveChange` is false the Hall still reports the change and
+  the game applies it from the next round. Every event is stamped with the switches, so the patch
+  tracker sews gold thread when the earning seat's switch is on A.
+- **Emoji summary.** `GameResult.emoji` is at most 12 emoji (pictographs, keycaps, flags, coloured
+  squares and circles; no letters, digits or names), checked by `emojiSummary`. The daily share line
+  is `Woodgrain '88 #12 · Tank Duel ch.7 · 3–1 · 🟩🟩🟥🟩` (plus the player's name only when they
+  opt in).
+- **Channel kinds.** `ChannelDef` gains `kind: 'original' | 'remix'`, `group?`, `originalGame?` and,
+  for Remix channels, `unlockedBy` (a patch id of the same game). At least one original per game;
+  `MAX_CHANNELS` rises to 64. `supports` loses `proSwitch` and gains `microChallenges`.
+- **Seats.** `SeatInfo.kid` names the Neighbourhood Kid in a bot seat; games turn it into AI settings
+  with the kit's `aiSettings`.

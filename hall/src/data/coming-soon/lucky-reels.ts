@@ -38,8 +38,8 @@ export const manifest: GameManifest = {
     { keys: ["Enter or click"], does: "play a move" },
   ],
   channels: [
-    { id: 'classic', title: 'Classic', description: 'The original rules, rebuilt and polished.' },
+    { id: 'classic', kind: 'original', title: 'Classic', description: 'The original rules, rebuilt and polished.' },
   ],
-  supports: { daily: false, challengeLinks: false, proSwitch: false, microChallenges: false },
+  supports: { daily: false, challengeLinks: false, microChallenges: false },
   events: [],
 };

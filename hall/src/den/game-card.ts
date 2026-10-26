@@ -57,8 +57,10 @@ export function createGameCard(options: GameCardOptions): GameCard {
   const renderGame = ({ slot, manifest, version }: CounterPlace) => {
     const { services } = options;
     const best = services.records.bestOverall(manifest.id, manifest.scoreOrder);
-    const patches = services.patches.status(manifest.id);
-    const earned = patches.filter((p) => p.earned).length;
+    // Den Life knows every game's patches, including those of games not loaded yet.
+    const patches = services.denLife.patchesFor(manifest.id);
+    const progress = services.repos.progress.get().games[manifest.id]?.patches ?? {};
+    const earned = patches.filter((patch) => progress[patch.id]?.earnedAt).length;
     const couch = manifest.versus !== 'none';
     const soon = manifest.status === 'coming-soon';
     element.style.setProperty('--card-accent-day', manifest.accent.day);

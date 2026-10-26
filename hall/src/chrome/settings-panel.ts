@@ -1,5 +1,6 @@
 /**
  * Settings: appearance (Light / Dark / System), sound, motion, the CRT look,
+ * Den Life (growth in the room, sharing, Versus Night length, Run sound),
  * controls for both seats (layout, rebinding, gamepads), the intro, and the
  * player's data (export, import with a preview first, forget everything).
  */
@@ -132,6 +133,21 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
       toggle('crtEffects', 'CRT look (curve, scanlines, glow)', s.crtEffects, 'Always off when motion is reduced') +
       toggle('colorBlindHints', 'Colour-blind hints', s.colorBlindHints, 'Shapes and patterns wherever colour carries meaning') +
       `</section>` +
+      `<section><h3>Den Life</h3>` +
+      toggle('showGrowth', 'Show what the room has grown', s.showGrowth, 'Trophies, posters, lights and the rest. Hiding them forgets nothing') +
+      toggle('shareWithName', 'Put my name on share lines', s.shareWithName, 'Off: share lines carry no name at all') +
+      `<p class="settings-note">Versus Night series length</p>` +
+      `<div class="choices" role="radiogroup" aria-label="Versus Night series length">` +
+      radio('versusBestOf', '3', 'Best of 3', s.versusBestOf === 3) +
+      radio('versusBestOf', '5', 'Best of 5', s.versusBestOf === 5) +
+      `</div>` +
+      `<p class="settings-note">Power Cycle Run sound</p>` +
+      `<div class="choices" role="radiogroup" aria-label="Power Cycle Run sound">` +
+      radio('runSound', 'quiet', 'Quiet', s.runSound === 'quiet') +
+      radio('runSound', 'normal', 'Normal', s.runSound === 'normal') +
+      radio('runSound', 'loud', 'Loud', s.runSound === 'loud') +
+      `</div>` +
+      `</section>` +
       `<section><h3>Controls</h3><div class="choices" role="radiogroup" aria-label="Keyboard layout">` +
       radio('layout', 'split', 'Two players share the keyboard', s.controls.layout === 'split') +
       radio('layout', 'solo', 'One player uses both halves', s.controls.layout === 'solo') +
@@ -166,7 +182,17 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
       if (name === 'appearance') draft.appearance = target.value as SettingsData['appearance'];
       else if (name === 'reducedMotion') draft.reducedMotion = target.value as SettingsData['reducedMotion'];
       else if (name === 'layout') draft.controls.layout = target.value as SettingsData['controls']['layout'];
-      else if (name === 'muted' || name === 'screenShake' || name === 'crtEffects' || name === 'colorBlindHints' || name === 'roomAmbience') {
+      else if (name === 'versusBestOf') draft.versusBestOf = target.value === '5' ? 5 : 3;
+      else if (name === 'runSound') draft.runSound = target.value as SettingsData['runSound'];
+      else if (
+        name === 'muted' ||
+        name === 'screenShake' ||
+        name === 'crtEffects' ||
+        name === 'colorBlindHints' ||
+        name === 'roomAmbience' ||
+        name === 'showGrowth' ||
+        name === 'shareWithName'
+      ) {
         draft[name] = target.checked;
       } else if (name === 'master' || name === 'sfx' || name === 'music' || name === 'ambience') {
         draft.volume[name] = Number(target.value) / 100;

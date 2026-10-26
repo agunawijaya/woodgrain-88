@@ -10,6 +10,7 @@ import {
   validateEventSchemas,
 } from '../src/events.ts';
 import { EVENT_LOG_LIMIT, type EventLogData } from '../src/store/types.ts';
+import { EASY_SWITCHES } from '../src/types.ts';
 import { fakeRepo } from './helpers/fake-repo.ts';
 
 function makeClock(startIso = '2026-10-25T18:00:00.000Z') {
@@ -39,11 +40,17 @@ describe('createEventBus', () => {
       received.push(event);
     });
 
-    bus.beginSession({ game: 'tank-duel', mode: 'normal', channel: 'open-field' });
+    bus.beginSession({
+      game: 'tank-duel',
+      mode: 'normal',
+      channel: 'open-field',
+      difficulty: EASY_SWITCHES,
+    });
     expect(bus.session).toEqual({
       game: 'tank-duel',
       mode: 'normal',
       channel: 'open-field',
+      difficulty: EASY_SWITCHES,
       startedAt: '2026-10-25T18:00:00.000Z',
     });
 
@@ -72,6 +79,7 @@ describe('createEventBus', () => {
       game: 'tank-duel',
       mode: 'normal',
       channel: 'open-field',
+      difficulty: EASY_SWITCHES,
       at: '2026-10-25T18:00:01.500Z',
       seq: 2,
     });
@@ -112,9 +120,19 @@ describe('createEventBus', () => {
       received.push(event);
     });
 
-    bus.beginSession({ game: 'game-one', mode: 'normal', channel: 'ch-1' });
+    bus.beginSession({
+      game: 'game-one',
+      mode: 'normal',
+      channel: 'ch-1',
+      difficulty: EASY_SWITCHES,
+    });
     clock.advance(3000);
-    bus.beginSession({ game: 'game-two', mode: 'daily', channel: 'ch-2' });
+    bus.beginSession({
+      game: 'game-two',
+      mode: 'daily',
+      channel: 'ch-2',
+      difficulty: EASY_SWITCHES,
+    });
 
     expect(eventLog.get().sessions).toHaveLength(1);
     expect(eventLog.get().sessions[0]?.game).toBe('game-one');
@@ -139,7 +157,12 @@ describe('createEventBus', () => {
     });
 
     for (let i = 0; i < EVENT_LOG_LIMIT + 5; i += 1) {
-      bus.beginSession({ game: `game-${i}`, mode: 'normal', channel: 'main' });
+      bus.beginSession({
+        game: `game-${i}`,
+        mode: 'normal',
+        channel: 'main',
+        difficulty: EASY_SWITCHES,
+      });
       clock.advance(100);
       bus.endSession();
     }
@@ -190,7 +213,12 @@ describe('createEventBus', () => {
       types.push(event.type);
     });
 
-    bus.beginSession({ game: 'sky-ace', mode: 'normal', channel: 'day' });
+    bus.beginSession({
+      game: 'sky-ace',
+      mode: 'normal',
+      channel: 'day',
+      difficulty: EASY_SWITCHES,
+    });
     bus.emit({ type: 'takeoff' });
     bus.emit({ type: 'cloud-pass' });
     bus.emit({ type: 'landing' });
@@ -215,7 +243,12 @@ describe('createEventBus', () => {
       },
     });
 
-    bus.beginSession({ game: 'sky-ace', mode: 'normal', channel: 'day' });
+    bus.beginSession({
+      game: 'sky-ace',
+      mode: 'normal',
+      channel: 'day',
+      difficulty: EASY_SWITCHES,
+    });
 
     const lateSeen: string[] = [];
     let addedLate = false;
@@ -254,7 +287,12 @@ describe('createEventBus', () => {
       afterThrow.push(event.type);
     });
 
-    bus.beginSession({ game: 'sky-ace', mode: 'normal', channel: 'day' });
+    bus.beginSession({
+      game: 'sky-ace',
+      mode: 'normal',
+      channel: 'day',
+      difficulty: EASY_SWITCHES,
+    });
     bus.emit({ type: 'boost' });
 
     expect(errorSpy).toHaveBeenCalledTimes(2);
@@ -272,7 +310,12 @@ describe('createEventBus', () => {
       seen.push(event.type);
     });
 
-    bus.beginSession({ game: 'sky-ace', mode: 'normal', channel: 'day' });
+    bus.beginSession({
+      game: 'sky-ace',
+      mode: 'normal',
+      channel: 'day',
+      difficulty: EASY_SWITCHES,
+    });
     bus.emit({ type: 'ring' });
     expect(seen).toEqual([]);
 

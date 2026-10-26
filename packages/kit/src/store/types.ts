@@ -5,7 +5,8 @@
  * a migration (schema.ts).
  */
 import type { Bindings, Layout, Seat } from '../input.ts';
-import type { AppearancePreference, IsoTime, RunMode } from '../types.ts';
+import type { KidId } from '../kids.ts';
+import type { AppearancePreference, DifficultySwitches, IsoTime, RunMode } from '../types.ts';
 
 export interface AvatarDescriptor {
   /** 0–359 on the colour wheel. */
@@ -58,6 +59,16 @@ export interface SettingsData {
   hintsSeen: Record<string, boolean>;
   /** Per-game settings, by game id then key. Games define their own keys. */
   games: Record<string, Record<string, unknown>>;
+  /** The console's two switches, as last set in the Den or a pause menu (settings v2). */
+  difficulty: DifficultySwitches;
+  /** Trophies, posters, lights and the rest of the room that play earns (v2). */
+  showGrowth: boolean;
+  /** Whether a copied share line ends with the display name; off by default (v2). */
+  shareWithName: boolean;
+  /** Versus Night's default series length (v2). */
+  versusBestOf: 3 | 5;
+  /** How loud the Power Cycle Run's transitions are (v2). */
+  runSound: 'quiet' | 'normal' | 'loud';
 }
 
 export interface PatchProgressData {
@@ -77,8 +88,121 @@ export interface GameProgressData {
   versionsFinished: Record<string, IsoTime>;
 }
 
+/** A UTC day (YYYY-MM-DD) in the streak: played, or covered by that ISO week's snow day. */
+export type StreakDayKind = 'played' | 'snow';
+
+export interface StreakData {
+  days: Record<string, StreakDayKind>;
+  /** The longest run of covered days so far. */
+  best: number;
+}
+
+/** The first run of a game on a given day: the one that counts for the daily score. */
+export interface DailyRunData {
+  score: number;
+  scoreLabel: string;
+  /** The game's emoji summary, already validated. */
+  emoji: string | null;
+  channel: string;
+  at: IsoTime;
+}
+
+/** The player's record against one Neighbourhood Kid, across every game. */
+export interface KidRecordData {
+  wins: number;
+  losses: number;
+  draws: number;
+  /** Wins with the player's switch on A, shown apart on the Block Ladder. */
+  winsOnA: number;
+  firstBeatenAt: IsoTime | null;
+  firstBeatenOnAAt: IsoTime | null;
+}
+
+/** One patch sewn on the jacket. Coordinates are in the jacket's 600×700 drawing units. */
+export interface PatchPlacement {
+  game: string;
+  patch: string;
+  side: 'front' | 'back';
+  x: number;
+  y: number;
+  /** Degrees, a multiple of 15. */
+  rotation: number;
+  /** Stacking order; higher is on top. */
+  z: number;
+}
+
+export interface JacketData {
+  placements: PatchPlacement[];
+  /** When the jacket was last opened; patches earned after it make the door jacket glint. */
+  lookedAt: IsoTime | null;
+}
+
+export interface VersusSeriesRecord {
+  at: IsoTime;
+  /** Seat 1 then seat 2, as typed (or a kid's name). */
+  names: [string, string];
+  kids: [KidId | null, KidId | null];
+  bestOf: 3 | 5;
+  games: { game: string; winner: Seat | null }[];
+  winner: Seat;
+}
+
+/** A pair of names that keeps meeting on Versus Night; keyed by `rivalryKey`. */
+export interface RivalryData {
+  /** Sorted, so the pair is the same whichever seat each took. */
+  names: [string, string];
+  /** Series and games won, in the order of `names`. */
+  series: [number, number];
+  games: [number, number];
+  lastAt: IsoTime;
+}
+
+export interface VersusData {
+  seriesPlayed: number;
+  /** Newest last; at most VERSUS_RECENT_LIMIT. */
+  recent: VersusSeriesRecord[];
+  rivalries: Record<string, RivalryData>;
+}
+
+export interface RunRoundData {
+  game: string;
+  challenge: string;
+  passed: boolean;
+  seconds: number;
+}
+
+export interface RunResultData {
+  at: IsoTime;
+  seed: number;
+  score: number;
+  rounds: RunRoundData[];
+}
+
+export interface RunsData {
+  /** Free runs, best score first; at most RECORDS_PER_BOARD. */
+  free: RunResultData[];
+  /** The day's seeded run, by YYYY-MM-DD; only the first finished run of a day counts. */
+  daily: Record<string, RunResultData>;
+}
+
+/** Den Life: everything the collection-wide layer remembers (progress v3). */
+export interface DenLifeData {
+  streak: StreakData;
+  /** By YYYY-MM-DD, then game id. */
+  daily: Record<string, Record<string, DailyRunData>>;
+  kids: Partial<Record<KidId, KidRecordData>>;
+  jacket: JacketData;
+  versus: VersusData;
+  runs: RunsData;
+  /** Growth items already revealed, by item id, so each sparkles in only once. */
+  growthSeen: Record<string, IsoTime>;
+  /** When all 32 Counter lamps first lit; the celebration plays once. */
+  counterCompletedAt: IsoTime | null;
+}
+
 export interface ProgressData {
   games: Record<string, GameProgressData>;
+  den: DenLifeData;
 }
 
 export interface RunRecord {
@@ -140,3 +264,4 @@ export interface EventLogData {
 
 export const EVENT_LOG_LIMIT = 200;
 export const RECORDS_PER_BOARD = 10;
+export const VERSUS_RECENT_LIMIT = 20;

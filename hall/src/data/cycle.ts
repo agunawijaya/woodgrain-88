@@ -46,12 +46,16 @@ export function counterPlaces(manifests: readonly GameManifest[]): CounterPlace[
 }
 
 /**
- * Whether a place's lamp is lit: a game without versions once it has been
- * played, and a version once a run has been finished with it.
+ * Whether a place's lamp is lit. Places 1–30 light with the game's first
+ * patch (Den Life); 31 and 32, a merged game's other version, light once a
+ * run has been finished with that version.
  */
-export function placeFinished(place: CounterPlace, progress: ProgressData, plays: (gameId: string) => number): boolean {
-  if (place.version) return Boolean(progress.games[place.manifest.id]?.versionsFinished[place.version.id]);
-  return plays(place.manifest.id) > 0;
+export function placeFinished(place: CounterPlace, progress: ProgressData): boolean {
+  const game = progress.games[place.manifest.id];
+  if (isVersionPlace(place.slot)) {
+    return place.version !== undefined && Boolean(game?.versionsFinished[place.version.id]);
+  }
+  return Object.values(game?.patches ?? {}).some((patch) => patch.earnedAt !== null);
 }
 
 /** The slot one power cycle away from `current`, wrapping around all 32 places. */

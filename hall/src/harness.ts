@@ -1,6 +1,8 @@
 /**
  * Entry point of the dev-only harness (harness.html): the real Hall with the
- * test-only fake game swapped into slot 11. Never part of the build.
+ * test-only fixtures swapped into their slots: paddles 11, grid 20, and the
+ * catch game five times over in 26–30, so a Power Cycle Run has five games.
+ * `?showcase=full|mid|new` works here too. Never part of the build.
  */
 import '@fontsource-variable/fraunces/full';
 import '@fontsource-variable/fraunces/full-italic';
@@ -12,9 +14,17 @@ import './styles/base.css';
 import './styles/den.css';
 import './styles/chrome.css';
 import './styles/pages.css';
+import './styles/den-life.css';
 
-import { fakeGame, fakeManifest } from '../tests/fixtures/fake-game.ts';
+import { fakeGame, fakeManifest, turnGame, turnManifest, virtualRunGames } from '../tests/fixtures/index.ts';
 import { boot } from './app/boot.ts';
+import { showcaseFromUrl } from './dev/showcase-boot.ts';
+
+const entries = [
+  { manifest: fakeManifest, load: () => Promise.resolve(fakeGame) },
+  { manifest: turnManifest, load: () => Promise.resolve(turnGame) },
+  ...virtualRunGames().map((game) => game.entry),
+];
 
 const root = document.getElementById('app');
-if (root) boot(root, [{ manifest: fakeManifest, load: () => Promise.resolve(fakeGame) }]);
+if (root) boot(root, entries, showcaseFromUrl(location.search, entries) ?? undefined);

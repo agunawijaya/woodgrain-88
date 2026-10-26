@@ -96,6 +96,8 @@ function createManagedRepo<N extends RepoName>(
     },
     forget() {
       cached = defaults(name, context);
+      // Everything showing this data (the Den's growth, the top bar) redraws from the defaults.
+      changes.emit(cached);
     },
   };
 }

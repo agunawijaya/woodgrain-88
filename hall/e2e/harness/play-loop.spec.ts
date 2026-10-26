@@ -2,13 +2,18 @@
  * End-to-end tests for the complete game play loop in the harness.
  */
 import { expect, test } from '@playwright/test';
-import { collectErrors, skipIntro } from '../helpers.ts';
+import { collectErrors, counterText, skipIntro } from '../helpers.ts';
 
 test.describe('Game play loop', () => {
   test('drives through play, pause menu, results dialog, and keyboard exits', async ({ page }) => {
     const errors = collectErrors(page);
     await skipIntro(page);
     await page.goto('/harness.html#/');
+
+    // Focus slot 11 to tune the Den to test-paddles before starting play
+    await page.locator('.cartridge[data-slot="11"]').focus();
+    await page.keyboard.press('Enter');
+    await expect.poll(() => counterText(page)).toBe('11');
 
     // From the Den, clicking Play opens the game view on the menu screen
     await page.locator('.game-card button[data-action="play"]').click();

@@ -1,12 +1,13 @@
 /**
  * Assembles The Den's SVG from its parts, back to front: room, jacket and
  * calendar, the Label Wall, the TV and stand, the console, the pads on the
- * rug, the beanbag and the cat, then the day and night light layers and, on top of
- * everything, one focus indicator so keyboard focus is visible even in the
- * dark.
+ * rug, the beanbag and the cat, then the day and night light layers and, on
+ * top of everything, one focus indicator so keyboard focus is visible even in
+ * the dark. Den Life's earned items go into empty slots between those layers.
  *
- * Interactive objects are focusable groups (role="button") in the Tab order
- * the prompt asks for: TV, console, wall row by row, calendar, jacket, pads.
+ * Interactive objects are focusable groups (role="button") in reading order:
+ * TV, console and its switches, wall row by row, calendar, corkboard, jacket,
+ * chalkboard, pads.
  */
 import type { GameManifest } from '@woodgrain-88/kit';
 import { cat, catDefs } from './cat.ts';
@@ -18,6 +19,17 @@ import { attrs, n, roundedRectPath } from './svg.ts';
 import { lamp, stickyNote, tvAndStand, tvDefs } from './tv.ts';
 import { introHandMarkup } from './intro.ts';
 import { labelWall, wallDefs } from './wall.ts';
+import { growthDefs } from './growth-art.ts';
+
+/** An invisible rectangle that takes the pointer and the focus ring for a drawing beside it. */
+function hitArea(box: { x: number; y: number; width: number; height: number }): string {
+  return `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" fill="transparent"/>`;
+}
+
+/** An empty layer the Den view fills with an earned item, at its place in the stacking order. */
+function growthSlot(kind: string): string {
+  return `<g data-growth-slot="${kind}" aria-hidden="true"></g>`;
+}
 
 // The label names the button and carries any words printed on the drawing
 // (the TV's badge, the calendar's date), so the drawing itself is hidden from
@@ -72,19 +84,35 @@ export function focusRingPath(box: { x: number; y: number; width: number; height
 export function denSceneMarkup(manifests: readonly GameManifest[]): string {
   return (
     `<svg class="den-scene" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CORE.width} ${CORE.height}" preserveAspectRatio="xMidYMid meet" role="group" aria-label="The Den">` +
-    `<defs>${roomDefs()}${catDefs()}${tvDefs()}${consoleDefs()}${wallDefs()}${lightingDefs()}</defs>` +
+    `<defs>${roomDefs()}${catDefs()}${tvDefs()}${consoleDefs()}${wallDefs()}${lightingDefs()}${growthDefs()}</defs>` +
     `<g class="layer-room" aria-hidden="true">${roomBack()}</g>` +
+    // Den Life fills these slots with what the player has earned (growth.ts).
+    growthSlot('posters') +
+    growthSlot('paper-chain') +
     hotspot('tv', 'The Woodgrain TV', tvAndStand()) +
     `<g aria-hidden="true">${lamp()}</g>` +
+    growthSlot('on-air') +
+    growthSlot('remote') +
     `<g class="layer-console">${consoleAndCounter()}</g>` +
+    growthSlot('plaque') +
     stickyNote() +
     `<g class="layer-wall" data-ref="wall">${labelWall(manifests)}</g>` +
+    growthSlot('string-lights') +
+    growthSlot('trophies') +
     `<g aria-hidden="true">${pothos()}</g>` +
     hotspot('calendar', "Calendar: today's Power Cycle", calendar()) +
-    hotspot('jacket', 'Denim jacket: your profile', jacket()) +
-    hotspot('pads', 'Two pads: Versus Night, coming in the next update', pads()) +
+    // The Polaroids and the chalk carry printed names, so their drawings sit
+    // beside the buttons rather than inside them (the names would have to
+    // match the buttons' accessible names word for word).
+    `<g data-ref="corkboard-art" aria-hidden="true"></g>` +
+    hotspot('corkboard', 'Corkboard: the Neighbourhood Kids', hitArea(LAYOUT.corkboard)) +
+    hotspot('jacket', 'Denim jacket: your patches', jacket()) +
+    `<g data-ref="chalkboard-art" aria-hidden="true"></g>` +
+    hotspot('chalkboard', 'Chalkboard: Versus Night', hitArea(LAYOUT.chalkboard)) +
+    hotspot('pads', 'Two pads: Versus Night', pads()) +
     `<g aria-hidden="true">${roomFront()}</g>` +
-    cat() +
+    growthSlot('second-beanbag') +
+    `<g data-ref="cat-slot" aria-hidden="true">${cat()}</g>` +
     daylight() +
     nightlight() +
     dimmer() +

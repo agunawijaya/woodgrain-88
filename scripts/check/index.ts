@@ -24,7 +24,7 @@ const checks: [string, () => Problem[]][] = [
 if (buildExists()) {
   checks.push(
     ['No network URLs in the build', checkNetworkUrls],
-    ['Fake test game kept out of the build', checkFixtureNotShipped],
+    ['Test fixtures and the dev showcase kept out of the build', checkFixtureNotShipped],
   );
 } else {
   console.warn('· No build in hall/dist: run `pnpm build` to include the build checks.');

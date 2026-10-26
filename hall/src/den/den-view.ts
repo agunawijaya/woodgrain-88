@@ -2,10 +2,13 @@
  * The Den as a living view: lays the SVG room out to the window, puts the
  * kit's CRT over the TV opening, and runs the room's moments: the power
  * switch (click, drag, P, Shift+P, holding P), the wall labels tuning the TV
- * as you hover or focus them, the Counter's flips, the RESET lever, the TV
- * tinting the room at night, and the game card for whatever is on.
+ * as you hover or focus them, the Counter's flips, the RESET lever, the two
+ * difficulty switches (click, drag, [ and ]), the TV tinting the room at
+ * night, and the game card for whatever is on. Den Life's pieces of the room
+ * are filled in by den-life-layer.ts.
  */
 import {
+  canPlanRun,
   createCrt,
   dailyNumber,
   powerCycleOfTheDay,
@@ -14,12 +17,16 @@ import {
   type CrtScreen,
   type DemoHandle,
   type Rgb,
+  type SwitchPosition,
+  type TransitionTiming,
 } from '@woodgrain-88/kit';
+import type { SwitchSide } from '../app/den-life.ts';
 import type { Services } from '../app/services.ts';
 import {
   counterDigits,
   counterPlaces,
   nextSlot,
+  isVersionPlace,
   placeFinished,
   type CounterPlace,
   type Direction,
@@ -29,6 +36,7 @@ import { fitCore, LAYOUT, toScreen, wallSlot, type Fit } from './geometry.ts';
 import { labelSvg } from './label.ts';
 import { focusRingPath, denSceneMarkup } from './scene.ts';
 import { createAmbience } from './ambience.ts';
+import { createDenLifeLayer } from './den-life-layer.ts';
 import { createLogoSurface } from './intro.ts';
 import { slateDemo, SLATE_SIZE } from './slate.ts';
 
@@ -38,7 +46,12 @@ export interface DenViewOptions {
   onOpenGame(id: string, version?: string): void;
   onOpenList(): void;
   onShowShortcuts(): void;
-  onOpenProfile(): void;
+  onOpenJacket(): void;
+  onOpenKids(): void;
+  onOpenVersus(): void;
+  onOpenCalendar(): void;
+  /** Holding POWER (or P) for a second, once five games can make a run. */
+  onStartRun(): void;
 }
 
 export interface DenView {
@@ -49,6 +62,14 @@ export interface DenView {
   /** The first-visit intro (also "Replay the intro"); any key or click skips it. */
   playIntro(): Promise<void>;
   tuneTo(slot: number): void;
+  /** The stage HTML overlays (the Run's cards) are laid on. */
+  readonly stage: HTMLElement;
+  /** Power Cycle Run: the switch flips itself to the game's channel; `onSnow` fires as the snow starts. */
+  runFlip(gameId: string, timing: TransitionTiming, onSnow?: () => void): Promise<void>;
+  /** While a run is on, the game card steps aside for the run's own cards. */
+  setRunning(running: boolean): void;
+  /** Lays an element over the game card's corner of the room, and keeps it there on resize. */
+  placeAtCard(element: HTMLElement): () => void;
   pause(): void;
   resume(): void;
   dispose(): void;
@@ -60,6 +81,11 @@ const HOVER_TUNE_DELAY_MS = 140;
 const TINT_SAMPLE_MS = 1000;
 const LEVER_THROW_DEGREES = 34;
 const DRAG_TRIGGER_PX = 18;
+const SWITCH_DRAG_PX = 6;
+const HOLD_TO_RUN_MS = 1000;
+
+const SWITCH_SEAT: Record<SwitchSide, number> = { left: 1, right: 2 };
+const SWITCH_KEY: Partial<Record<string, SwitchSide>> = { '[': 'left', ']': 'right' };
 
 function query<T extends Element>(
   root: ParentNode,
@@ -117,6 +143,8 @@ export function createDenView(options: DenViewOptions): DenView {
   const digits = [0, 1].map((i) => query(svg, `[data-ref="counter-digit-${i}"]`, SVGGElement));
   const cartridges = [...svg.querySelectorAll<SVGGElement>('.cartridge')];
   const tvPowerLight = query(svg, '[data-ref="tv-power-light"]', SVGCircleElement);
+  const powerHoldRing = query(svg, '[data-ref="power-hold-ring"]', SVGCircleElement);
+  const life = createDenLifeLayer(svg, services);
 
   const crt: CrtScreen = createCrt(crtHost, {
     effects: settings.crtEnabled(),
@@ -143,6 +171,8 @@ export function createDenView(options: DenViewOptions): DenView {
     onDetails: (id, version) => options.onOpenGame(id, version),
   });
   stage.append(card.element);
+  // The game card's corner of the room; the Run's cards take the same place.
+  const cardSpots = new Set<HTMLElement>([card.element]);
 
   // ——— Layout ———
   const layout = () => {
@@ -161,8 +191,11 @@ export function createDenView(options: DenViewOptions): DenView {
         borderRadius: `${18 * fit.scale}px`,
       });
     }
+    for (const spot of cardSpots) placeAtCardSpot(spot);
+  };
+  const placeAtCardSpot = (target: HTMLElement) => {
     const cardBox = toScreen(LAYOUT.card, fit);
-    Object.assign(card.element.style, {
+    Object.assign(target.style, {
       left: `${cardBox.x}px`,
       top: `${cardBox.y}px`,
       width: `${cardBox.width}px`,
@@ -251,13 +284,12 @@ export function createDenView(options: DenViewOptions): DenView {
     lightPlayedLamps();
   };
 
-  // The Counter's lamps: one for each game you have played, and for a merged
-  // game one for each cartridge version you have finished a run with.
+  // The Counter's lamps: one for each game with a patch earned, and the last
+  // two for the merged games' other cartridge versions, once finished.
   const lightPlayedLamps = () => {
     const progress = services.repos.progress.get();
-    const plays = (gameId: string) => services.stats.game(gameId).plays;
     for (const lamp of lamps) {
-      lamp.classList.toggle('is-played', placeFinished(placeAt(Number(lamp.dataset.slot)), progress, plays));
+      lamp.classList.toggle('is-played', placeFinished(placeAt(Number(lamp.dataset.slot)), progress));
     }
   };
 
@@ -336,8 +368,81 @@ export function createDenView(options: DenViewOptions): DenView {
     }
   };
 
+  // ——— Power Cycle Run: the switch flips by itself ———
+  const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+  const runFlip = async (target: number, timing: TransitionTiming, onSnow?: () => void): Promise<void> => {
+    busy = true;
+    void audio.unlock();
+    if (settings.reducedMotion()) {
+      // A quick cross-fade instead of the whole performance.
+      setSlot(target, false);
+      onSnow?.();
+      await crt.snow(160, 0.6);
+      busy = false;
+      return;
+    }
+    // The run's sound follows its own setting, on top of the effects volume.
+    const gain = { quiet: 0.5, normal: 1, loud: 1.4 }[settings.get().runSound];
+    element.style.setProperty('--run-dim-ms', `${timing.dimMs}ms`);
+    element.style.setProperty('--run-slide-ms', `${timing.slideMs}ms`);
+    element.classList.add('is-run-dimming');
+    // The fifth flip is the fastest, and the room can barely keep up.
+    const frantic = timing.dimMs < 250;
+    element.classList.toggle('is-frantic', frantic);
+    if (frantic) crt.setSnowFloor(0.3);
+    await wait(timing.dimMs);
+    audio.play('power-clunk', { pitch: 1 + (1 - timing.dimMs / 400), gain });
+    throwLever(1);
+    tvPowerLight.classList.add('is-off');
+    audio.play('tube-off', { gain });
+    await crt.powerOff();
+    // The next cartridge slides into the console and the Counter flips over to it.
+    consoleLabel.classList.remove('is-sliding');
+    void consoleLabel.getBoundingClientRect();
+    consoleLabel.classList.add('is-sliding');
+    setSlot(target, true);
+    glowOnWall(target);
+    audio.play('flip-tick', { gain });
+    await wait(Math.max(timing.slideMs, timing.flipMs));
+    tvPowerLight.classList.remove('is-off');
+    audio.play('static-hiss', { gain });
+    element.classList.add('is-snowing');
+    onSnow?.();
+    await crt.powerOn({ snowMs: timing.snowMs });
+    element.classList.remove('is-snowing', 'is-run-dimming', 'is-frantic');
+    crt.setSnowFloor(0);
+    setTimeout(sampleTint, 60);
+    busy = false;
+  };
+
+  const slotOf = (gameId: string): number =>
+    places.find((place) => place.manifest.id === gameId && !isVersionPlace(place.slot))?.slot ?? slot;
+
+  // Holding the switch starts a Power Cycle Run once five games can make one;
+  // until then holding it is the old joke: flip after flip, the snow growing comic.
+  let runHold: ReturnType<typeof setTimeout> | null = null;
+  const canStartRun = () => canPlanRun(services.denLife.runCandidates());
+  const beginRunHold = () => {
+    powerHoldRing.classList.add('is-holding');
+    runHold = setTimeout(() => {
+      cancelRunHold();
+      // The press became a hold: letting go now must not flip the switch as well.
+      dragStart = null;
+      options.onStartRun();
+    }, HOLD_TO_RUN_MS);
+  };
+  const cancelRunHold = () => {
+    if (runHold !== null) clearTimeout(runHold);
+    runHold = null;
+    powerHoldRing.classList.remove('is-holding');
+  };
+
   const startHold = (direction: Direction) => {
     void powerCycle(direction);
+    if (canStartRun()) {
+      beginRunHold();
+      return;
+    }
     holdTimer = setTimeout(() => {
       holdLoop = true;
       const step = () => {
@@ -353,6 +458,7 @@ export function createDenView(options: DenViewOptions): DenView {
   };
 
   const endHold = () => {
+    cancelRunHold();
     holdLoop = false;
     if (holdTimer !== null) clearTimeout(holdTimer);
     holdTimer = null;
@@ -386,6 +492,7 @@ export function createDenView(options: DenViewOptions): DenView {
     dragStart = { x: event.clientX, pointer: event.pointerId };
     dragFired = false;
     power.setPointerCapture(event.pointerId);
+    if (canStartRun()) beginRunHold();
   });
   power.addEventListener('pointermove', (event) => {
     if (!dragStart || dragFired || settings.reducedMotion()) return;
@@ -394,14 +501,17 @@ export function createDenView(options: DenViewOptions): DenView {
     powerArm.style.transition = 'none';
     powerArm.style.transform = `rotate(${angle}deg)`;
     if (Math.abs(dx) > DRAG_TRIGGER_PX) {
+      cancelRunHold();
       dragFired = true;
       void powerCycle(dx > 0 ? 1 : -1);
     }
   });
   power.addEventListener('pointerup', (event) => {
+    cancelRunHold();
     if (dragStart && !dragFired) void powerCycle(event.shiftKey ? -1 : 1);
     dragStart = null;
   });
+  power.addEventListener('pointercancel', cancelRunHold);
   power.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -447,27 +557,93 @@ export function createDenView(options: DenViewOptions): DenView {
     tooltip.hidden = true;
   };
 
-  const tipFor: Record<string, string> = {
-    pads: 'Versus Night: coming in the next update',
-    'switch-1': 'Seat 1 difficulty switch: becomes the Pro switch in the next update',
-    'switch-2': 'Seat 2 difficulty switch: becomes the Pro switch in the next update',
-  };
-  const jacketSpot = hotspot('jacket');
-  jacketSpot.addEventListener('click', () => options.onOpenProfile());
-  jacketSpot.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      options.onOpenProfile();
-    }
-  });
-  for (const [ref, text] of Object.entries(tipFor)) {
+  // Objects that open a Den Life screen or view, with what their tooltip says.
+  const opens: [ref: string, tip: string, open: () => void][] = [
+    ['jacket', 'The jacket: sew on your patches', () => options.onOpenJacket()],
+    ['calendar', '', () => options.onOpenCalendar()],
+    ['corkboard', 'The Neighbourhood Kids and the Block Ladder', () => options.onOpenKids()],
+    ['chalkboard', 'Versus Night: two players, best of 3 or 5', () => options.onOpenVersus()],
+    ['pads', 'Versus Night: two players, best of 3 or 5', () => options.onOpenVersus()],
+  ];
+  for (const [ref, tip, open] of opens) {
     const target = hotspot(ref);
-    target.addEventListener('pointerenter', () => showTooltip(text, target));
-    target.addEventListener('pointerleave', hideTooltip);
-    target.addEventListener('focus', () => showTooltip(text, target));
-    target.addEventListener('blur', hideTooltip);
-    target.addEventListener('click', () => showTooltip(text, target));
+    // The calendar writes its own, changing tooltip below.
+    if (tip) {
+      target.addEventListener('pointerenter', () => showTooltip(tip, target));
+      target.addEventListener('pointerleave', hideTooltip);
+      target.addEventListener('focus', () => showTooltip(tip, target));
+      target.addEventListener('blur', hideTooltip);
+    }
+    target.addEventListener('click', open);
+    target.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        open();
+      }
+    });
   }
+
+  // ——— The difficulty switches ———
+  const switchSpots: Record<SwitchSide, SVGGElement> = { left: hotspot('switch-left'), right: hotspot('switch-right') };
+  const switchWords = (position: SwitchPosition) => (position === 'A' ? 'A, hard' : 'B, easy');
+  const switchTip = (side: SwitchSide) => {
+    const position = services.denLife.switches()[side];
+    const gold = position === 'A' && side === 'left' ? '. Patches earned now are sewn in gold thread' : '';
+    return `Seat ${SWITCH_SEAT[side]} difficulty switch: ${switchWords(position)}${gold}`;
+  };
+  const showSwitches = () => {
+    for (const side of ['left', 'right'] as const) {
+      const position = services.denLife.switches()[side];
+      switchSpots[side].classList.toggle('is-a', position === 'A');
+      switchSpots[side].setAttribute('aria-label', `Seat ${SWITCH_SEAT[side]} difficulty switch: ${switchWords(position)}`);
+    }
+  };
+  const setSwitch = (side: SwitchSide, position: SwitchPosition) => {
+    if (services.denLife.switches()[side] === position) return;
+    void audio.unlock();
+    audio.play('switch-snick', { pitch: position === 'A' ? 1.12 : 1 });
+    services.denLife.setSwitch(side, position);
+    if (!tooltip.hidden) showTooltip(switchTip(side), switchSpots[side]);
+    announcer.textContent = switchTip(side);
+  };
+  const flipSwitch = (side: SwitchSide) => setSwitch(side, services.denLife.switches()[side] === 'A' ? 'B' : 'A');
+  for (const side of ['left', 'right'] as const) {
+    const spot = switchSpots[side];
+    let pressX: number | null = null;
+    let dragged = false;
+    spot.addEventListener('pointerdown', (event) => {
+      pressX = event.clientX;
+      dragged = false;
+      spot.setPointerCapture(event.pointerId);
+    });
+    spot.addEventListener('pointermove', (event) => {
+      if (pressX === null) return;
+      const dx = event.clientX - pressX;
+      if (Math.abs(dx) < SWITCH_DRAG_PX) return;
+      dragged = true;
+      // A sits to the left of the slot, B to the right.
+      setSwitch(side, dx < 0 ? 'A' : 'B');
+    });
+    spot.addEventListener('pointerup', () => {
+      if (pressX !== null && !dragged) flipSwitch(side);
+      pressX = null;
+    });
+    spot.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        flipSwitch(side);
+      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        setSwitch(side, event.key === 'ArrowLeft' ? 'A' : 'B');
+      }
+    });
+    spot.addEventListener('pointerenter', () => showTooltip(switchTip(side), spot));
+    spot.addEventListener('pointerleave', hideTooltip);
+    spot.addEventListener('focus', () => showTooltip(switchTip(side), spot));
+    spot.addEventListener('blur', hideTooltip);
+  }
+  showSwitches();
+  const stopSwitches = services.denLife.onChange(showSwitches);
 
   const tv = hotspot('tv');
   const openCurrent = () => {
@@ -483,23 +659,19 @@ export function createDenView(options: DenViewOptions): DenView {
   });
 
   const calendarSpot = hotspot('calendar');
-  const calendarTip = () =>
-    powerCycleGame
-      ? `Daily #${dailyNumber(today)}: today's Power Cycle is ${powerCycleGame.title}`
-      : `Daily #${dailyNumber(today)}: the first Power Cycle arrives with the first game`;
-  calendarSpot.addEventListener('pointerenter', () => showTooltip(calendarTip(), calendarSpot));
+  calendarSpot.addEventListener('pointerenter', () => showTooltip(life.calendarSummary(), calendarSpot));
   calendarSpot.addEventListener('pointerleave', hideTooltip);
-  calendarSpot.addEventListener('focus', () => showTooltip(calendarTip(), calendarSpot));
+  calendarSpot.addEventListener('focus', () => showTooltip(life.calendarSummary(), calendarSpot));
   calendarSpot.addEventListener('blur', hideTooltip);
 
   // Hovering a Counter lamp names what it stands for and whether it is lit.
   const lampTip = (lampSlot: number) => {
     const place = placeAt(lampSlot);
     const what = place.version ? `${place.manifest.title}, ${place.version.label} version` : place.manifest.title;
-    const lit = placeFinished(place, services.repos.progress.get(), (gameId) => services.stats.game(gameId).plays);
+    const lit = placeFinished(place, services.repos.progress.get());
     const state = lit
-      ? place.version ? 'finished' : 'played'
-      : place.version ? 'lights up when you finish a run with it' : 'lights up when you play it';
+      ? isVersionPlace(place.slot) ? 'finished' : 'first patch earned'
+      : isVersionPlace(place.slot) ? 'lights up when you finish a run with it' : 'lights up with your first patch';
     return `Lamp ${lampSlot} · ${what} · ${state}`;
   };
   const counterLamps = query(svg, '[data-ref="counter-lamps"]', SVGGElement);
@@ -591,6 +763,8 @@ export function createDenView(options: DenViewOptions): DenView {
       event.preventDefault();
       if (event.repeat) return;
       startHold(event.shiftKey ? -1 : 1);
+    } else if (SWITCH_KEY[event.key]) {
+      flipSwitch(SWITCH_KEY[event.key] ?? 'left');
     } else if (event.key === 'l' || event.key === 'L') {
       options.onOpenList();
     } else if (event.key === '?') {
@@ -619,7 +793,6 @@ export function createDenView(options: DenViewOptions): DenView {
   const daily = `Daily #${dailyNumber(today)}`;
   query(svg, '[data-ref="calendar-month"]', SVGTextElement).textContent = month.toUpperCase();
   query(svg, '[data-ref="calendar-day"]', SVGTextElement).textContent = day;
-  query(svg, '[data-ref="calendar-daily"]', SVGTextElement).textContent = daily;
   // Speech input users say what they see, so the name carries the printed date.
   calendarSpot.setAttribute('aria-label', `Calendar, ${month} ${day}, ${daily}: today's Power Cycle`);
 
@@ -707,7 +880,18 @@ export function createDenView(options: DenViewOptions): DenView {
     powerCycle: (direction) => powerCycle(direction),
     playIntro,
     tuneTo,
+    stage,
+    runFlip: (gameId, timing, onSnow) => runFlip(slotOf(gameId), timing, onSnow),
+    setRunning(running) {
+      element.classList.toggle('is-running', running);
+    },
+    placeAtCard(target) {
+      cardSpots.add(target);
+      placeAtCardSpot(target);
+      return () => cardSpots.delete(target);
+    },
     pause() {
+      life.setActive(false);
       demo?.pause();
       crt.pause();
     },
@@ -718,6 +902,7 @@ export function createDenView(options: DenViewOptions): DenView {
       layout();
       demo?.resume();
       crt.resume();
+      life.setActive(true);
     },
     dispose() {
       endHold();
@@ -729,6 +914,8 @@ export function createDenView(options: DenViewOptions): DenView {
       stopAppearance();
       stopMotion();
       stopSettings();
+      stopSwitches();
+      life.dispose();
       ambience.dispose();
       window.removeEventListener('pointerdown', unlockAndSync);
       window.removeEventListener('keydown', unlockAndSync);

@@ -605,3 +605,514 @@
 [data-motion='reduced'] .cat-ear {
   animation: none;
 }
+
+/* Den Life: the difficulty switches. B (easy) sits to the right; A slides the thumb left. */
+.difficulty-thumb {
+  transform: translateX(10px);
+  transition: transform 110ms cubic-bezier(0.3, 1.5, 0.6, 1);
+}
+
+.difficulty.is-a .difficulty-thumb {
+  transform: translateX(0);
+}
+
+.difficulty:hover .difficulty-thumb {
+  filter: brightness(1.15);
+}
+
+/* Den Life: objects that open its screens */
+[data-ref='corkboard-art']:has(+ .hotspot--corkboard:hover),
+[data-ref='chalkboard-art']:has(+ .hotspot--chalkboard:hover) {
+  filter: brightness(1.06);
+}
+
+/* The door jacket glints while there are patches nobody has looked at yet. */
+.jacket-glint {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+
+.hotspot--jacket.has-news .jacket-glint {
+  animation: jacket-glint 2.8s ease-in-out infinite;
+}
+
+@keyframes jacket-glint {
+  0%,
+  55%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4) rotate(0deg);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.1) rotate(45deg);
+  }
+}
+
+[data-motion='reduced'] .hotspot--jacket.has-news .jacket-glint {
+  animation: none;
+  opacity: 0.9;
+}
+
+/* A growth item's first appearance: it fades in under a little starburst. */
+.growth-arriving {
+  animation: growth-arrive 1.4s ease-out both;
+}
+
+@keyframes growth-arrive {
+  0% {
+    opacity: 0;
+    filter: brightness(2.2) drop-shadow(0 0 6px #fff6c8);
+  }
+  40% {
+    opacity: 1;
+    filter: brightness(1.6) drop-shadow(0 0 10px #fff6c8);
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+[data-motion='reduced'] .growth-arriving {
+  animation: growth-arrive-quiet 0.4s ease-out both;
+}
+
+@keyframes growth-arrive-quiet {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Lit things after dark: the ON AIR tube flickers once in a while. */
+.den[data-time='night'] .neon-tube {
+  filter: drop-shadow(0 0 3px #ff5a4a);
+  animation: neon-flicker 9s steps(1) infinite;
+}
+
+@keyframes neon-flicker {
+  0%,
+  91%,
+  93%,
+  100% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 0.55;
+  }
+}
+
+[data-motion='reduced'] .neon-tube {
+  animation: none;
+}
+
+/* Power Cycle Run: the room dims, the next cartridge drops into the slot. */
+.den.is-run-dimming {
+  --tv-power: 0.3;
+}
+
+.den.is-run-dimming .room-dimmer {
+  opacity: 0.38;
+  transition-duration: var(--run-dim-ms, 400ms);
+}
+
+[data-ref='console-label'].is-sliding > * {
+  animation: cartridge-slide var(--run-slide-ms, 450ms) cubic-bezier(0.2, 1.4, 0.5, 1) both;
+}
+
+@keyframes cartridge-slide {
+  from {
+    transform: translateY(-70px);
+    opacity: 0.2;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.den.is-running .game-card {
+  visibility: hidden;
+}
+
+/* Power Cycle Run: the HUD along the top, and the cards in the game card's corner. */
+.run-hud {
+  position: absolute;
+  z-index: 6;
+  top: 78px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--topbar-bg);
+  box-shadow: var(--shadow);
+  transform: translateX(-50%);
+  font-weight: 700;
+}
+
+.run-hud-title {
+  font-family: var(--font-label);
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.run-hud-score {
+  font-variant-numeric: tabular-nums;
+}
+
+.run-pips {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.run-pip {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--ink-faint);
+}
+
+.run-pip--passed {
+  border-color: #2f7a46;
+  background: #2f7a46;
+}
+
+.run-pip--missed {
+  border-color: var(--accent);
+  background: repeating-linear-gradient(45deg, var(--accent) 0 2px, transparent 2px 4px);
+}
+
+.run-pip--current {
+  border-color: var(--ink);
+  background: var(--mustard);
+}
+
+.run-card {
+  position: absolute;
+  z-index: 5;
+  padding: 1.1em 1.2em 1.15em;
+  border-radius: var(--radius-l);
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--panel-edge);
+  box-shadow: var(--shadow);
+}
+
+.run-card[data-phase='flipping'] {
+  visibility: hidden;
+}
+
+.run-card.is-dropping {
+  animation: run-card-drop var(--card-ms, 600ms) cubic-bezier(0.25, 1.5, 0.5, 1) both;
+}
+
+@keyframes run-card-drop {
+  from {
+    transform: translateY(-110vh) rotate(-6deg);
+  }
+  to {
+    transform: translateY(0) rotate(-1deg);
+  }
+}
+
+[data-motion='reduced'] .run-card.is-dropping {
+  animation: run-card-fade 200ms ease-out both;
+}
+
+@keyframes run-card-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.run-card-kicker {
+  margin: 0;
+  font-family: var(--font-label);
+  font-weight: 800;
+  font-size: 0.9em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.run-card-title {
+  margin: 0.1em 0 0;
+  font-family: var(--font-display);
+  font-size: 1.75em;
+  line-height: 1.05;
+}
+
+.run-card-goal {
+  margin: 0.4em 0 0.2em;
+  font-family: var(--font-hand);
+  font-size: 2.3em;
+  line-height: 1.05;
+}
+
+.run-card-text,
+.run-card-note,
+.run-card-meta {
+  margin: 0.5em 0 0;
+  color: var(--ink-soft);
+}
+
+.run-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-weight: 700;
+}
+
+.run-clock {
+  width: 1.1em;
+  height: 1.1em;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  background: conic-gradient(currentColor 0 25%, transparent 25%);
+}
+
+.run-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 0.9em;
+}
+
+.run-card-rounds {
+  display: grid;
+  gap: 4px;
+  margin: 0.6em 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.run-card-rounds li {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: var(--radius-s);
+  background: var(--panel-2);
+  font-weight: 700;
+}
+
+.run-card-rounds .is-missed span:last-child {
+  color: var(--accent);
+}
+
+/* Holding POWER: a ring fills round the knob, and a full ring starts a Power Cycle Run. */
+.power-hold-ring {
+  fill: none;
+  stroke: #ffd76a;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.power-hold-ring.is-holding {
+  opacity: 1;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1000ms linear;
+}
+
+.run-slates {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin: 0.7em 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.run-slate {
+  position: relative;
+  padding: 3px 3px 8px;
+  border-radius: 3px;
+  background: #1c1917;
+}
+
+.run-slate-label svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.run-slate.is-missed .run-slate-label {
+  filter: grayscale(0.85) brightness(0.8);
+}
+
+.run-slate-stamp {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  padding: 0 4px;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  font-family: var(--font-label);
+  font-weight: 800;
+  font-size: 0.72em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgb(255 255 255 / 85%);
+  transform: translate(-50%, -50%) rotate(-12deg);
+}
+
+.run-slate.is-passed .run-slate-stamp {
+  color: #2f7a46;
+}
+
+.run-slate.is-missed .run-slate-stamp {
+  color: #b8481a;
+}
+
+.run-share {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0.6em 0 0;
+  padding: 4px 4px 4px 10px;
+  border-radius: var(--radius-s);
+  background: var(--panel-2);
+  font-weight: 700;
+  font-size: 0.9em;
+}
+
+/* A run round in a game: the goal and the clock across the top. */
+.run-round-hud {
+  position: absolute;
+  z-index: 5;
+  top: 14px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--topbar-bg);
+  box-shadow: var(--shadow);
+  transform: translateX(-50%);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.run-round-number {
+  font-family: var(--font-label);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.run-round-goal {
+  font-family: var(--font-hand);
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.run-round-clock {
+  min-width: 3.2em;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.run-round-clock.is-short {
+  color: var(--accent);
+}
+
+.run-round-verdict {
+  font-family: var(--font-display);
+  font-size: 22px;
+}
+
+.run-round-hud.is-passed .run-round-verdict {
+  color: #2f7a46;
+}
+
+[data-appearance='dark'] .run-round-hud.is-passed .run-round-verdict {
+  color: #6fd08c;
+}
+
+.run-round-hud.is-missed .run-round-verdict {
+  color: var(--accent);
+}
+
+/* All 32 lamps lit, once: the lamps chase round the Counter. */
+.lamp.is-chasing {
+  animation: lamp-chase 1.6s ease-out 2;
+}
+
+@keyframes lamp-chase {
+  0%,
+  100% {
+    filter: none;
+  }
+  12% {
+    filter: brightness(2.2) drop-shadow(0 0 3px #ffd76a);
+  }
+}
+
+[data-motion='reduced'] .lamp.is-chasing {
+  animation: none;
+}
+
+/* Round five: the lever rattles, the Counter shakes, the goal card comes in spinning. */
+.den.is-frantic [data-ref='power-arm'] {
+  animation: lever-rattle 90ms linear infinite;
+}
+
+.den.is-frantic [data-ref='counter-digit-0'],
+.den.is-frantic [data-ref='counter-digit-1'] {
+  animation: counter-jitter 70ms steps(2) infinite;
+}
+
+@keyframes lever-rattle {
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes counter-jitter {
+  50% {
+    transform: translate(1px, -1px);
+  }
+}
+
+.run-card.is-dropping.is-frantic {
+  animation-name: run-card-spin;
+}
+
+@keyframes run-card-spin {
+  from {
+    transform: translateY(-110vh) rotate(-200deg) scale(0.6);
+  }
+  70% {
+    transform: translateY(10px) rotate(6deg) scale(1.04);
+  }
+  to {
+    transform: translateY(0) rotate(-1deg) scale(1);
+  }
+}
+
+[data-motion='reduced'] .den.is-frantic [data-ref='power-arm'],
+[data-motion='reduced'] .den.is-frantic [data-ref='counter-digit-0'],
+[data-motion='reduced'] .den.is-frantic [data-ref='counter-digit-1'] {
+  animation: none;
+}
+
+[data-motion='reduced'] .run-card.is-dropping.is-frantic {
+  animation-name: run-card-fade;
+}

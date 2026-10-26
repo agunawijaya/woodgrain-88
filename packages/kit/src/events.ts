@@ -12,7 +12,7 @@
 import type { Unsubscribe } from './emitter.ts';
 import type { Repository } from './store/repos.ts';
 import { EVENT_LOG_LIMIT, type EventLogData, type SessionSummary } from './store/types.ts';
-import type { IsoTime, RunMode } from './types.ts';
+import type { DifficultySwitches, IsoTime, RunMode } from './types.ts';
 
 export type EventFieldType = 'number' | 'string' | 'boolean';
 export type EventValue = number | string | boolean;
@@ -35,6 +35,8 @@ export interface StampedEvent extends GameEvent {
   game: string;
   mode: RunMode;
   channel: string;
+  /** The console's switches when the event happened: gold thread and "beaten on A" read it. */
+  difficulty: DifficultySwitches;
   at: IsoTime;
   /** 1, 2, 3 ... within the session. */
   seq: number;
@@ -67,11 +69,14 @@ export interface SessionInfo {
   game: string;
   mode: RunMode;
   channel: string;
+  difficulty: DifficultySwitches;
 }
 
 export interface EventBus {
   /** Starts a session (ending any open one) and emits session-start. */
   beginSession(info: SessionInfo): void;
+  /** A switch was flipped during the session; later events carry the new positions. */
+  setDifficulty(switches: DifficultySwitches): void;
   /**
    * Stamps and queues an event for the open session. Without an open session
    * the event is dropped with a console warning. Never throws.
@@ -149,6 +154,7 @@ export function createEventBus(options: EventBusOptions): EventBus {
       game: session.game,
       mode: session.mode,
       channel: session.channel,
+      difficulty: { ...session.difficulty },
       at: timestamp.toISOString(),
       seq: session.seq,
     };
@@ -213,6 +219,7 @@ export function createEventBus(options: EventBusOptions): EventBus {
       game: info.game,
       mode: info.mode,
       channel: info.channel,
+      difficulty: { ...info.difficulty },
       startedAt: startedDate.toISOString(),
       startedAtMs: startedDate.getTime(),
       seq: 0,
@@ -232,6 +239,9 @@ export function createEventBus(options: EventBusOptions): EventBus {
 
   return {
     beginSession,
+    setDifficulty(switches) {
+      if (active !== null) active.difficulty = { ...switches };
+    },
     emit,
     endSession,
     on(listener) {
@@ -248,6 +258,7 @@ export function createEventBus(options: EventBusOptions): EventBus {
         game: active.game,
         mode: active.mode,
         channel: active.channel,
+        difficulty: { ...active.difficulty },
         startedAt: active.startedAt,
       };
     },

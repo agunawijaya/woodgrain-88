@@ -24,14 +24,15 @@ import type { GameLoop, LoopOptions } from './loop.ts';
 import type { MicroBrief, MicroChallengeDef, MicroResult } from './micro.ts';
 import type { PatchDef, PatchEarned, PatchStatus } from './patches.ts';
 import type { Rng } from './rng.ts';
+import type { KidId } from './kids.ts';
 import type { GameSettingsStore } from './settings.ts';
 import type { Challenge, ShareCardInput } from './share.ts';
 import type { RunRecord } from './store/types.ts';
 import {
   FAMILIES,
   type Appearance,
+  type DifficultySwitches,
   type Family,
-  type ProSwitchPosition,
   type RunMode,
   type ScoreOrder,
 } from './types.ts';
@@ -154,20 +155,44 @@ export interface GameManifest {
   supports: {
     daily: boolean;
     challengeLinks: boolean;
-    proSwitch: boolean;
     microChallenges: boolean;
   };
+  /** Leave out when the game never reads the switches. */
+  difficulty?: DifficultyMeaning;
   events: readonly GameEventSchema[];
   /** Only for a game made from two near-identical cartridge programs: at least two, default first. */
   versions?: readonly CartridgeVersion[];
 }
 
-/** Who sits in each seat. Prompt 01 fills `kid` with a Neighbourhood Kid for bot seats. */
+/** Who sits in each seat. A bot seat is always one of the Neighbourhood Kids. */
 export interface SeatInfo {
   seat: Seat;
   kind: 'human' | 'bot';
   name: string;
-  kid?: string;
+  /** Set exactly when `kind` is 'bot'; map it onto the game's AI with `aiSettings`. */
+  kid?: KidId;
+}
+
+/** What one difficulty switch does in this game, shown in its details as "A: …  B: …". */
+export interface SwitchMeaning {
+  /** At most 60 characters each. */
+  a: string;
+  b: string;
+}
+
+/**
+ * What the console's difficulty switches mean in this game, as on its
+ * original: the left switch for the left player, the right for the right.
+ */
+export interface DifficultyMeaning {
+  left: SwitchMeaning;
+  /** Leave out when the game only reads the left switch. */
+  right?: SwitchMeaning;
+  /**
+   * True when a switch flipped mid-run takes effect from the next round; false
+   * when it waits for the next game. Either way the change is never instant.
+   */
+  liveChange: boolean;
 }
 
 /** What kind of run this is and how it is seeded. */
@@ -196,6 +221,11 @@ export interface GameResult {
   winnerSeat?: Seat | null;
   /** Up to four extra lines for the results card. */
   details?: readonly { label: string; value: string }[];
+  /**
+   * The run in at most 12 emoji for the daily share line, e.g. "🟩🟩🟥🟩" for
+   * rounds won and lost. Plain emoji only: no letters, digits or names.
+   */
+  emoji?: string;
   /** 'hall' asks the chrome to show the standard results screen; 'game' means the game shows its own. */
   presentation: 'hall' | 'game';
 }
@@ -248,10 +278,14 @@ export interface GameContext {
   readonly input: InputController;
   readonly audio: AudioEngine;
   readonly settings: GameSettingsView;
-  /** Each seat's difficulty switch. Prompt 01 gives Pro its rules; for now it is only reported. */
-  readonly proSwitch: {
-    position(seat: Seat): ProSwitchPosition;
-    onChange(listener: (seat: Seat, position: ProSwitchPosition) => void): Unsubscribe;
+  /**
+   * The console's two difficulty switches. Read them when a round starts; a
+   * flip during the run arrives through `onChange` and applies from the next
+   * round or game, as the manifest's `difficulty.liveChange` says.
+   */
+  readonly difficulty: {
+    get(): DifficultySwitches;
+    onChange(listener: (switches: DifficultySwitches) => void): Unsubscribe;
   };
   readonly save: SaveSlot;
   readonly patches: { status(): PatchStatus[] };
@@ -410,6 +444,23 @@ export function validateManifest(manifest: GameManifest): string[] {
   problems.push(...validateChannels(manifest.channels).map((p) => `${manifest.id}: ${p}`));
   problems.push(...validateEventSchemas(manifest.events).map((p) => `${manifest.id}: ${p}`));
   problems.push(...versionProblems(manifest).map((p) => `${manifest.id}: ${p}`));
+  problems.push(...difficultyProblems(manifest).map((p) => `${manifest.id}: ${p}`));
+  return problems;
+}
+
+function difficultyProblems(manifest: GameManifest): string[] {
+  const { difficulty } = manifest;
+  if (difficulty === undefined) return [];
+  const problems: string[] = [];
+  const sides = [['left', difficulty.left], ['right', difficulty.right]] as const;
+  for (const [side, meaning] of sides) {
+    if (meaning === undefined) continue;
+    for (const position of ['a', 'b'] as const) {
+      const text = meaning[position];
+      if (text.length === 0 || text.length > 60)
+        problems.push(`difficulty.${side}.${position} must be 1–60 characters`);
+    }
+  }
   return problems;
 }
 

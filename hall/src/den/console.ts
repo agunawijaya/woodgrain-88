@@ -57,7 +57,7 @@ function body(): string {
     `<rect x="${c.x}" y="${faceTop + 12}" width="${c.width}" height="3" fill="url(#den-chrome)"/>` +
     `<text x="${LAYOUT.powerLever.x + LAYOUT.powerLever.width / 2}" y="${faceTop + 10}" text-anchor="middle" fill="var(--den-chrome)" font-family="var(--font-label)" font-weight="800" font-size="8" letter-spacing="1.4">POWER</text>` +
     `<text x="${LAYOUT.resetLever.x + LAYOUT.resetLever.width / 2}" y="${faceTop + 10}" text-anchor="middle" fill="var(--den-chrome)" font-family="var(--font-label)" font-weight="800" font-size="8" letter-spacing="1.4">RESET</text>` +
-    `<text x="${LAYOUT.switches.x + LAYOUT.switches.width / 2}" y="${faceTop + 10}" text-anchor="middle" fill="var(--den-chrome)" font-family="var(--font-label)" font-weight="800" font-size="7" letter-spacing="1">AM · PRO</text>` +
+    `<text x="${LAYOUT.switches.x + LAYOUT.switches.width / 2}" y="${faceTop + 10}" text-anchor="middle" fill="var(--den-chrome)" font-family="var(--font-label)" font-weight="800" font-size="6" letter-spacing="0.8">DIFFICULTY</text>` +
     `<text x="${c.x + c.width - 12}" y="${faceTop + 40}" text-anchor="end" fill="#f4e4c8" fill-opacity="0.75" font-family="var(--font-display)" font-style="italic" font-weight="700" font-size="11">Woodgrain '88</text>` +
     `</g>`
   );
@@ -84,21 +84,38 @@ function lever(
     `<circle cx="${pivotX}" cy="${area.y + knobR}" r="${knobR + 1.5}" fill="#000" opacity="0.35"/>` +
     `<circle cx="${pivotX}" cy="${area.y + knobR - 1}" r="${knobR}" fill="${knobFill}"/>` +
     `<ellipse cx="${pivotX - knobR * 0.35}" cy="${area.y + knobR * 0.6}" rx="${knobR * 0.35}" ry="${knobR * 0.22}" fill="#fff" opacity="0.45"/>` +
+    // POWER only: the ring that fills while the lever is held, starting a Power Cycle Run.
+    (ref === 'power'
+      ? `<circle class="power-hold-ring" data-ref="power-hold-ring" cx="${pivotX}" cy="${area.y + knobR - 1}" r="${knobR + 6}" pathLength="100" transform="rotate(-90 ${pivotX} ${area.y + knobR - 1})"/>`
+      : '') +
     `</g>` +
     `<ellipse cx="${pivotX}" cy="${pivotY}" rx="9" ry="4" fill="url(#den-chrome)"/>` +
     `</g>`
   );
 }
 
+/**
+ * The two difficulty switches, a slide each: left for seat 1, right for
+ * seat 2, A (hard) to the left and B (easy) to the right as stamped under the
+ * slot. The Den view moves the thumb and keeps the accessible name current.
+ * The printed seat number and letters sit outside the button, so its name
+ * ("Seat 1 difficulty switch: B, easy") is not checked against them.
+ */
 function switches(): string {
   const { switches: s } = LAYOUT;
-  const one = (x: number, ref: string, label: string) =>
-    `<g class="hotspot difficulty" data-ref="${ref}" tabindex="0" role="button" aria-label="Seat ${label} difficulty switch: the Pro switch arrives in the next update">` +
+  const one = (x: number, side: 'left' | 'right', seat: string) =>
+    `<g aria-hidden="true">` +
+    `<text x="${x + 11}" y="${s.y - 4}" text-anchor="middle" fill="var(--den-chrome)" font-family="var(--font-label)" font-weight="800" font-size="7.5">${seat}</text>` +
+    `<text x="${x + 4}" y="${s.y + s.height + 8}" text-anchor="middle" fill="var(--den-chrome)" font-family="var(--font-label)" font-weight="800" font-size="6.5" opacity="0.85">A</text>` +
+    `<text x="${x + 18}" y="${s.y + s.height + 8}" text-anchor="middle" fill="var(--den-chrome)" font-family="var(--font-label)" font-weight="800" font-size="6.5" opacity="0.85">B</text>` +
+    `</g>` +
+    `<g class="hotspot difficulty" data-ref="switch-${side}" data-side="${side}" tabindex="0" role="button" aria-label="Seat ${seat} difficulty switch">` +
     `<rect x="${x}" y="${s.y}" width="22" height="${s.height}" rx="4" fill="#0b0908"/>` +
-    `<rect class="difficulty-thumb" x="${x + 3}" y="${s.y + 3}" width="9" height="${s.height - 6}" rx="2" fill="url(#den-chrome)"/>` +
-    `<text x="${x + 11}" y="${s.y - 4}" text-anchor="middle" fill="var(--den-chrome)" font-family="var(--font-label)" font-weight="800" font-size="7.5">${label}</text>` +
+    `<rect x="${x + 2}" y="${s.y + s.height / 2 - 1}" width="18" height="2" rx="1" fill="#000" opacity="0.8"/>` +
+    `<g class="difficulty-thumb"><rect x="${x + 2.5}" y="${s.y + 3}" width="9" height="${s.height - 6}" rx="2" fill="url(#den-chrome)"/>` +
+    `<path d="M${x + 5} ${s.y + 7}v${s.height - 14}M${x + 7} ${s.y + 7}v${s.height - 14}M${x + 9} ${s.y + 7}v${s.height - 14}" stroke="#000" stroke-opacity="0.25" stroke-width="0.6"/></g>` +
     `</g>`;
-  return one(s.x, 'switch-1', '1') + one(s.x + 30, 'switch-2', '2');
+  return one(s.x, 'left', '1') + one(s.x + 30, 'right', '2');
 }
 
 function cartridgeSlot(): string {
@@ -183,7 +200,7 @@ export function consoleAndCounter(): string {
       LAYOUT.powerLever,
       'url(#den-lever-knob)',
       11,
-      'POWER lever: switch to the next game (P), or back (Shift+P)',
+      'POWER lever: switch to the next game (P), or back (Shift+P); hold it for a Power Cycle Run',
     ) +
     lever('reset', LAYOUT.resetLever, 'url(#den-reset-knob)', 8, 'RESET lever: restart what is on the TV') +
     switches() +

@@ -48,6 +48,22 @@ export const LAYOUT = {
   beanbag: rect(1176, 708, 290, 182),
   /** Asleep on the carpet, tucked against the beanbag's side (its box is 180×100 at scale 1). */
   cat: rect(1030, 778, 170, 94),
+  // Den Life. Each anchor was placed with every growth item showing at once,
+  // so a fully grown room still leaves the TV, the Counter and the labels clear.
+  /** The Neighbourhood Kids' Polaroids, below the calendar on the left of the TV. */
+  corkboard: rect(222, 334, 136, 116),
+  /** Versus Night's score, propped against the front of the stand by the Counter. */
+  chalkboard: rect(762, 690, 124, 110),
+  /** The four family posters in a row above the door and the calendar, low enough to clear the top bar at 1280 px. */
+  posters: rect(40, 84, 322, 72),
+  /** The ON AIR sign standing on the right of the TV's top. */
+  onAir: rect(660, 128, 108, 38),
+  /** The woodgrain remote lying on the left of the TV's top. */
+  remote: rect(388, 154, 66, 14),
+  /** The 32 in 1 plaque, a little brass easel on the Counter's top. */
+  plaque: rect(724, 528, 54, 24),
+  /** The second beanbag, partly off the right edge of the room. */
+  secondBeanbag: rect(1416, 742, 230, 144),
   /** Where the HTML game card floats, bottom left. */
   card: rect(24, 566, 306, 320),
 } as const;

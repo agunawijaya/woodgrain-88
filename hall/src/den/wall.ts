@@ -129,8 +129,8 @@ function boxes(slot: Rect): string {
     colours
       .map(
         (colour, i) =>
-          `<rect x="${slot.x - 30 + i * 3}" y="${bottom - 14 - i * 14}" width="${slot.width + 48 - i * 8}" height="14" rx="1.5" fill="${colour}"/>` +
-          `<rect x="${slot.x - 26 + i * 3}" y="${bottom - 9 - i * 14}" width="${18 + i * 4}" height="4" rx="1" fill="#fff" opacity="0.55"/>`,
+          `<rect x="${slot.x - 4 + i * 3}" y="${bottom - 14 - i * 14}" width="${slot.width + 22 - i * 8}" height="14" rx="1.5" fill="${colour}"/>` +
+          `<rect x="${slot.x + i * 3}" y="${bottom - 9 - i * 14}" width="${18 + i * 4}" height="4" rx="1" fill="#fff" opacity="0.55"/>`,
       )
       .join('') +
     `</g>`

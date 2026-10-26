@@ -3,17 +3,21 @@
  * and share line formatting.
  */
 import { describe, expect, it } from 'vitest';
+import type { ChannelDef } from '../src/channels.ts';
 import {
   DAILY_EPOCH,
+  dailyChannel,
   dailyNumber,
   dailySeed,
   dailyShareLine,
   isSameUtcDay,
   powerCycleOfTheDay,
+  recordDailyRun,
   utcDateKey,
   utcDayIndex,
 } from '../src/daily.ts';
 import { hashSeed } from '../src/rng.ts';
+import type { DailyRunData } from '../src/store/types.ts';
 
 interface TestGame {
   id: string;
@@ -152,23 +156,149 @@ describe('daily clock', () => {
     expect(isSameUtcDay('2026-10-26T00:00:00.000Z', now)).toBe(false);
   });
 
-  it('formats the daily share line with optional score and squares', () => {
+  it('picks daily channel deterministically, varies across days, and handles single-channel games', () => {
+    const channels: ChannelDef[] = [
+      { id: 'ch-1', kind: 'original', title: 'One', description: 'One' },
+      { id: 'ch-2', kind: 'original', title: 'Two', description: 'Two' },
+      { id: 'ch-3', kind: 'original', title: 'Three', description: 'Three' },
+      { id: 'ch-4', kind: 'original', title: 'Four', description: 'Four' },
+      { id: 'ch-5', kind: 'original', title: 'Five', description: 'Five' },
+      { id: 'ch-6', kind: 'remix', title: 'Six', description: 'Six', unlockedBy: 'patch-1' },
+    ];
+    const game = { id: 'tank-duel', channels };
+
+    // Deterministic per game and day
+    const morning = new Date('2026-10-25T08:00:00.000Z');
+    const night = new Date('2026-10-25T22:00:00.000Z');
+    expect(dailyChannel(game, morning).id).toBe(dailyChannel(game, night).id);
+
+    // Differs across days (over 30 days at least 3 distinct channels for a 6-channel game)
+    const seen = new Set<string>();
+    for (let offset = 0; offset < 30; offset++) {
+      const date = new Date(Date.UTC(2026, 9, 25 + offset, 12, 0, 0));
+      seen.add(dailyChannel(game, date).id);
+    }
+    expect(seen.size).toBeGreaterThanOrEqual(3);
+
+    // Always returns the only channel of a one-channel game
+    const singleGame = {
+      id: 'solo-game',
+      channels: channels.slice(0, 1),
+    };
+    for (let offset = 0; offset < 10; offset++) {
+      const date = new Date(Date.UTC(2026, 9, 25 + offset, 12, 0, 0));
+      expect(dailyChannel(singleGame, date).id).toBe('ch-1');
+    }
+  });
+
+  it('keeps only the first run of a day for daily score, and counts again the next day', () => {
+    const dailyMap: Record<string, Record<string, DailyRunData>> = {};
+    const dayOne = new Date('2026-10-25T10:00:00.000Z');
+    const run1: DailyRunData = {
+      score: 100,
+      scoreLabel: '100 pts',
+      emoji: '🟩🟩🟩🟩',
+      channel: 'ch-1',
+      at: '2026-10-25T10:00:00.000Z',
+    };
+
+    // First run counts
+    const firstResult = recordDailyRun(dailyMap, dayOne, 'tank-duel', run1);
+    expect(firstResult.counted).toBe(true);
+    expect(firstResult.daily['2026-10-25']?.['tank-duel']).toEqual(run1);
+    expect(dailyMap).toEqual({}); // input not mutated
+
+    // Second run the same UTC day does not count and does not replace the first
+    const dayOneLater = new Date('2026-10-25T18:00:00.000Z');
+    const run2: DailyRunData = {
+      score: 200,
+      scoreLabel: '200 pts',
+      emoji: '🟩🟩🟩🟩',
+      channel: 'ch-1',
+      at: '2026-10-25T18:00:00.000Z',
+    };
+    const secondResult = recordDailyRun(firstResult.daily, dayOneLater, 'tank-duel', run2);
+    expect(secondResult.counted).toBe(false);
+    expect(secondResult.daily['2026-10-25']?.['tank-duel']).toEqual(run1);
+
+    // The next day counts again
+    const dayTwo = new Date('2026-10-26T09:00:00.000Z');
+    const run3: DailyRunData = {
+      score: 300,
+      scoreLabel: '300 pts',
+      emoji: '🟩🟩🟩🟩',
+      channel: 'ch-2',
+      at: '2026-10-26T09:00:00.000Z',
+    };
+    const thirdResult = recordDailyRun(secondResult.daily, dayTwo, 'tank-duel', run3);
+    expect(thirdResult.counted).toBe(true);
+    expect(thirdResult.daily['2026-10-25']?.['tank-duel']).toEqual(run1);
+    expect(thirdResult.daily['2026-10-26']?.['tank-duel']).toEqual(run3);
+  });
+
+  it('formats dailyShareLine for all-present, minimal and invalid-emoji inputs', () => {
     const date = new Date('2026-11-05T15:00:00.000Z'); // Daily #12
-    const baseLine = dailyShareLine({ title: 'Tank Duel', date });
-    expect(baseLine).toBe("Woodgrain '88 · Daily #12 · Tank Duel");
 
-    const scoredLine = dailyShareLine({ title: 'Tank Duel', date, score: '3–1' });
-    expect(scoredLine).toBe("Woodgrain '88 · Daily #12 · Tank Duel · 3–1");
-
-    const fullLine = dailyShareLine({
+    // All present
+    const allPresent = dailyShareLine({
       title: 'Tank Duel',
       date,
+      channelNumber: 7,
       score: '3–1',
-      squares: ['[+]', '[+]', '[-]', '[+]'],
+      emoji: '🟩🟩🟥🟩',
+      name: 'Robin',
     });
-    expect(fullLine).toBe("Woodgrain '88 · Daily #12 · Tank Duel · 3–1 [+][+][-][+]");
+    expect(allPresent).toBe("Woodgrain '88 #12 · Tank Duel ch.7 · 3–1 · 🟩🟩🟥🟩 · Robin");
 
-    const squaresOnly = dailyShareLine({ title: 'Tank Duel', date, squares: ['[+]', '[+]'] });
-    expect(squaresOnly).toBe("Woodgrain '88 · Daily #12 · Tank Duel [+][+]");
+    // Minimal
+    const minimal = dailyShareLine({
+      title: 'Tank Duel',
+      date,
+    });
+    expect(minimal).toBe("Woodgrain '88 #12 · Tank Duel");
+
+    // Invalid emoji is left out
+    const invalidEmoji = dailyShareLine({
+      title: 'Tank Duel',
+      date,
+      channelNumber: 7,
+      score: '3–1',
+      emoji: 'not an emoji',
+      name: 'Robin',
+    });
+    expect(invalidEmoji).toBe("Woodgrain '88 #12 · Tank Duel ch.7 · 3–1 · Robin");
+  });
+});
+
+describe('dailyChannel and Remix channels', () => {
+  it('only ever picks an original channel, which every player has open', () => {
+    const game = {
+      id: 'mixed-game',
+      channels: [
+        {
+          id: 'classic',
+          kind: 'original' as const,
+          title: 'Classic',
+          description: 'The original.',
+        },
+        {
+          id: 'remix-a',
+          kind: 'remix' as const,
+          title: 'Remix A',
+          description: 'A remix.',
+          unlockedBy: 'club',
+        },
+        {
+          id: 'remix-b',
+          kind: 'remix' as const,
+          title: 'Remix B',
+          description: 'A remix.',
+          unlockedBy: 'pro',
+        },
+      ],
+    };
+    for (let offset = 0; offset < 60; offset++) {
+      expect(dailyChannel(game, new Date(Date.UTC(2026, 9, 25 + offset, 12))).id).toBe('classic');
+    }
   });
 });
