@@ -1,0 +1,8 @@
+packages:
+  - hall
+  - packages/*
+  - games/*
+
+# tsx runs the repo scripts through esbuild, which verifies its platform binary after install.
+allowBuilds:
+  esbuild: true

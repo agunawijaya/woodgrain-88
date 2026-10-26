@@ -1,0 +1,608 @@
+/*
+ * The Den: stage, scene layers, day/night choreography and the HTML overlays
+ * (CRT glass, tooltip, game card). Day/night swaps are cross-fades of whole
+ * light layers plus token changes; reduced motion makes them instant.
+ */
+.den {
+  position: absolute;
+  inset: 0;
+  --tv-power: 1;
+}
+
+.den-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--den-wall-dark);
+}
+
+.den-scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.den-scene * {
+  transition:
+    fill var(--appearance-ms) ease,
+    stop-color var(--appearance-ms) ease;
+}
+
+/* Light layers */
+.daylight,
+.nightlight,
+.room-dimmer,
+.focus-indicator {
+  pointer-events: none;
+}
+
+.daylight {
+  opacity: 1;
+  transition: opacity var(--appearance-ms) ease;
+}
+
+.nightlight {
+  opacity: 0;
+  transition: opacity var(--appearance-ms) ease;
+}
+
+.den[data-time='night'] .daylight {
+  opacity: 0;
+}
+
+.den[data-time='night'] .nightlight {
+  opacity: 1;
+}
+
+.nightlight .tv-light {
+  opacity: var(--tv-power);
+  transition: opacity 220ms ease;
+}
+
+.den.is-power-cycling {
+  --tv-power: 0.25;
+}
+
+.room-dimmer {
+  transition: opacity 160ms ease;
+}
+
+.den.is-power-cycling .room-dimmer {
+  opacity: 0.1;
+}
+
+.den.is-snowing {
+  --tv-tint: #c8d2e6;
+}
+
+.den.is-snowing .nightlight .tv-light {
+  animation: snow-flicker 90ms steps(2) infinite;
+}
+
+@keyframes snow-flicker {
+  0% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+[data-motion='reduced'] .den.is-snowing .nightlight .tv-light {
+  animation: none;
+}
+
+/* Blinds: open by day, nearly shut at night. */
+.slat {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--appearance-ms) var(--ease-out);
+}
+
+.den[data-time='night'] .slat {
+  transform: scaleY(1.75);
+}
+
+.window-garden,
+.window-sun {
+  transition: opacity var(--appearance-ms) ease;
+}
+
+.den[data-time='night'] .window-sun {
+  opacity: 0;
+}
+
+.calendar,
+.wall-clock {
+  transition: filter var(--appearance-ms) ease;
+}
+
+.den[data-time='night'] .calendar,
+.den[data-time='night'] .wall-clock {
+  filter: brightness(0.55) saturate(0.75);
+}
+
+.clock-hand {
+  transform-box: view-box;
+}
+
+.den[data-time='night'] .window-garden {
+  opacity: 0.25;
+}
+
+/* The lamp: off by day, glowing by night. */
+.lamp-bulb {
+  opacity: 0;
+  transition: opacity 260ms ease;
+}
+
+.den[data-time='night'] .lamp-bulb {
+  opacity: 1;
+}
+
+.shelf-strip {
+  transition: opacity var(--appearance-ms) ease;
+}
+
+/* Intro */
+.intro-dark {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+
+.den.is-intro .intro-dark {
+  opacity: 0.9;
+}
+
+.den.is-intro.is-intro-lit .intro-dark {
+  opacity: 0;
+}
+
+.intro-hand {
+  pointer-events: none;
+}
+
+.intro-hand-move {
+  transform: translateY(260px);
+  opacity: 0;
+  transition:
+    transform 900ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    opacity 400ms ease;
+  filter: blur(1.5px);
+}
+
+.den.is-intro-hand .intro-hand-move {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.den.is-intro .game-card {
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+
+.den.is-intro.is-intro-lit .game-card {
+  opacity: 1;
+}
+
+[data-motion='reduced'] .intro-dark {
+  transition-duration: 600ms;
+}
+
+/* Hotspots */
+.hotspot {
+  cursor: pointer;
+  outline: none;
+}
+
+.hotspot:focus,
+.cartridge:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.hotspot--jacket:hover .jacket,
+.hotspot--calendar:hover .calendar {
+  filter: brightness(1.06);
+}
+
+.hotspot--pads:hover .joystick {
+  filter: brightness(1.12);
+}
+
+.lever:hover .lever-arm {
+  filter: brightness(1.15);
+}
+
+.lever-arm {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+/* Cartridges on the wall */
+.cartridge {
+  cursor: pointer;
+  outline: none;
+}
+
+.cartridge-lift {
+  transition: transform 220ms var(--ease-out);
+}
+
+.cartridge:hover .cartridge-lift,
+.cartridge:focus-visible .cartridge-lift {
+  transform: translateY(-8px);
+}
+
+.cartridge .focus-ring {
+  fill: none;
+  stroke: none;
+}
+
+.cartridge.is-tuned .cartridge-lift {
+  transform: translateY(-5px);
+}
+
+.cartridge.is-glowing .cartridge-lift {
+  animation: cartridge-glow 1.2s ease-out;
+}
+
+@keyframes cartridge-glow {
+  0% {
+    filter: drop-shadow(0 0 0 rgb(255 214 140 / 0%)) brightness(1);
+  }
+  25% {
+    filter: drop-shadow(0 0 10px rgb(255 214 140 / 95%)) brightness(1.25);
+  }
+  100% {
+    filter: drop-shadow(0 0 0 rgb(255 214 140 / 0%)) brightness(1);
+  }
+}
+
+.focus-indicator {
+  fill: none;
+  stroke: var(--focus);
+  stroke-width: 3.5;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  filter: drop-shadow(0 0 3px var(--focus-halo));
+}
+
+.focus-indicator.is-visible {
+  opacity: 1;
+}
+
+/* Counter */
+.lamp {
+  fill: #3a3230;
+  transition: fill 200ms ease;
+}
+
+.lamp.is-played {
+  fill: #c98a2b;
+}
+
+.lamp--secret.is-played {
+  fill: #9a6fd6;
+}
+
+.lamp.is-current {
+  fill: #ffcf6a;
+  filter: drop-shadow(0 0 2px #ffb347);
+}
+
+.lamp--secret {
+  fill: #3b2e4a;
+}
+
+.lamp--secret.is-current {
+  fill: #c9a2ff;
+  filter: drop-shadow(0 0 2px #a67bff);
+}
+
+.flip-flap {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  opacity: 0;
+}
+
+.flip-digit.is-flipping .flip-flap {
+  animation: flip-down 260ms cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+
+@keyframes flip-down {
+  0% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(0);
+  }
+}
+
+[data-ref='tv-power-light'] {
+  transition: fill 120ms ease;
+}
+
+[data-ref='tv-power-light'].is-off {
+  fill: #4a1c14;
+}
+
+/* CRT */
+.crt-host,
+.crt-glass {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.crt-host {
+  background: #000;
+}
+
+.crt-screen {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.crt-glass {
+  background:
+    radial-gradient(120% 90% at 30% 18%, rgb(255 255 255 / 14%), rgb(255 255 255 / 0%) 42%),
+    radial-gradient(140% 120% at 50% 50%, rgb(0 0 0 / 0%) 62%, rgb(0 0 0 / 38%));
+  box-shadow:
+    inset 0 0 18px rgb(0 0 0 / 55%),
+    inset 0 2px 0 rgb(255 255 255 / 12%);
+}
+
+/* Tooltip */
+.den-tooltip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 12px));
+  max-width: 280px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--panel-edge);
+  box-shadow: var(--shadow);
+  font-size: 14px;
+  line-height: 1.35;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Game card */
+.game-card {
+  position: absolute;
+  z-index: 4;
+  padding: 1.05em 1.1em 1.1em;
+  border-radius: var(--radius-l);
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--panel-edge);
+  box-shadow: var(--shadow);
+  --card-accent: var(--card-accent-day, var(--accent));
+}
+
+[data-appearance='dark'] .game-card {
+  --card-accent: var(--card-accent-night, var(--accent));
+}
+
+.game-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 6px;
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+  background: var(--card-accent);
+}
+
+.game-card.is-arriving {
+  animation: card-arrive 320ms var(--ease-out);
+}
+
+@keyframes card-arrive {
+  from {
+    opacity: 0.4;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.game-card-head {
+  display: flex;
+  gap: 0.75em;
+  align-items: center;
+}
+
+.game-card-emblem {
+  width: 3.1em;
+  height: 3.1em;
+  flex: none;
+}
+
+.game-card-kicker {
+  margin: 0;
+  font-family: var(--font-label);
+  font-weight: 800;
+  font-size: 0.82em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.game-card-title {
+  margin: 0.05em 0 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.65em;
+  line-height: 1.05;
+  font-variation-settings: 'SOFT' 100, 'WONK' 1;
+}
+
+.game-card-tagline {
+  margin: 0.65em 0 0.7em;
+  font-size: 0.98em;
+  color: var(--ink-soft);
+}
+
+.game-card-note {
+  margin: 0;
+  font-size: 0.9em;
+  color: var(--ink-faint);
+}
+
+.game-card-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin: 0 0 0.8em;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85em;
+}
+
+.game-card-facts li {
+  padding: 0.15em 0.65em;
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--ink);
+}
+
+.game-card-facts .game-card-badge {
+  background: var(--card-accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+[data-appearance='dark'] .game-card-facts .game-card-badge {
+  color: #1a1012;
+}
+
+.game-card-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5em;
+  margin: 0 0 0.9em;
+}
+
+.game-card-stats div {
+  padding: 0.45em 0.6em;
+  border-radius: var(--radius-m);
+  background: var(--panel-2);
+}
+
+.game-card-stats dt {
+  font-size: 0.75em;
+  color: var(--ink-soft);
+}
+
+.game-card-stats dd {
+  margin: 0;
+  font-family: var(--font-label);
+  font-weight: 800;
+  font-size: 1.3em;
+}
+
+.game-card-actions {
+  display: flex;
+  gap: 0.5em;
+}
+
+.game-card-actions .button {
+  flex: 1;
+  min-height: 2.6em;
+  padding: 0 0.8em;
+  font-size: 0.92em;
+  white-space: nowrap;
+}
+
+.game-card-actions .button[aria-disabled='true'] {
+  background: var(--panel-2);
+  border-color: var(--panel-edge);
+  color: var(--ink-soft);
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-card.is-arriving,
+  .cartridge.is-glowing .cartridge-lift {
+    animation: none;
+  }
+}
+
+[data-motion='reduced'] .game-card.is-arriving,
+[data-motion='reduced'] .cartridge.is-glowing .cartridge-lift,
+[data-motion='reduced'] .flip-digit.is-flipping .flip-flap {
+  animation: none;
+}
+
+.sticky-note {
+  pointer-events: none;
+}
+
+/* The cat asleep by the beanbag: slow breathing, and now and then the far
+   ear flicks. */
+.cat {
+  pointer-events: none;
+}
+
+.cat-breath {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: cat-breath 4.2s ease-in-out infinite;
+}
+
+.cat-ear {
+  transform-box: fill-box;
+  transform-origin: 15% 100%;
+  animation: cat-ear 11s ease-in-out infinite;
+}
+
+@keyframes cat-breath {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.01, 1.03);
+  }
+}
+
+@keyframes cat-ear {
+  0%,
+  90%,
+  94%,
+  97%,
+  100% {
+    transform: rotate(0deg);
+  }
+  92% {
+    transform: rotate(-14deg);
+  }
+  95.5% {
+    transform: rotate(-8deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cat-breath,
+  .cat-ear {
+    animation: none;
+  }
+}
+
+[data-motion='reduced'] .cat-breath,
+[data-motion='reduced'] .cat-ear {
+  animation: none;
+}

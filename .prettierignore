@@ -1,0 +1,22 @@
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+pnpm-lock.yaml
+prompts/
+docs/media/
+# Generated from .team/ledger.json by the crew bridge.
+.team/LEDGER.md
+.team/runs/
+.team/worktrees/
+# Each session edits only its own row; unaligned rows keep those edits from rewriting the table.
+docs/PROGRESS.md
+# The builder skill and the plan are the owner's and the architect's text, kept exactly as written.
+.claude/
+docs/PLAN.md
+CLAUDE.md
+# Reference material and research never leave this machine.
+original/
+src/
+research/

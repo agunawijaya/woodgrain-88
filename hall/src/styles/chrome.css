@@ -1,0 +1,345 @@
+/*
+ * Shared chrome: the top bar, the list view, overlays and dialogs. Designed
+ * for both day (cream paper, walnut ink) and night (plum-dark panels, warm
+ * ink); every pair meets AA.
+ */
+.shell {
+  position: absolute;
+  inset: 0;
+}
+
+.view {
+  position: absolute;
+  inset: 0;
+}
+
+/* Top bar */
+.topbar {
+  position: absolute;
+  z-index: 10;
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 6px 8px 6px 12px;
+  border-radius: 16px;
+  background: var(--topbar-bg);
+  border: 1px solid var(--topbar-edge);
+  box-shadow: 0 8px 24px -14px rgb(30 15 5 / 60%);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+}
+
+.topbar-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 2px;
+  border-radius: 10px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.topbar-logo-mark {
+  width: 38px;
+  height: 27px;
+}
+
+.topbar-logo-text {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: -0.01em;
+  font-variation-settings: 'SOFT' 100, 'WONK' 1;
+}
+
+.topbar-logo-text em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.topbar-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--chip);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+button.topbar-chip {
+  cursor: pointer;
+}
+
+button.topbar-chip:hover {
+  border-color: var(--panel-edge);
+}
+
+.topbar-chip--daily {
+  font-weight: 400;
+}
+
+.topbar-chip-label {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.topbar-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, hsl(var(--avatar-hue) 70% 72%), hsl(var(--avatar-hue) 60% 42%));
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 35%);
+}
+
+.topbar-spacer {
+  flex: 1;
+}
+
+.topbar-switch {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--chip);
+}
+
+.topbar-switch button {
+  min-height: 34px;
+  min-width: 58px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.topbar-switch button[aria-pressed='true'] {
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 18%);
+}
+
+.topbar-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.topbar-icon:hover {
+  background: var(--chip);
+}
+
+.topbar-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+@media (max-width: 900px) {
+  .topbar-chip--daily .topbar-chip-label {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar-logo-text,
+  .topbar-chip--daily {
+    display: none;
+  }
+}
+
+/* List view */
+.list-view {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  background:
+    repeating-linear-gradient(90deg, rgb(120 70 30 / 4%) 0 1px, transparent 1px 44px),
+    linear-gradient(180deg, var(--panel-2), var(--panel));
+}
+
+[data-appearance='dark'] .list-view {
+  background:
+    repeating-linear-gradient(90deg, rgb(255 220 180 / 3%) 0 1px, transparent 1px 44px),
+    radial-gradient(120% 70% at 50% 0%, #2c2131, #17111b 70%);
+}
+
+.list-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 96px 28px 48px;
+}
+
+.list-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.05;
+  font-variation-settings: 'SOFT' 100, 'WONK' 1;
+}
+
+.list-lede {
+  margin: 8px 0 18px;
+  max-width: 60ch;
+  color: var(--ink-soft);
+  font-size: 17px;
+}
+
+.list-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-chip {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--panel-edge);
+  background: var(--panel);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.filter-chip[aria-pressed='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--panel);
+}
+
+.list-count {
+  margin: 14px 0 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list-card {
+  display: flex;
+  gap: 14px;
+  height: 100%;
+  padding: 12px;
+  border-radius: var(--radius-l);
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 10px 24px -20px rgb(40 20 8 / 70%);
+  transition:
+    transform 180ms var(--ease-out),
+    box-shadow 180ms var(--ease-out);
+  --card-accent: var(--card-accent-day);
+}
+
+[data-appearance='dark'] .list-card {
+  --card-accent: var(--card-accent-night);
+}
+
+.list-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 30px -18px rgb(40 20 8 / 75%);
+}
+
+.list-card-label {
+  flex: none;
+  width: 124px;
+  padding: 6px 6px 10px;
+  border-radius: 10px;
+  background: #25211f;
+  box-shadow: inset 0 -6px 0 #1a1715;
+  align-self: start;
+}
+
+.list-card-label svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.list-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.list-card-kicker {
+  font-family: var(--font-label);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.list-card-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 1.1;
+  font-variation-settings: 'SOFT' 100, 'WONK' 1;
+}
+
+.list-card-tagline {
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.list-card-meta {
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+/* The word stays in ink so it reads at AA whatever the game's accent; the
+   accent marks it with a dot instead. */
+.list-card-meta strong {
+  color: var(--ink);
+}
+
+.list-card-meta strong::before {
+  content: '';
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  margin-right: 0.3em;
+  border-radius: 50%;
+  background: var(--card-accent);
+}

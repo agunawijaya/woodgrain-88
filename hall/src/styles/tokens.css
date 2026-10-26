@@ -1,0 +1,175 @@
+/*
+ * Design tokens for The Den. Day is a late-afternoon rec room in warm creams,
+ * honey pine, burnt orange and teal; night is the same room after dark,
+ * blue-brown, lit by one lamp and the television. Night is designed, not
+ * inverted: every surface has its own night value.
+ *
+ * Scene tokens (--den-*) colour the SVG room; UI tokens colour cards,
+ * menus and the top bar. AA pairs are asserted in hall/tests/contrast.test.ts.
+ */
+:root {
+  --font-display: 'Fraunces Variable', 'Fraunces', Georgia, serif;
+  --font-ui: 'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+  --font-label: 'Big Shoulders Display Variable', 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --font-hand: 'Patrick Hand', 'Comic Sans MS', cursive;
+
+  --radius-s: 6px;
+  --radius-m: 12px;
+  --radius-l: 18px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --appearance-ms: 700ms;
+}
+
+:root,
+[data-appearance='light'] {
+  color-scheme: light;
+
+  /* UI */
+  --page: #2a1c14;
+  --panel: #fff8ec;
+  --panel-2: #f6ead4;
+  --panel-edge: #e0cba7;
+  --ink: #2a1b12;
+  --ink-soft: #5a4232;
+  --ink-faint: #7a5f4d;
+  --accent: #b8481a;
+  --accent-hover: #9c3b12;
+  --accent-ink: #ffffff;
+  --teal: #1b6a67;
+  --mustard: #d9a21b;
+  --focus: #1b6a67;
+  --focus-halo: #fff8ec;
+  --shadow: 0 18px 40px -18px rgb(58 30 12 / 55%), 0 2px 6px rgb(58 30 12 / 18%);
+  --topbar-bg: rgb(255 248 236 / 88%);
+  --topbar-edge: rgb(90 52 32 / 18%);
+  --chip: #f1e1c4;
+
+  /* Scene: the room by day */
+  --den-wall: #bd8550;
+  --den-wall-light: #d29e66;
+  --den-wall-dark: #94603a;
+  --den-groove: #6e4426;
+  --den-trim: #5a3420;
+  --den-ceiling: #efe2c9;
+  --den-carpet: #b4552a;
+  --den-carpet-light: #c96a3b;
+  --den-carpet-dark: #8b3e1d;
+  --den-door: #ead9bb;
+  --den-door-edge: #c9b18b;
+  --den-shelf: #c48d57;
+  --den-shelf-dark: #8f5f35;
+  --den-shelf-back: #1f4b47;
+  --den-shelf-back-light: #2c605b;
+  --den-tv-wood: #6a3d21;
+  --den-tv-wood-light: #8c5431;
+  --den-bezel: #cfc8bb;
+  --den-bezel-dark: #948c80;
+  --den-glass-off: #1a2420;
+  --den-console: #221d1a;
+  --den-console-top: #342c27;
+  --den-console-wood: #7c482a;
+  --den-chrome: #e2dcd2;
+  --den-chrome-dark: #9b958b;
+  --den-denim: #4371a6;
+  --den-denim-dark: #2d5383;
+  --den-stitch: #e8b04b;
+  --den-rug-1: #d9a21b;
+  --den-rug-2: #1d6f6c;
+  --den-rug-3: #c4501a;
+  --den-rug-4: #f1e2c4;
+  --den-beanbag: #cc9c30;
+  --den-beanbag-dark: #a07619;
+  --den-sky-top: #f6c98f;
+  --den-sky-bottom: #fbe9c5;
+  --den-slat: #f4ece0;
+  --den-slat-edge: #cdbfa8;
+  --den-leaf: #4f8a3e;
+  --den-leaf-dark: #2f6427;
+  --den-pot: #c4501a;
+  --den-lamp-shade: #f2e2c0;
+  --den-lamp-base: #2f7470;
+  --den-calendar: #fffaf0;
+  --den-tape: #f5efe2;
+  --den-sun: #ffd79a;
+}
+
+[data-appearance='dark'] {
+  color-scheme: dark;
+
+  --page: #0f0b12;
+  --panel: #231b27;
+  --panel-2: #2d2332;
+  --panel-edge: #47384a;
+  --ink: #f5ebdd;
+  --ink-soft: #d0bfac;
+  --ink-faint: #a8968a;
+  --accent: #f28a4c;
+  --accent-hover: #ff9f66;
+  --accent-ink: #24130a;
+  --teal: #67d4cc;
+  --mustard: #f0c04d;
+  --focus: #ffd27a;
+  --focus-halo: #1a1320;
+  --shadow: 0 20px 44px -16px rgb(0 0 0 / 70%), 0 2px 8px rgb(0 0 0 / 40%);
+  --topbar-bg: rgb(26 19 32 / 86%);
+  --topbar-edge: rgb(255 230 200 / 10%);
+  --chip: #33283a;
+
+  /* Scene: the same room after dark, before the lights and the TV are added */
+  --den-wall: #3b2a2c;
+  --den-wall-light: #4a3536;
+  --den-wall-dark: #2b1f23;
+  --den-groove: #1d1418;
+  --den-trim: #1f1518;
+  --den-ceiling: #221a24;
+  --den-carpet: #4a2620;
+  --den-carpet-light: #5a3027;
+  --den-carpet-dark: #321915;
+  --den-door: #4b4046;
+  --den-door-edge: #352c32;
+  --den-shelf: #5b3f2c;
+  --den-shelf-dark: #3a2819;
+  --den-shelf-back: #102725;
+  --den-shelf-back-light: #173431;
+  --den-tv-wood: #2e1b12;
+  --den-tv-wood-light: #43291a;
+  --den-bezel: #77716c;
+  --den-bezel-dark: #4a4541;
+  --den-glass-off: #0b100e;
+  --den-console: #120f0e;
+  --den-console-top: #1d1815;
+  --den-console-wood: #3d2416;
+  --den-chrome: #a59f97;
+  --den-chrome-dark: #625d57;
+  --den-denim: #2c4a73;
+  --den-denim-dark: #1e3554;
+  --den-stitch: #b98a3c;
+  --den-rug-1: #8c6a1a;
+  --den-rug-2: #174a48;
+  --den-rug-3: #7c3516;
+  --den-rug-4: #8e8270;
+  --den-beanbag: #7a5d1d;
+  --den-beanbag-dark: #5a4413;
+  --den-sky-top: #0c1430;
+  --den-sky-bottom: #1d2b52;
+  --den-slat: #7e7a86;
+  --den-slat-edge: #4e4a58;
+  --den-leaf: #2c4f25;
+  --den-leaf-dark: #1b3517;
+  --den-pot: #6b2e12;
+  --den-lamp-shade: #ffd896;
+  --den-lamp-base: #1d4b48;
+  --den-calendar: #b7ab99;
+  --den-tape: #efe8da;
+  --den-sun: #8fb2ff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --appearance-ms: 0ms;
+  }
+}
+
+[data-motion='reduced'] {
+  --appearance-ms: 0ms;
+}

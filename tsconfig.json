@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["*.ts", "scripts", "hall/*.config.ts", "hall/build", "packages/*/*.config.ts"]
+}

@@ -1,0 +1,27 @@
+# Reference material — owner's local copies, never published (CLAUDE.md rule 2)
+/original/
+/src/
+/research/
+*.bin
+*.a26
+*.rom
+
+# Crew runtime (orders and logs are kept; raw transcripts and worktrees are not)
+/.team/runs/
+/.team/worktrees/
+
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+.vite/
+
+# Local environment
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db

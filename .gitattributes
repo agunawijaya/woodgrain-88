@@ -1,0 +1,7 @@
+# Normalise line endings so Windows and CI agree byte for byte.
+* text=auto eol=lf
+*.bin binary
+*.png binary
+*.jpg binary
+*.webp binary
+*.woff2 binary

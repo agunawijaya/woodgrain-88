@@ -1,0 +1,15 @@
+{
+  "name": "@woodgrain-88/kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The shared runtime The Den and every Woodgrain '88 game are built on.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}
