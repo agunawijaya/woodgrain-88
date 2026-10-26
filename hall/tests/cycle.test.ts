@@ -1,10 +1,17 @@
 /**
  * Tests for the Counter's slot cycle: 32-place wrapping, step sequence generation,
- * secret slot flags, digit formatting and deterministic daily game selection.
+ * version places, digit formatting and deterministic daily game selection.
  */
-import { powerCycleOfTheDay } from '@woodgrain-88/kit';
+import { powerCycleOfTheDay, type ProgressData } from '@woodgrain-88/kit';
 import { describe, expect, it } from 'vitest';
-import { counterDigits, cycleSlots, isSecretSlot, nextSlot } from '../src/data/cycle.ts';
+import {
+  counterDigits,
+  counterPlaces,
+  cycleSlots,
+  isVersionPlace,
+  nextSlot,
+  placeFinished,
+} from '../src/data/cycle.ts';
 import { createRegistry } from '../src/data/registry.ts';
 import { fakeManifest } from './fixtures/fake-game.ts';
 
@@ -24,15 +31,15 @@ describe('slot cycling and counter', () => {
     expect(cycleSlots(2, -1, 3)).toEqual([1, 32, 31]);
   });
 
-  it('returns true only for secret slots 31 and 32 and pads counter digits to two places', () => {
-    expect(isSecretSlot(31)).toBe(true);
-    expect(isSecretSlot(32)).toBe(true);
+  it('marks only places 31 and 32 as version places and pads counter digits to two places', () => {
+    expect(isVersionPlace(31)).toBe(true);
+    expect(isVersionPlace(32)).toBe(true);
 
     for (let slot = 1; slot <= 30; slot++) {
-      expect(isSecretSlot(slot)).toBe(false);
+      expect(isVersionPlace(slot)).toBe(false);
     }
-    expect(isSecretSlot(0)).toBe(false);
-    expect(isSecretSlot(33)).toBe(false);
+    expect(isVersionPlace(0)).toBe(false);
+    expect(isVersionPlace(33)).toBe(false);
 
     expect(counterDigits(7)).toBe('07');
     expect(counterDigits(32)).toBe('32');
@@ -56,5 +63,86 @@ describe('slot cycling and counter', () => {
       expect(pick).not.toBeNull();
       expect(pick?.id).toBe(fakeManifest.id);
     }
+  });
+
+  it('orders counterPlaces 1-32 with base registry version placements and reflects fixture override', () => {
+    const baseManifests = createRegistry().manifests;
+    const places = counterPlaces(baseManifests);
+
+    expect(places).toHaveLength(32);
+    expect(places.map((p) => p.slot)).toEqual(Array.from({ length: 32 }, (_, i) => i + 1));
+
+    const place11 = places.find((p) => p.slot === 11);
+    expect(place11?.manifest.id).toBe('lane-hopper');
+    expect(place11?.version?.id).toBe('chicken');
+
+    const place15 = places.find((p) => p.slot === 15);
+    expect(place15?.manifest.id).toBe('pier-derby');
+    expect(place15?.version?.id).toBe('derby');
+
+    const place31 = places.find((p) => p.slot === 31);
+    expect(place31?.manifest.id).toBe('lane-hopper');
+    expect(place31?.version?.id).toBe('rabbit');
+
+    const place32 = places.find((p) => p.slot === 32);
+    expect(place32?.manifest.id).toBe('pier-derby');
+    expect(place32?.version?.id).toBe('hack');
+
+    const overriddenManifests = createRegistry([{ manifest: fakeManifest }]).manifests;
+    const overriddenPlaces = counterPlaces(overriddenManifests);
+
+    const overridden31 = overriddenPlaces.find((p) => p.slot === 31);
+    expect(overridden31?.manifest.id).toBe('test-paddles');
+    expect(overridden31?.version?.id).toBe('tall');
+
+    const overridden32 = overriddenPlaces.find((p) => p.slot === 32);
+    expect(overridden32?.manifest.id).toBe('pier-derby');
+    expect(overridden32?.version?.id).toBe('hack');
+  });
+
+  it('lights a version place only by its own versionsFinished entry and unversioned place once plays > 0', () => {
+    const places = counterPlaces(createRegistry().manifests);
+    const place1 = places.find((p) => p.slot === 1);
+    const place11 = places.find((p) => p.slot === 11);
+    const place31 = places.find((p) => p.slot === 31);
+
+    if (!place1 || !place11 || !place31) {
+      throw new Error('Expected places 1, 11, and 31 to exist');
+    }
+
+    const noPlays = () => 0;
+    const hasPlays = () => 3;
+
+    // A game without versions is lit once plays > 0
+    const emptyProgress: ProgressData = { games: {} };
+    expect(placeFinished(place1, emptyProgress, noPlays)).toBe(false);
+    expect(placeFinished(place1, emptyProgress, hasPlays)).toBe(true);
+
+    // A version place is lit only by its own versionsFinished entry (not the other version's)
+    const chickenFinished: ProgressData = {
+      games: {
+        'lane-hopper': {
+          patches: {},
+          channels: {},
+          firstPlayedAt: '2026-10-25T12:00:00Z',
+          versionsFinished: { chicken: '2026-10-25T12:00:00Z' },
+        },
+      },
+    };
+    expect(placeFinished(place11, chickenFinished, hasPlays)).toBe(true);
+    expect(placeFinished(place31, chickenFinished, hasPlays)).toBe(false);
+
+    const rabbitFinished: ProgressData = {
+      games: {
+        'lane-hopper': {
+          patches: {},
+          channels: {},
+          firstPlayedAt: '2026-10-25T12:00:00Z',
+          versionsFinished: { rabbit: '2026-10-25T12:00:00Z' },
+        },
+      },
+    };
+    expect(placeFinished(place11, rabbitFinished, hasPlays)).toBe(false);
+    expect(placeFinished(place31, rabbitFinished, hasPlays)).toBe(true);
   });
 });

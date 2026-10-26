@@ -4,7 +4,7 @@
  * Records and About pages. The real site and the test harness both boot
  * through here; only the harness passes registry overrides.
  */
-import type { GameEntry } from '@woodgrain-88/kit';
+import { VERSION_SETTING, type GameEntry, type GameManifest } from '@woodgrain-88/kit';
 import { openDetails } from '../chrome/details.ts';
 import type { Dialog } from '../chrome/dialog.ts';
 import { openProfilePanel, openShortcuts } from '../chrome/profile-panel.ts';
@@ -56,9 +56,11 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = []): v
 
   const router = createRouter((route) => void handle(route));
 
-  const openSettings = () =>
+  // From inside a game the panel also shows that game's own settings.
+  const openSettings = (game?: GameManifest) =>
     openSettingsPanel({
       services,
+      ...(game ? { game } : {}),
       onReplayIntro: () => {
         router.go({ name: 'den' });
         void replayIntro();
@@ -69,12 +71,13 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = []): v
     services,
     onDen: () => router.go({ name: 'den' }),
     onList: () => router.go({ name: 'list' }),
-    onSettings: openSettings,
+    onSettings: () => openSettings(),
     onProfile: () => openProfilePanel(services),
   });
   shell.prepend(topbar.element);
 
-  const goToGame = (id: string) => router.go({ name: 'game', id });
+  const goToGame = (id: string, version?: string) =>
+    router.go(version ? { name: 'game', id, version } : { name: 'game', id });
 
   const clearViews = (keep: 'den' | 'list' | 'none') => {
     if (keep !== 'den') {
@@ -146,6 +149,7 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = []): v
       details = openDetails({
         services,
         entry,
+        ...(route.name === 'game' && route.version ? { version: route.version } : {}),
         onPlay: goToGame,
         onClose: () => {
           details = null;
@@ -159,13 +163,17 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = []): v
     clearViews('none');
     endSession();
     shell.classList.add('is-playing');
-    const params = route.name === 'play' ? route.params : new URLSearchParams();
+    const params =
+      route.name === 'play'
+        ? route.params
+        : new URLSearchParams(route.name === 'game' && route.version ? { version: route.version } : {});
+    const savedVersion = services.settings.game(id).get<string | undefined>(VERSION_SETTING, undefined);
     session = await startPlaySession({
       services,
       entry,
-      run: runFromParams(entry.manifest, params, location.hash),
+      run: runFromParams(entry.manifest, params, location.hash, new Date(), savedVersion),
       onBackToHall: () => router.go({ name: 'den' }),
-      onOpenSettings: openSettings,
+      onOpenSettings: () => openSettings(entry.manifest),
     });
     viewHost.append(session.element);
   };

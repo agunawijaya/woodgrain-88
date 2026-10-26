@@ -9,7 +9,7 @@ export const manifest: GameManifest = {
   slot: 23,
   title: "Lasso Run",
   tagline: "Round up the herd to the rhythm of hooves.",
-  teaser: "Ride alongside the herd and loop each calf gently home. Keep the rhythm going and the round-up turns into a song.",
+  teaser: "Ride alongside the herd and rope each calf before it escapes. Keep the rhythm going and the round-up turns into a song.",
   family: 'arcade',
   players: '1P',
   versus: 'none',

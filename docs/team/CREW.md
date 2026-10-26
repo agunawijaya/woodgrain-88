@@ -16,8 +16,9 @@ not meet this guide. Do the order exactly, do it well, and say clearly what you 
 3. **No images, no audio files, no network.** Visuals come from code (SVG, Canvas, CSS); sound is
    synthesised. Code never makes network requests.
 4. **Local first.** Only the kit's store modules touch `localStorage`.
-5. **Players first.** All ages. No gambling mechanics, no pressure or guilt copy. Nobody gets hurt:
-   tanks splat paint, misses land in water.
+5. **Faithful to the original.** Keep the game's real theme: tanks shoot and explode, outlaws use
+   six-shooters, boxing has knockouts, card and slot games use chips, bets and credits as play
+   money (never real money, nothing to buy). Arcade-style, no gore, no guilt or pressure copy.
 
 ## How you work
 

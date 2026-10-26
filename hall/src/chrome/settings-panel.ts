@@ -15,15 +15,19 @@ import {
   STANDARD_ACTIONS,
   validateBindings,
   type Bindings,
+  type GameManifest,
   type Seat,
   type SettingsData,
 } from '@woodgrain-88/kit';
 import type { Services } from '../app/services.ts';
 import { escapeXml } from '../den/svg.ts';
 import { confirmDialog, openDialog, toast } from './dialog.ts';
+import { bindVersionPicker, chosenVersion, isVersionInput, versionPickerMarkup } from './version-picker.ts';
 
 export interface SettingsPanelOptions {
   services: Services;
+  /** Set when the panel is opened from inside a game: its own settings come first. */
+  game?: GameManifest;
   onReplayIntro(): void;
 }
 
@@ -87,11 +91,25 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
   const dialog = openDialog({ title: 'Settings', className: 'dialog--settings', closeButton: true });
   let listening: { seat: Seat; action: string } | null = null;
 
+  // Only merged games have settings of their own so far: the cartridge version.
+  const gameSection = () => {
+    const { game } = options;
+    if (!game?.versions) return '';
+    return (
+      `<section><h3>${escapeXml(game.title)}</h3>` +
+      versionPickerMarkup(game, chosenVersion(services, game)) +
+      `<p class="settings-note">A new version applies from the next game you start. In the Den, each channel plays its own version.</p>` +
+      `</section>`
+    );
+  };
+  if (options.game) bindVersionPicker(dialog.body, services, options.game);
+
   const render = () => {
     const s: SettingsData = settings.get();
     const bindings = s.controls.bindings ?? DEFAULT_BINDINGS;
     dialog.body.innerHTML =
       `<form class="settings-form" novalidate>` +
+      gameSection() +
       `<section><h3>Appearance</h3><div class="choices" role="radiogroup" aria-label="Appearance">` +
       radio('appearance', 'light', 'Day', s.appearance === 'light') +
       radio('appearance', 'dark', 'Night', s.appearance === 'dark') +
@@ -137,6 +155,7 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
   const save = (change: (draft: SettingsData) => void) => settings.update(change);
 
   dialog.body.addEventListener('change', (event) => {
+    if (isVersionInput(event.target)) return;
     const target = event.target as HTMLInputElement;
     const { name } = target;
     if (target.type === 'file') {

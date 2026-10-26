@@ -1,10 +1,11 @@
 /**
  * The files the checks look at: everything git would publish (tracked plus
  * untracked-but-not-ignored), so a check fails before a bad file is ever
- * committed. Paths are repo-relative with forward slashes.
+ * committed. A tracked file deleted in the working tree is left out: it will
+ * not be published. Paths are repo-relative with forward slashes.
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 export const repoRoot = resolve(import.meta.dirname, '..', '..');
@@ -21,7 +22,10 @@ export function repoFiles(): string[] {
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
   });
-  return output.split('\n').filter(Boolean).sort();
+  return output
+    .split('\n')
+    .filter((file) => file && existsSync(join(repoRoot, file)))
+    .sort();
 }
 
 export function readRepoFile(file: string): string {

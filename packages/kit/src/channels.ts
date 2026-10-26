@@ -8,6 +8,7 @@
  * unlock rule, and until then every channel is open.
  */
 import type { Repository } from './store/repos.ts';
+import { emptyGameProgress } from './store/schema.ts';
 import type { GameProgressData, ProgressData } from './store/types.ts';
 
 export interface ChannelDef {
@@ -111,12 +112,7 @@ export function createChannelRegistry(options: ChannelRegistryOptions): ChannelR
     }
     const unlockedAt = now().toISOString();
     options.progress.update((draft) => {
-      const gameEntry = (draft.games[gameId] ??= {
-        patches: {},
-        channels: {},
-        firstPlayedAt: null,
-        secretsFound: {},
-      });
+      const gameEntry = (draft.games[gameId] ??= emptyGameProgress());
       gameEntry.channels[channelId] = { unlockedAt };
     });
     return true;

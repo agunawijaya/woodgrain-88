@@ -15,12 +15,12 @@ const TANK_CHANNELS: readonly ChannelDef[] = [
   {
     id: 'open-field',
     title: 'Open Field',
-    description: 'Clear arena with long sightlines and standard paint shells.',
+    description: 'Clear arena with long sightlines and standard shells.',
   },
   {
     id: 'billiard-walls',
     title: 'Billiard Walls',
-    description: 'Shots bank off walls before splatting the opposing tank.',
+    description: 'Shots bank off walls before they hit the opposing tank.',
   },
   {
     id: 'fog-bank',
@@ -33,29 +33,29 @@ describe('createChannelRegistry', () => {
   it('lists channels in manifest order with EVERY_CHANNEL_OPEN by default', () => {
     const progress = fakeRepo<ProgressData>({ games: {} });
     const registry = createChannelRegistry({
-      games: [{ id: 'paint-tanks', channels: TANK_CHANNELS }],
+      games: [{ id: 'tank-duel', channels: TANK_CHANNELS }],
       progress,
     });
 
-    expect(registry.list('paint-tanks')).toEqual([
+    expect(registry.list('tank-duel')).toEqual([
       { ...TANK_CHANNELS[0], index: 0, unlocked: true },
       { ...TANK_CHANNELS[1], index: 1, unlocked: true },
       { ...TANK_CHANNELS[2], index: 2, unlocked: true },
     ]);
-    expect(registry.defaultChannel('paint-tanks')).toEqual(TANK_CHANNELS[0]);
-    expect(registry.get('paint-tanks', 'billiard-walls')).toEqual({
+    expect(registry.defaultChannel('tank-duel')).toEqual(TANK_CHANNELS[0]);
+    expect(registry.get('tank-duel', 'billiard-walls')).toEqual({
       ...TANK_CHANNELS[1],
       index: 1,
       unlocked: true,
     });
-    expect(registry.isUnlocked('paint-tanks', 'fog-bank')).toBe(true);
+    expect(registry.isUnlocked('tank-duel', 'fog-bank')).toBe(true);
   });
 
   it('handles unknown games, unknown channels, and games with no channels', () => {
     const progress = fakeRepo<ProgressData>({ games: {} });
     const registry = createChannelRegistry({
       games: [
-        { id: 'paint-tanks', channels: TANK_CHANNELS },
+        { id: 'tank-duel', channels: TANK_CHANNELS },
         { id: 'empty-game', channels: [] },
       ],
       progress,
@@ -63,9 +63,9 @@ describe('createChannelRegistry', () => {
 
     expect(registry.list('unknown-game')).toEqual([]);
     expect(registry.get('unknown-game', 'open-field')).toBeNull();
-    expect(registry.get('paint-tanks', 'missing-channel')).toBeNull();
+    expect(registry.get('tank-duel', 'missing-channel')).toBeNull();
     expect(registry.isUnlocked('unknown-game', 'open-field')).toBe(false);
-    expect(registry.isUnlocked('paint-tanks', 'missing-channel')).toBe(false);
+    expect(registry.isUnlocked('tank-duel', 'missing-channel')).toBe(false);
 
     expect(() => registry.defaultChannel('unknown-game')).toThrow('unknown-game has no channels');
     expect(() => registry.defaultChannel('empty-game')).toThrow('empty-game has no channels');
@@ -75,31 +75,31 @@ describe('createChannelRegistry', () => {
     const progress = fakeRepo<ProgressData>({ games: {} });
     const fixedNow = () => new Date('2026-10-25T19:00:00.000Z');
     const registry = createChannelRegistry({
-      games: [{ id: 'paint-tanks', channels: TANK_CHANNELS }],
+      games: [{ id: 'tank-duel', channels: TANK_CHANNELS }],
       progress,
       rule: (_gameId, _channel, index) => index === 0,
       now: fixedNow,
     });
 
-    expect(registry.isUnlocked('paint-tanks', 'open-field')).toBe(true);
-    expect(registry.isUnlocked('paint-tanks', 'billiard-walls')).toBe(false);
-    expect(registry.isUnlocked('paint-tanks', 'fog-bank')).toBe(false);
+    expect(registry.isUnlocked('tank-duel', 'open-field')).toBe(true);
+    expect(registry.isUnlocked('tank-duel', 'billiard-walls')).toBe(false);
+    expect(registry.isUnlocked('tank-duel', 'fog-bank')).toBe(false);
 
-    expect(registry.unlock('paint-tanks', 'billiard-walls')).toBe(true);
-    expect(registry.unlock('paint-tanks', 'billiard-walls')).toBe(false);
+    expect(registry.unlock('tank-duel', 'billiard-walls')).toBe(true);
+    expect(registry.unlock('tank-duel', 'billiard-walls')).toBe(false);
 
-    expect(progress.get().games['paint-tanks']).toEqual({
+    expect(progress.get().games['tank-duel']).toEqual({
       patches: {},
       channels: {
         'billiard-walls': { unlockedAt: '2026-10-25T19:00:00.000Z' },
       },
       firstPlayedAt: null,
-      secretsFound: {},
+      versionsFinished: {},
     });
 
-    expect(registry.isUnlocked('paint-tanks', 'billiard-walls')).toBe(true);
-    expect(registry.get('paint-tanks', 'billiard-walls')?.unlocked).toBe(true);
-    expect(registry.isUnlocked('paint-tanks', 'fog-bank')).toBe(false);
+    expect(registry.isUnlocked('tank-duel', 'billiard-walls')).toBe(true);
+    expect(registry.get('tank-duel', 'billiard-walls')?.unlocked).toBe(true);
+    expect(registry.isUnlocked('tank-duel', 'fog-bank')).toBe(false);
   });
 });
 

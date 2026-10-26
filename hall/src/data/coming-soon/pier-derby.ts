@@ -41,12 +41,18 @@ export const manifest: GameManifest = {
   ],
   supports: { daily: false, challengeLinks: false, proSwitch: false, microChallenges: false },
   events: [],
-  secrets: [
+  versions: [
     {
-      id: 'second-pond',
-      counterSlot: 32,
-      title: 'The Second Pond',
-      hint: 'Some say there is another pond where the switches feel backwards.',
+      id: 'derby',
+      label: 'Derby',
+      cartridgeSlot: 26,
+      description: 'The derby as it shipped: its own pond, its own anglers.',
+    },
+    {
+      id: 'hack',
+      label: 'Hack',
+      cartridgeSlot: 15,
+      description: 'The other copy: new colours and anglers, and the two difficulty switches handicap the opposite angler.',
     },
   ],
 };

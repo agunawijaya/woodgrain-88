@@ -67,4 +67,144 @@ describe('run parameter setup', () => {
     const defaultRun = runFromParams(fakeManifest, emptyParams, '');
     expect(defaultRun.channel).toBe('classic');
   });
+
+  it('resolves version following priority order for normal, daily and challenge runs and omits version when unsupported', () => {
+    const { versions: _versions, ...unversionedManifest } = fakeManifest;
+
+    // Normal run priority: ?version= on route > savedVersion > defaultVersion
+    const normalWithParam = runFromParams(
+      fakeManifest,
+      new URLSearchParams('version=tall'),
+      '',
+      new Date(),
+      'standard',
+    );
+    expect(normalWithParam.version).toBe('tall');
+
+    const normalWithUnknownParam = runFromParams(
+      fakeManifest,
+      new URLSearchParams('version=not-a-version'),
+      '',
+      new Date(),
+      'tall',
+    );
+    expect(normalWithUnknownParam.version).toBe('tall');
+
+    const normalWithSaved = runFromParams(
+      fakeManifest,
+      new URLSearchParams(),
+      '',
+      new Date(),
+      'tall',
+    );
+    expect(normalWithSaved.version).toBe('tall');
+
+    const normalWithDefault = runFromParams(
+      fakeManifest,
+      new URLSearchParams(),
+      '',
+      new Date(),
+      undefined,
+    );
+    expect(normalWithDefault.version).toBe('standard');
+
+    // Daily run priority: ?version= on route > savedVersion > defaultVersion
+    const dailyWithParam = runFromParams(
+      fakeManifest,
+      new URLSearchParams('mode=daily&version=tall'),
+      '',
+      new Date(),
+      'standard',
+    );
+    expect(dailyWithParam.version).toBe('tall');
+
+    const dailyWithUnknownParam = runFromParams(
+      fakeManifest,
+      new URLSearchParams('mode=daily&version=invalid-version'),
+      '',
+      new Date(),
+      'tall',
+    );
+    expect(dailyWithUnknownParam.version).toBe('tall');
+
+    const dailyWithDefault = runFromParams(
+      fakeManifest,
+      new URLSearchParams('mode=daily'),
+      '',
+      new Date(),
+      undefined,
+    );
+    expect(dailyWithDefault.version).toBe('standard');
+
+    // Challenge run priority: challenge.version > savedVersion > defaultVersion
+    const challengeWithVersion: Challenge = {
+      game: fakeManifest.id,
+      channel: 'classic',
+      seed: 1234,
+      score: 50,
+      version: 'tall',
+    };
+    const challengeHash = encodeChallenge(challengeWithVersion);
+    const challengeParams = new URLSearchParams(
+      challengeHash.slice(challengeHash.indexOf('?') + 1),
+    );
+
+    const challengeRun = runFromParams(
+      fakeManifest,
+      challengeParams,
+      challengeHash,
+      new Date(),
+      'standard',
+    );
+    expect(challengeRun.version).toBe('tall');
+
+    const challengeNoVersion: Challenge = {
+      game: fakeManifest.id,
+      channel: 'classic',
+      seed: 1234,
+      score: 50,
+    };
+    const hashNoVersion = encodeChallenge(challengeNoVersion);
+    const paramsNoVersion = new URLSearchParams(
+      hashNoVersion.slice(hashNoVersion.indexOf('?') + 1),
+    );
+
+    const challengeRunWithSaved = runFromParams(
+      fakeManifest,
+      paramsNoVersion,
+      hashNoVersion,
+      new Date(),
+      'tall',
+    );
+    expect(challengeRunWithSaved.version).toBe('tall');
+
+    // Game without versions gets no version property
+    const unversionedNormal = runFromParams(
+      unversionedManifest,
+      new URLSearchParams('version=tall'),
+      '',
+      new Date(),
+      'tall',
+    );
+    expect(unversionedNormal.version).toBeUndefined();
+    expect('version' in unversionedNormal).toBe(false);
+
+    const unversionedDaily = runFromParams(
+      unversionedManifest,
+      new URLSearchParams('mode=daily&version=tall'),
+      '',
+      new Date(),
+      'tall',
+    );
+    expect(unversionedDaily.version).toBeUndefined();
+
+    const unversionedChallenge = runFromParams(
+      unversionedManifest,
+      challengeParams,
+      challengeHash,
+      new Date(),
+      'tall',
+    );
+    expect(unversionedChallenge.version).toBeUndefined();
+  });
 });

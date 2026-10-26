@@ -44,7 +44,7 @@ export interface RepoDataMap {
 export const SCHEMA_VERSIONS: Record<RepoName, number> = {
   profile: 1,
   settings: 1,
-  progress: 1,
+  progress: 2,
   records: 1,
   stats: 1,
   saves: 1,
@@ -55,7 +55,9 @@ export const SCHEMA_VERSIONS: Record<RepoName, number> = {
 export const MIGRATIONS: Record<RepoName, ((data: unknown) => unknown)[]> = {
   profile: [],
   settings: [],
-  progress: [],
+  // v1 → v2: the hidden-reskin "secrets" became cartridge versions you choose.
+  // No build ever wrote a secret, so nothing is carried across.
+  progress: [migrateProgressSecretsToVersions],
   records: [],
   stats: [],
   saves: [],
@@ -259,6 +261,22 @@ function sanitizeSettings(data: Record<string, unknown>): SettingsData {
   };
 }
 
+/** A game's progress before anything has happened in it. */
+export function emptyGameProgress(): GameProgressData {
+  return { patches: {}, channels: {}, firstPlayedAt: null, versionsFinished: {} };
+}
+
+function migrateProgressSecretsToVersions(data: unknown): unknown {
+  if (!isPlainObject(data) || !isPlainObject(data.games)) return data;
+  const games: Record<string, unknown> = {};
+  for (const [gameId, rawGame] of Object.entries(data.games)) {
+    if (!isPlainObject(rawGame)) continue;
+    const { secretsFound: _dropped, ...rest } = rawGame;
+    games[gameId] = { ...rest, versionsFinished: {} };
+  }
+  return { ...data, games };
+}
+
 function sanitizeProgress(data: Record<string, unknown>): ProgressData {
   const games: Record<string, GameProgressData> = {};
   if (isPlainObject(data.games)) {
@@ -283,18 +301,18 @@ function sanitizeProgress(data: Record<string, unknown>): ProgressData {
           if (unlockedAt !== null) channels[channelId] = { unlockedAt };
         }
       }
-      const secretsFound: Record<string, string> = {};
-      if (isPlainObject(rawGame.secretsFound)) {
-        for (const [secretId, rawTime] of Object.entries(rawGame.secretsFound)) {
-          const foundAt = trimmedString(rawTime);
-          if (foundAt !== null) secretsFound[secretId] = foundAt;
+      const versionsFinished: Record<string, string> = {};
+      if (isPlainObject(rawGame.versionsFinished)) {
+        for (const [versionId, rawTime] of Object.entries(rawGame.versionsFinished)) {
+          const finishedAt = trimmedString(rawTime);
+          if (finishedAt !== null) versionsFinished[versionId] = finishedAt;
         }
       }
       games[gameId] = {
         patches,
         channels,
         firstPlayedAt: trimmedString(rawGame.firstPlayedAt),
-        secretsFound,
+        versionsFinished,
       };
     }
   }

@@ -16,6 +16,7 @@ import {
   createPatchTracker,
   createRng,
   DEFAULT_BINDINGS,
+  emptyGameProgress,
   encodeChallenge,
   renderShareCard,
   copyText,
@@ -299,6 +300,16 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
     });
   };
 
+  // The first finished run with a cartridge version lights its Counter lamp.
+  const markVersionFinished = () => {
+    const { version } = run;
+    if (version === undefined) return;
+    services.repos.progress.update((draft) => {
+      const game = (draft.games[manifest.id] ??= emptyGameProgress());
+      game.versionsFinished[version] ??= new Date().toISOString();
+    });
+  };
+
   // ——— The context the contract promises ———
   const proSwitchListeners = new Set<(seat: Seat, position: ProSwitchPosition) => void>();
   const settings = services.settings;
@@ -372,6 +383,7 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
         order: manifest.scoreOrder,
         ...(result.winnerSeat ? { versusWinner: result.winnerSeat } : {}),
       });
+      markVersionFinished();
       services.bus.emit({ type: 'result', data: { score: result.score, won: result.won ?? false, newBest: submitted.newBest } });
       const receipt: ResultReceipt = {
         newBest: submitted.newBest,
@@ -389,7 +401,14 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
       return receipt;
     },
     share: {
-      challengeLink: (score) => encodeChallenge({ game: manifest.id, channel: run.channel, seed: run.seed, score }),
+      challengeLink: (score) =>
+        encodeChallenge({
+          game: manifest.id,
+          channel: run.channel,
+          seed: run.seed,
+          score,
+          ...(run.version === undefined ? {} : { version: run.version }),
+        }),
       card: (input) =>
         renderShareCard({
           title: manifest.title,

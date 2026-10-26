@@ -13,8 +13,8 @@ test('** spans folders, * stays inside one segment', () => {
 test('**/ in the middle matches zero or more folders', () => {
   const regex = globToRegExp('games/**/NOTES.md');
   assert.ok(regex.test('games/NOTES.md'));
-  assert.ok(regex.test('games/paint-tanks/docs/NOTES.md'));
-  assert.ok(!regex.test('games/paint-tanks/docs/NOTES.mdx'));
+  assert.ok(regex.test('games/tank-duel/docs/NOTES.md'));
+  assert.ok(!regex.test('games/tank-duel/docs/NOTES.mdx'));
 });
 
 test('braces and ? work, dots are literal', () => {

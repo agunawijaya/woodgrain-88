@@ -1,6 +1,6 @@
 /**
  * Entry point of the dev-only harness (harness.html): the real Hall with the
- * test-only fake game swapped into slot 20. Never part of the build.
+ * test-only fake game swapped into slot 11. Never part of the build.
  */
 import '@fontsource-variable/fraunces/full';
 import '@fontsource-variable/fraunces/full-italic';

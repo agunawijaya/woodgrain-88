@@ -101,14 +101,22 @@ export interface InspiredBy {
   cartridgeSlots: readonly number[];
 }
 
-/** A hidden extra (the merged pairs' reskins) that lights Counter slot 31 or 32 when found. */
-export interface SecretDef {
+/**
+ * One program of the 1988 cartridge that a game plays. Two pairs of programs
+ * on the cartridge are near-copies, and each pair became one game that offers
+ * both as versions: the player picks one in the game's settings or on its
+ * details overlay, and the Hall passes the choice to the game in `run.version`.
+ * The first version listed is the default (ADR-0002, amended for prompt 00a).
+ */
+export interface CartridgeVersion {
+  /** kebab-case and stable forever: it is saved per game and kept in records of play. */
   id: string;
-  counterSlot: 31 | 32;
-  /** Shown only once found. */
-  title: string;
-  /** Shown before it is found, e.g. "Something hops in lane seven at dawn…". */
-  hint: string;
+  /** What the player picks, at most 24 characters, e.g. "Rabbit". */
+  label: string;
+  /** The cartridge program this version follows (1–32); one of `inspiredBy.cartridgeSlots`. */
+  cartridgeSlot: number;
+  /** One sentence on what is different, at most 140 characters. */
+  description: string;
 }
 
 export interface GameManifest {
@@ -150,7 +158,8 @@ export interface GameManifest {
     microChallenges: boolean;
   };
   events: readonly GameEventSchema[];
-  secrets?: readonly SecretDef[];
+  /** Only for a game made from two near-identical cartridge programs: at least two, default first. */
+  versions?: readonly CartridgeVersion[];
 }
 
 /** Who sits in each seat. Prompt 01 fills `kid` with a Neighbourhood Kid for bot seats. */
@@ -172,6 +181,8 @@ export interface RunInfo {
   micro?: MicroBrief;
   /** Set when the player opened a challenge link: the score to beat. */
   challenge?: Challenge;
+  /** The chosen `CartridgeVersion` id; set exactly when the manifest declares versions. */
+  version?: string;
 }
 
 export interface GameResult {
@@ -292,6 +303,8 @@ export interface DemoContext {
   /** The picture size in CSS pixels; demos draw at about 320×240 and the CRT scales it. */
   width: number;
   height: number;
+  /** The cartridge version to show, for a game that declares versions. */
+  version?: string;
 }
 
 /**
@@ -396,13 +409,35 @@ export function validateManifest(manifest: GameManifest): string[] {
   if (manifest.controls.length === 0) add('controls must list at least one hint');
   problems.push(...validateChannels(manifest.channels).map((p) => `${manifest.id}: ${p}`));
   problems.push(...validateEventSchemas(manifest.events).map((p) => `${manifest.id}: ${p}`));
-  for (const secret of manifest.secrets ?? []) {
-    if (!KEBAB.test(secret.id)) add(`secret ${secret.id} needs a kebab-case id`);
+  problems.push(...versionProblems(manifest).map((p) => `${manifest.id}: ${p}`));
+  return problems;
+}
+
+function versionProblems(manifest: GameManifest): string[] {
+  const versions = manifest.versions;
+  if (versions === undefined) return [];
+  const problems: string[] = [];
+  if (versions.length < 2) problems.push('versions must list at least two cartridge versions');
+  const ids = new Set<string>();
+  const slots = new Set<number>();
+  for (const version of versions) {
+    if (!KEBAB.test(version.id)) problems.push(`version ${version.id} needs a kebab-case id`);
+    if (ids.has(version.id)) problems.push(`version ${version.id} is listed twice`);
+    ids.add(version.id);
+    if (version.label.length === 0 || version.label.length > 24)
+      problems.push(`version ${version.id}: label must be 1–24 characters`);
+    if (version.description.length === 0 || version.description.length > 140)
+      problems.push(`version ${version.id}: description must be 1–140 characters`);
+    if (!manifest.inspiredBy.cartridgeSlots.includes(version.cartridgeSlot))
+      problems.push(`version ${version.id}: cartridgeSlot must be one of inspiredBy.cartridgeSlots`);
+    if (slots.has(version.cartridgeSlot))
+      problems.push(`version ${version.id}: cartridge slot ${version.cartridgeSlot} is already a version`);
+    slots.add(version.cartridgeSlot);
   }
   return problems;
 }
 
-/** Problems across a whole registry: each manifest, plus unique ids, slots and secret counter slots. */
+/** Problems across a whole registry: each manifest, plus unique ids, slots and version cartridge slots. */
 export function validateRegistry(manifests: readonly GameManifest[]): string[] {
   const problems = manifests.flatMap(validateManifest);
   const seen = (label: string, values: readonly (string | number)[]) => {
@@ -420,8 +455,8 @@ export function validateRegistry(manifests: readonly GameManifest[]): string[] {
     manifests.map((m) => m.slot),
   );
   seen(
-    'secret counter slot',
-    manifests.flatMap((m) => (m.secrets ?? []).map((s) => s.counterSlot)),
+    'version cartridge slot',
+    manifests.flatMap((m) => (m.versions ?? []).map((v) => v.cartridgeSlot)),
   );
   return problems;
 }

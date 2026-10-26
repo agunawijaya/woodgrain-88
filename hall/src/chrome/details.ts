@@ -3,7 +3,14 @@
  * is for and how long it takes, the controls, the channels, the patches with
  * their thresholds, your records, and the ways in (Play, How to play).
  */
-import { createCrt, createPatchTracker, type DemoHandle, type GameEntry, type GameModule } from '@woodgrain-88/kit';
+import {
+  createCrt,
+  createPatchTracker,
+  resolveVersion,
+  type DemoHandle,
+  type GameEntry,
+  type GameModule,
+} from '@woodgrain-88/kit';
 import type { Services } from '../app/services.ts';
 import { counterDigits } from '../data/cycle.ts';
 import { FAMILY_NAMES } from '../data/registry.ts';
@@ -12,11 +19,14 @@ import { slateDemo, SLATE_SIZE } from '../den/slate.ts';
 import { escapeXml } from '../den/svg.ts';
 import { openDialog, type Dialog } from './dialog.ts';
 import { showHowToPlay } from './how-to-play.ts';
+import { bindVersionPicker, chosenVersion, versionPickerMarkup } from './version-picker.ts';
 
 export interface DetailsOptions {
   services: Services;
   entry: GameEntry;
-  onPlay(id: string): void;
+  /** The cartridge version to show first (a Den channel asks for one); else the saved choice. */
+  version?: string;
+  onPlay(id: string, version?: string): void;
   onClose?(): void;
 }
 
@@ -33,6 +43,11 @@ export function openDetails(options: DetailsOptions): Dialog {
   const soon = manifest.status === 'coming-soon' || !entry.load;
   let demo: DemoHandle | null = null;
   let module: GameModule | null = null;
+  let picked = resolveVersion(manifest, options.version, chosenVersion(services, manifest));
+  const versionSection =
+    picked === undefined
+      ? ''
+      : `<section class="details-section details-versions"><h3>Cartridge version</h3>${versionPickerMarkup(manifest, picked)}</section>`;
 
   const dialog = openDialog({
     title: manifest.title,
@@ -71,6 +86,7 @@ export function openDetails(options: DetailsOptions): Dialog {
       .list(manifest.id)
       .map((channel) => `<li><strong>${escapeXml(channel.title)}</strong> ${escapeXml(channel.description)}${channel.unlocked ? '' : ' <em>(locked)</em>'}</li>`)
       .join('')}</ul></section>` +
+    versionSection +
     `<section class="details-section"><h3>Patches</h3><div data-ref="patches"><p class="settings-note">${soon ? 'Patches arrive with the game.' : 'Loading…'}</p></div></section>` +
     `<section class="details-section"><h3>Your records</h3><p>${best ? `Best ${best.score.toLocaleString('en-GB')} on ${new Date(best.at).toLocaleDateString()}` : 'No runs yet.'} · ${stats.plays} plays</p></section>` +
     `<div class="details-label" aria-hidden="true">${labelDocument(manifest, `details-${manifest.id}`)}</div>` +
@@ -83,26 +99,29 @@ export function openDetails(options: DetailsOptions): Dialog {
     reducedMotion: services.settings.reducedMotion(),
     scanlineRows: SLATE_SIZE.height / 1.5,
   });
-  const demoContext = {
+  const demoContext = () => ({
     appearance: services.settings.appearance(),
     reducedMotion: services.settings.reducedMotion(),
     width: SLATE_SIZE.width,
     height: SLATE_SIZE.height,
-  };
+    ...(picked === undefined ? {} : { version: picked }),
+  });
   const offscreen = document.createElement('div');
   const showDemo = (handle: DemoHandle) => {
     demo?.dispose();
     demo = handle;
     crt.setSource(handle.surface);
   };
-  showDemo(slateDemo(offscreen, manifest, demoContext));
+  const showPickedDemo = () =>
+    showDemo(module ? module.demo(offscreen, manifest.slot, demoContext()) : slateDemo(offscreen, manifest, demoContext()));
+  showPickedDemo();
   void crt.powerOn({ snowMs: 220 });
 
   if (entry.load) {
     void entry.load().then((loaded) => {
       if (!dialog.open) return;
       module = loaded;
-      showDemo(loaded.demo(offscreen, manifest.slot, demoContext));
+      showPickedDemo();
       const patches = dialog.body.querySelector<HTMLDivElement>('[data-ref="patches"]');
       if (patches) {
         const tracker = createPatchTracker({
@@ -126,10 +145,15 @@ export function openDetails(options: DetailsOptions): Dialog {
     const what = (event.target as Element).closest<HTMLButtonElement>('[data-do]')?.dataset.do;
     if (what === 'play') {
       dialog.close();
-      options.onPlay(manifest.id);
+      options.onPlay(manifest.id, picked);
     } else if (what === 'how' && module) {
       showHowToPlay(module);
     }
+  });
+  // Picking a version saves it and puts that version on the little TV.
+  bindVersionPicker(dialog.body, services, manifest, (versionId) => {
+    picked = versionId;
+    showPickedDemo();
   });
   return dialog;
 }

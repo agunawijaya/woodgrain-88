@@ -1,13 +1,13 @@
 /**
  * Hash routing, so the site works from any static host (GitHub Pages) and the
  * browser's Back button moves between the Den, the list, a game and its play
- * screen. Query parameters on play routes carry the channel, run mode and
- * challenge links.
+ * screen. Query parameters on play routes carry the channel, run mode,
+ * cartridge version and challenge links; a game route may carry the version.
  */
 export type Route =
   | { name: 'den' }
   | { name: 'list' }
-  | { name: 'game'; id: string }
+  | { name: 'game'; id: string; version?: string }
   | { name: 'play'; id: string; params: URLSearchParams }
   | { name: 'records' }
   | { name: 'about' }
@@ -25,7 +25,10 @@ export function parseRoute(hash: string): Route {
   if (parts.length === 1 && head === 'records') return { name: 'records' };
   if (parts.length === 1 && head === 'about') return { name: 'about' };
   if (parts.length === 2 && id !== undefined && ID.test(id)) {
-    if (head === 'game') return { name: 'game', id };
+    if (head === 'game') {
+      const version = new URLSearchParams(query).get('version');
+      return version !== null && ID.test(version) ? { name: 'game', id, version } : { name: 'game', id };
+    }
     if (head === 'play') return { name: 'play', id, params: new URLSearchParams(query) };
   }
   return { name: 'not-found', hash };
@@ -42,7 +45,7 @@ export function routeHash(route: Route): string {
     case 'about':
       return '#/about';
     case 'game':
-      return `#/game/${route.id}`;
+      return `#/game/${route.id}${route.version ? `?version=${route.version}` : ''}`;
     case 'play': {
       const query = route.params.toString();
       return `#/play/${route.id}${query ? `?${query}` : ''}`;

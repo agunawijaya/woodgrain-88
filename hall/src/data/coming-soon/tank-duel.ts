@@ -1,15 +1,15 @@
 /**
- * Paint Tanks, slot 20: registered as coming soon. Its own prompt replaces
- * this placeholder with the real manifest in games/paint-tanks/.
+ * Tank Duel, slot 20: registered as coming soon. Its own prompt replaces
+ * this placeholder with the real manifest in games/tank-duel/.
  */
 import type { GameManifest } from '@woodgrain-88/kit';
 
 export const manifest: GameManifest = {
-  id: 'paint-tanks',
+  id: 'tank-duel',
   slot: 20,
-  title: "Paint Tanks",
-  tagline: "Toy tanks in a diorama that splat paint on each other.",
-  teaser: "Ricochet paint shells round the corners of a tabletop diorama. Duck behind cover, bank the shot, and watch your rival turn your colour.",
+  title: "Tank Duel",
+  tagline: "Tanks, jets and biplanes. Ricochets, cover and big explosions.",
+  teaser: "Tanks, jets and biplanes face off in an arena of walls and cover. Bank shells off the walls, steer guided shots round the corners and blow your rival up before they get you.",
   family: 'duels',
   players: '2P',
   versus: 'local+bot',
@@ -17,13 +17,13 @@ export const manifest: GameManifest = {
   status: 'coming-soon',
   scoreOrder: 'higher',
   accent: { day: '#2e7d32', night: '#8fe08f' },
-  emblem: "M3 15h14l2 4H5ZM6 15v-4h8v4M14 12h6",
+  emblem: "M3 15.5h12l2 3.5H5ZM6 15.5V12.5h6v3M12 13.5h5M19.5 11.5l1.6-1.6M19.8 13.5h2.2M19.5 15.5l1.6 1.6M7.5 17.3h0M10.5 17.3h0M13.5 17.3h0",
   label: {
-    pattern: 'dots',
-    paper: '#2e7d32',
-    ink: '#66a86a',
-    band: '#fdd835',
-    bandText: '#1b3a1d',
+    pattern: "bricks",
+    paper: "#56652b",
+    ink: "#71833b",
+    band: "#f2a22c",
+    bandText: "#22160a",
   },
   inspiredBy: {
     originalTitle: "Combat",

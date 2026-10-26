@@ -818,6 +818,48 @@
       "note": "Specs found real a11y and Back bugs (fixed in the Hall). Lead fixed lint/types, made import check durable, relaxed Den URL, rewrote the frame-time spec as its own GPU project.",
       "startedAt": "2026-10-25T23:21:21.830Z",
       "updatedAt": "2026-10-25T23:48:17.465Z"
+    },
+    {
+      "id": "faithful-copy",
+      "kind": "data",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 422.2,
+      "crewTokens": {
+        "input": 277073,
+        "output": 46455,
+        "thinking": 40509,
+        "cacheRead": 1695177,
+        "total": 323528
+      },
+      "violations": 0,
+      "leadTokens": 6000,
+      "soloTokens": 14000,
+      "note": "Rewrote the four softened manifests (missiles, knockouts, crash landing, roping the herd) and left 18 alone; read all 22. Acceptance failed only on the lead's in-progress test changes.",
+      "startedAt": "2026-10-26T01:09:23.019Z",
+      "updatedAt": "2026-10-26T01:27:24.632Z"
+    },
+    {
+      "id": "versions-tests",
+      "kind": "tests",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 604.7,
+      "crewTokens": {
+        "input": 302802,
+        "output": 56512,
+        "thinking": 42803,
+        "cacheRead": 8015071,
+        "total": 359314
+      },
+      "violations": 0,
+      "leadTokens": 14000,
+      "soloTokens": 45000,
+      "note": "Kit, Hall and e2e coverage for versions. Lead fixed two exactOptionalPropertyTypes errors, one test that picked the default (proved nothing), a match too slow with tall paddles, and formatting. Crew report JSON missing.",
+      "startedAt": "2026-10-26T01:32:38.001Z",
+      "updatedAt": "2026-10-26T01:37:50.984Z"
     }
   ]
 }

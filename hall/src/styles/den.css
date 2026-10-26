@@ -287,7 +287,7 @@
   fill: #c98a2b;
 }
 
-.lamp--secret.is-played {
+.lamp--version.is-played {
   fill: #9a6fd6;
 }
 
@@ -296,11 +296,11 @@
   filter: drop-shadow(0 0 2px #ffb347);
 }
 
-.lamp--secret {
+.lamp--version {
   fill: #3b2e4a;
 }
 
-.lamp--secret.is-current {
+.lamp--version.is-current {
   fill: #c9a2ff;
   filter: drop-shadow(0 0 2px #a67bff);
 }
@@ -376,6 +376,11 @@
   line-height: 1.35;
   pointer-events: none;
   z-index: 5;
+}
+
+/* Under a Counter lamp the tip hangs below, so the digits above stay in view. */
+.den-tooltip.is-below {
+  transform: translate(-50%, 12px);
 }
 
 /* Game card */
@@ -454,12 +459,6 @@
   margin: 0.65em 0 0.7em;
   font-size: 0.98em;
   color: var(--ink-soft);
-}
-
-.game-card-note {
-  margin: 0;
-  font-size: 0.9em;
-  color: var(--ink-faint);
 }
 
 .game-card-facts {

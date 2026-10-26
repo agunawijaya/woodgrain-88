@@ -13,6 +13,7 @@
 import { createEmitter, type Unsubscribe } from './emitter.ts';
 import type { EventBus, GameEventSchema, StampedEvent } from './events.ts';
 import type { Repository } from './store/repos.ts';
+import { emptyGameProgress } from './store/schema.ts';
 import type { ProgressData } from './store/types.ts';
 import type { IsoTime, RunMode } from './types.ts';
 
@@ -170,12 +171,7 @@ export function createPatchTracker(options: PatchTrackerOptions): PatchTracker {
     const at = now().toISOString();
 
     options.progress.update((draft) => {
-      const gameEntry = (draft.games[event.game] ??= {
-        patches: {},
-        channels: {},
-        firstPlayedAt: null,
-        secretsFound: {},
-      });
+      const gameEntry = (draft.games[event.game] ??= emptyGameProgress());
 
       for (const patch of matching) {
         const existing = gameEntry.patches[patch.id];

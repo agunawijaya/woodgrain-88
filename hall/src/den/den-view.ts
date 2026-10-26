@@ -13,22 +13,29 @@ import {
   type Appearance,
   type CrtScreen,
   type DemoHandle,
-  type GameManifest,
   type Rgb,
 } from '@woodgrain-88/kit';
 import type { Services } from '../app/services.ts';
-import { counterDigits, nextSlot, type Direction } from '../data/cycle.ts';
+import {
+  counterDigits,
+  counterPlaces,
+  nextSlot,
+  placeFinished,
+  type CounterPlace,
+  type Direction,
+} from '../data/cycle.ts';
 import { createGameCard, type GameCard } from './game-card.ts';
 import { fitCore, LAYOUT, toScreen, wallSlot, type Fit } from './geometry.ts';
 import { labelSvg } from './label.ts';
 import { focusRingPath, denSceneMarkup } from './scene.ts';
 import { createAmbience } from './ambience.ts';
 import { createLogoSurface } from './intro.ts';
-import { lockedDemo, slateDemo, SLATE_SIZE } from './slate.ts';
+import { slateDemo, SLATE_SIZE } from './slate.ts';
 
 export interface DenViewOptions {
   services: Services;
-  onOpenGame(id: string): void;
+  /** `version` is set when the channel plays a particular cartridge version. */
+  onOpenGame(id: string, version?: string): void;
   onOpenList(): void;
   onShowShortcuts(): void;
   onOpenProfile(): void;
@@ -132,8 +139,8 @@ export function createDenView(options: DenViewOptions): DenView {
 
   const card: GameCard = createGameCard({
     services,
-    onPlay: (id) => options.onOpenGame(id),
-    onDetails: (id) => options.onOpenGame(id),
+    onPlay: (id, version) => options.onOpenGame(id, version),
+    onDetails: (id, version) => options.onOpenGame(id, version),
   });
   stage.append(card.element);
 
@@ -189,8 +196,13 @@ export function createDenView(options: DenViewOptions): DenView {
   window.addEventListener('keydown', unlockAndSync, { once: true });
 
   // ——— What is on ———
-  const manifestFor = (target: number): GameManifest | null =>
-    services.registry.entryBySlot(target)?.manifest ?? null;
+  const places = counterPlaces(services.registry.manifests);
+  // The registry always fills all 32 places (a Hall test holds it to that).
+  const placeAt = (target: number): CounterPlace => {
+    const place = places.find((candidate) => candidate.slot === target);
+    if (!place) throw new Error(`Counter place ${target} has nothing on it`);
+    return place;
+  };
 
   // Each call bumps the token, so a module that finishes loading after the
   // player has already moved on never replaces the newer picture.
@@ -198,18 +210,19 @@ export function createDenView(options: DenViewOptions): DenView {
   const startDemo = (target: number) => {
     demo?.dispose();
     const token = ++demoToken;
-    const entry = services.registry.entryBySlot(target);
-    const manifest = entry?.manifest ?? null;
+    const { manifest, version } = placeAt(target);
+    const entry = services.registry.entryById(manifest.id);
     const context = {
       appearance: settings.appearance(),
       reducedMotion: settings.reducedMotion(),
       width: SLATE_SIZE.width,
       height: SLATE_SIZE.height,
+      ...(version ? { version: version.id } : {}),
     };
     const offscreen = document.createElement('div');
-    demo = manifest ? slateDemo(offscreen, manifest, context) : lockedDemo(offscreen, target, context);
+    demo = slateDemo(offscreen, manifest, context, target);
     crt.setSource(demo.surface);
-    if (!entry?.load || !manifest) return;
+    if (!entry?.load) return;
     void entry.load().then((module) => {
       if (token !== demoToken) return;
       demo?.dispose();
@@ -238,32 +251,25 @@ export function createDenView(options: DenViewOptions): DenView {
     lightPlayedLamps();
   };
 
-  // The Counter's lamps: one for each game you have played, and the two
-  // hidden ones once their secret is found.
+  // The Counter's lamps: one for each game you have played, and for a merged
+  // game one for each cartridge version you have finished a run with.
   const lightPlayedLamps = () => {
-    const found = new Set(
-      services.registry.manifests.flatMap((manifest) =>
-        (manifest.secrets ?? [])
-          .filter((secret) => services.repos.progress.get().games[manifest.id]?.secretsFound[secret.id])
-          .map((secret) => secret.counterSlot),
-      ),
-    );
+    const progress = services.repos.progress.get();
+    const plays = (gameId: string) => services.stats.game(gameId).plays;
     for (const lamp of lamps) {
-      const lampSlot = Number(lamp.dataset.slot);
-      const manifest = services.registry.entryBySlot(lampSlot)?.manifest;
-      const played = manifest ? services.stats.game(manifest.id).plays > 0 : found.has(lampSlot as 31 | 32);
-      lamp.classList.toggle('is-played', played);
+      lamp.classList.toggle('is-played', placeFinished(placeAt(Number(lamp.dataset.slot)), progress, plays));
     }
   };
 
   const showCartridge = (target: number) => {
-    const manifest = manifestFor(target);
-    consoleLabel.innerHTML = manifest ? labelSvg(manifest, { idPrefix: 'console-slot' }) : '';
-    cartridges.forEach((cartridge) => cartridge.classList.toggle('is-tuned', Number(cartridge.dataset.slot) === target));
+    const { manifest } = placeAt(target);
+    consoleLabel.innerHTML = labelSvg(manifest, { idPrefix: 'console-slot' });
+    cartridges.forEach((cartridge) => cartridge.classList.toggle('is-tuned', cartridge.dataset.game === manifest.id));
   };
 
   const glowOnWall = (target: number) => {
-    const cartridge = cartridges.find((c) => Number(c.dataset.slot) === target);
+    const { manifest } = placeAt(target);
+    const cartridge = cartridges.find((c) => c.dataset.game === manifest.id);
     if (!cartridge) return;
     cartridge.classList.remove('is-glowing');
     void cartridge.getBoundingClientRect();
@@ -271,10 +277,9 @@ export function createDenView(options: DenViewOptions): DenView {
   };
 
   const announce = (target: number) => {
-    const manifest = manifestFor(target);
-    announcer.textContent = manifest
-      ? `Channel ${target}: ${manifest.title}. ${manifest.status === 'coming-soon' ? 'Coming soon.' : ''}`
-      : `Channel ${target}: something is hidden here.`;
+    const { manifest, version } = placeAt(target);
+    const versionText = version ? `, ${version.label} version` : '';
+    announcer.textContent = `Channel ${target}: ${manifest.title}${versionText}. ${manifest.status === 'coming-soon' ? 'Coming soon.' : ''}`;
   };
 
   const setSlot = (target: number, animateCounter: boolean) => {
@@ -282,7 +287,7 @@ export function createDenView(options: DenViewOptions): DenView {
     startDemo(target);
     showCounter(target, animateCounter);
     showCartridge(target);
-    card.show(manifestFor(target), target);
+    card.show(placeAt(target));
     announce(target);
   };
 
@@ -429,13 +434,14 @@ export function createDenView(options: DenViewOptions): DenView {
     }
   });
 
-  const showTooltip = (text: string, anchor: Element) => {
+  const showTooltip = (text: string, anchor: Element, below = false) => {
     const box = anchor.getBoundingClientRect();
     const stageBox = stage.getBoundingClientRect();
     tooltip.textContent = text;
     tooltip.hidden = false;
+    tooltip.classList.toggle('is-below', below);
     tooltip.style.left = `${box.left - stageBox.left + box.width / 2}px`;
-    tooltip.style.top = `${box.top - stageBox.top}px`;
+    tooltip.style.top = `${(below ? box.bottom : box.top) - stageBox.top}px`;
   };
   const hideTooltip = () => {
     tooltip.hidden = true;
@@ -465,8 +471,8 @@ export function createDenView(options: DenViewOptions): DenView {
 
   const tv = hotspot('tv');
   const openCurrent = () => {
-    const manifest = manifestFor(slot);
-    if (manifest) options.onOpenGame(manifest.id);
+    const { manifest, version } = placeAt(slot);
+    options.onOpenGame(manifest.id, version?.id);
   };
   tv.addEventListener('click', openCurrent);
   tv.addEventListener('keydown', (event) => {
@@ -485,6 +491,23 @@ export function createDenView(options: DenViewOptions): DenView {
   calendarSpot.addEventListener('pointerleave', hideTooltip);
   calendarSpot.addEventListener('focus', () => showTooltip(calendarTip(), calendarSpot));
   calendarSpot.addEventListener('blur', hideTooltip);
+
+  // Hovering a Counter lamp names what it stands for and whether it is lit.
+  const lampTip = (lampSlot: number) => {
+    const place = placeAt(lampSlot);
+    const what = place.version ? `${place.manifest.title}, ${place.version.label} version` : place.manifest.title;
+    const lit = placeFinished(place, services.repos.progress.get(), (gameId) => services.stats.game(gameId).plays);
+    const state = lit
+      ? place.version ? 'finished' : 'played'
+      : place.version ? 'lights up when you finish a run with it' : 'lights up when you play it';
+    return `Lamp ${lampSlot} · ${what} · ${state}`;
+  };
+  const counterLamps = query(svg, '[data-ref="counter-lamps"]', SVGGElement);
+  counterLamps.addEventListener('pointerover', (event) => {
+    const cell = (event.target as Element).closest<SVGRectElement>('.lamp-hit');
+    if (cell) showTooltip(lampTip(Number(cell.dataset.slot)), cell, true);
+  });
+  counterLamps.addEventListener('pointerleave', hideTooltip);
 
   // ——— The wall ———
   const cartridgeGrid = cartridges.map((cartridge) => ({

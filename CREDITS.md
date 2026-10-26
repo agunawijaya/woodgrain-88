@@ -24,38 +24,38 @@ outside the United States. Facts used on the About page:
 
 ## The games that inspired ours
 
-| Our game         | Inspired by      | Publisher  |
-| ---------------- | ---------------- | ---------- |
-| Saucer Patrol    | Space Jockey     | US Games   |
-| Big Top Splash   | Human Cannonball | Atari      |
-| Sum Rush         | Basic Math       | Atari      |
-| Quad Cube        | 3-D Tic-Tac-Toe  | Atari      |
-| Hot & Cold       | Flag Capture     | Atari      |
-| Disc Duel        | Othello          | Atari      |
-| Pocket Links     | Golf             | Atari      |
-| Trailblaze       | Surround         | Atari      |
-| Crown Jump       | Checkers         | Activision |
-| Table 21         | Blackjack        | Atari      |
-| Lane Hopper      | Freeway          | Activision |
-| Putt Parlor      | Miniature Golf   | Atari      |
-| Chalk Talk       | Football         | Atari      |
-| Bumper Chase     | Slot Racers      | Atari      |
-| Pier Derby       | Fishing Derby    | Activision |
-| Gravity Duel     | Space War        | Atari      |
-| Glove Box        | Boxing           | Activision |
-| Skyline Gallery  | Air-Sea Battle   | Atari      |
-| Baseline         | Tennis           | Activision |
-| Paint Tanks      | Combat           | Atari      |
-| Reel Puzzle      | Slot Machine     | Atari      |
-| Slalom Line      | Skiing           | Activision |
-| Lasso Run        | Stampede         | Activision |
-| Quickdraw Splash | Outlaw           | Atari      |
-| Drop Zone        | Sky Diver        | Atari      |
-| Hover Blast      | Laser Blast      | Activision |
-| Hoop Duel        | Basketball       | Atari      |
-| Swarm Garden     | Cosmic Swarm     | CommaVid   |
-| Lane Ten         | Bowling          | Atari      |
-| Sandlot Slugger  | Home Run         | Atari      |
+| Our game        | Inspired by      | Publisher  |
+| --------------- | ---------------- | ---------- |
+| Saucer Patrol   | Space Jockey     | US Games   |
+| Big Top Cannon  | Human Cannonball | Atari      |
+| Sum Rush        | Basic Math       | Atari      |
+| Quad Cube       | 3-D Tic-Tac-Toe  | Atari      |
+| Hot & Cold      | Flag Capture     | Atari      |
+| Disc Duel       | Othello          | Atari      |
+| Pocket Links    | Golf             | Atari      |
+| Trailblaze      | Surround         | Atari      |
+| Crown Jump      | Checkers         | Activision |
+| Table 21        | Blackjack        | Atari      |
+| Lane Hopper     | Freeway          | Activision |
+| Putt Parlor     | Miniature Golf   | Atari      |
+| Chalk Talk      | Football         | Atari      |
+| Bumper Chase    | Slot Racers      | Atari      |
+| Pier Derby      | Fishing Derby    | Activision |
+| Gravity Duel    | Space War        | Atari      |
+| Glove Box       | Boxing           | Activision |
+| Shore Battery   | Air-Sea Battle   | Atari      |
+| Baseline        | Tennis           | Activision |
+| Tank Duel       | Combat           | Atari      |
+| Lucky Reels     | Slot Machine     | Atari      |
+| Slalom Line     | Skiing           | Activision |
+| Lasso Run       | Stampede         | Activision |
+| Quickdraw       | Outlaw           | Atari      |
+| Drop Zone       | Sky Diver        | Atari      |
+| Hover Blast     | Laser Blast      | Activision |
+| Hoop Duel       | Basketball       | Atari      |
+| Swarm Garden    | Cosmic Swarm     | CommaVid   |
+| Lane Ten        | Bowling          | Atari      |
+| Sandlot Slugger | Home Run         | Atari      |
 
 Titles and publishers are the architect's best knowledge; release years are shown only once a
 cited source confirms them. Othello is a trademark of its owner, and every other name above belongs

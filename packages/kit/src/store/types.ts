@@ -73,8 +73,8 @@ export interface GameProgressData {
   /** Channels opened by play, by channel id. Every channel is open in prompt 00. */
   channels: Record<string, { unlockedAt: IsoTime }>;
   firstPlayedAt: IsoTime | null;
-  /** Secrets found (e.g. a hidden reskin), by secret id. */
-  secretsFound: Record<string, IsoTime>;
+  /** When a run was first finished with each cartridge version, by version id. */
+  versionsFinished: Record<string, IsoTime>;
 }
 
 export interface ProgressData {

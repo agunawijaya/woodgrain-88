@@ -1,9 +1,10 @@
 /**
  * Tests for the game registry: base game catalog, slot sequencing, coming-soon
- * placeholders, secret counter slots, harness overrides and Label Wall grouping.
+ * placeholders, cartridge versions on the Counter, harness overrides and Label Wall grouping.
  */
 import { validateRegistry } from '@woodgrain-88/kit';
 import { describe, expect, it } from 'vitest';
+import { counterPlaces } from '../src/data/cycle.ts';
 import { BASE_ENTRIES, createRegistry, wallRows } from '../src/data/registry.ts';
 import { fakeManifest } from './fixtures/fake-game.ts';
 
@@ -43,25 +44,22 @@ describe('game registry', () => {
     }
   });
 
-  it('assigns counter slot 31 to lane-hopper and 32 to pier-derby as the only secret slots', () => {
-    const secretsWithGame = BASE_ENTRIES.flatMap((entry) =>
-      (entry.manifest.secrets ?? []).map((secret) => ({
-        gameId: entry.manifest.id,
-        counterSlot: secret.counterSlot,
-      })),
+  it('fills all 32 Counter places, with the other versions of the merged games on 31 and 32', () => {
+    const places = counterPlaces(createRegistry().manifests);
+    expect(places.map((place) => place.slot)).toEqual(
+      Array.from({ length: 32 }, (_, index) => index + 1),
     );
 
-    const secretsSlot31 = secretsWithGame.filter((item) => item.counterSlot === 31);
-    const secretsSlot32 = secretsWithGame.filter((item) => item.counterSlot === 32);
-
-    expect(secretsSlot31).toHaveLength(1);
-    expect(secretsSlot31[0]?.gameId).toBe('lane-hopper');
-
-    expect(secretsSlot32).toHaveLength(1);
-    expect(secretsSlot32[0]?.gameId).toBe('pier-derby');
+    const versioned = places.filter((place) => place.version !== undefined);
+    expect(versioned.map((place) => [place.slot, place.manifest.id, place.version?.id])).toEqual([
+      [11, 'lane-hopper', 'chicken'],
+      [15, 'pier-derby', 'derby'],
+      [31, 'lane-hopper', 'rabbit'],
+      [32, 'pier-derby', 'hack'],
+    ]);
   });
 
-  it('keeps total count at 30 and places test fixture into slot 20 when overridden', () => {
+  it('keeps total count at 30 and places test fixture into slot 11 when overridden', () => {
     const hasFakeId = BASE_ENTRIES.some((entry) => entry.manifest.id === fakeManifest.id);
     expect(hasFakeId).toBe(false);
 
@@ -69,8 +67,7 @@ describe('game registry', () => {
     expect(overriddenRegistry.entries).toHaveLength(30);
     expect(overriddenRegistry.manifests).toHaveLength(30);
 
-    const slot20Entry = overriddenRegistry.entryBySlot(20);
-    expect(slot20Entry?.manifest.id).toBe(fakeManifest.id);
+    expect(overriddenRegistry.entryBySlot(11)?.manifest.id).toBe(fakeManifest.id);
   });
 
   it('groups all 30 games into four wall rows with expected family sizes in slot order', () => {

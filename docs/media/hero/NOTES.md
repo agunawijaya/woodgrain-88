@@ -4,6 +4,11 @@ Live screens from the running Hall (`pnpm dev`, port 4488), captured at 1920×10
 Recaptured at the end of prompt 00 after the owner's fixes and two label colours raised to AA.
 Nothing here is a mockup: every pixel is drawn by code (SVG room, WebGL CRT, canvas slates).
 
+These frames predate prompt 00a and stay as approved. Since then five games have new names (Big
+Top Cannon, Shore Battery, Tank Duel, Lucky Reels, Quickdraw) and the two "hidden reskins" became
+cartridge versions you choose, with Counter places 31 and 32; current screens are in
+`docs/media/screens/`.
+
 | Frame | File | What it shows |
 |---|---|---|
 | a | `a-den-day.png` | The Den by day |
@@ -19,12 +24,13 @@ light in, and it lands as soft stripes across the shag carpet and the beanbag. T
 centre-left: a walnut cabinet with rabbit ears, playing the current channel's slate. Below it, on the
 stand's open shelf, sits our own woodgrain console: chunky POWER and RESET levers, two difficulty
 switches, the current cartridge in its slot, and the Counter showing 01 above its 32 lamps (31 and
-32 are diamond-shaped because they belong to the hidden reskins). A handwritten sticky note on the
-TV says "flip the POWER switch! (or press P)", so the room explains itself. On the right is the Label
+32 are diamond-shaped because they belong to the hidden reskins). A handwritten sticky note stuck
+to the stand's rail under the lamp says "flip the POWER switch! (or press P)", so the room explains
+itself. On the right is the Label
 Wall: four felt-backed shelves with label-maker tape plaques (DUELS, BRAIN, SPORTS, ARCADE) and
 thirty code-drawn cartridges. The door with the denim jacket, the calendar (today's date, Daily #1),
-the sunburst clock (real time), the braided rug, two joysticks and a trailing pothos fill the room
-around it.
+the sunburst clock (real time), the braided rug, two joysticks, a trailing pothos and a white cat
+asleep against the beanbag fill the room around it.
 
 ## b — The Den by night
 
@@ -101,3 +107,14 @@ Approved in principle, with four fixes, all made and the frames re-shot:
    lopsided. It is now its own small wooden unit with a SLOT name plate, standing on the shelf on
    the console's baseline and wired to it, with the console narrowed so the pair sits evenly.
    This departs from the prompt's "on top of the console" at the owner's request.
+
+## Owner review, second round (2026-10-26)
+
+1. The sticky note still sat awkwardly. It now hangs from the stand's top rail under the lamp: only
+   its gummed strip is stuck to the wood, the lower half hangs over the open shelf with a longer
+   shadow and a lifted corner, and by night the lamp keeps it readable. The owner chose this over a
+   taller drawer front or a smaller note.
+2. A white cat now sleeps on the carpet against the beanbag, curled with its chin on its paws and
+   its tail round the front. It is drawn in layers (window light, a cool shade low on the flank,
+   soft tufts along the back, combed strands, pink ears and nose, whiskers), breathes slowly and
+   flicks an ear now and then; both stop with reduced motion. By night it turns a soft grey.

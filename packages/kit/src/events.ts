@@ -19,7 +19,7 @@ export type EventValue = number | string | boolean;
 
 /** What a game declares in its manifest for each event type it emits. */
 export interface GameEventSchema {
-  /** kebab-case, e.g. "splat", "round-won". */
+  /** kebab-case, e.g. "hit", "round-won". */
   type: string;
   /** One line for prompt authors: when it fires and what it means. */
   description: string;

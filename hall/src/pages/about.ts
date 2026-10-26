@@ -51,7 +51,7 @@ export function createAboutPage(options: {
     `<p>The copy we studied is the PAL version, catalogue number CX26163P: a 64 KB image holding 32 programs of 2 KB each.</p>` +
     `</section>` +
     `<section><h2>30 games, not 32</h2>` +
-    `<p>Comparing the 32 programs byte by byte turned up two near-twins. The road-crossing game appears twice, the second copy differing in 59 of its 2,048 bytes: solid lane lines, new colours and a different hero, but the same game. The fishing game also appears twice, differing in 45 bytes: new colours and anglers, and one change that is easy to miss, the left and right difficulty switches are swapped. So the cartridge holds 30 distinct games. Here the twins come back as hidden variants inside their games, and finding them lights the last two lamps on the Counter, 31 and 32.</p>` +
+    `<p>Comparing the 32 programs byte by byte turned up two near-twins. The road-crossing game appears twice, the second copy differing in 59 of its 2,048 bytes: solid lane lines, new colours and a different hero, but the same game. The fishing game also appears twice, differing in 45 bytes: new colours and anglers, and one change that is easy to miss, the left and right difficulty switches are swapped. So the cartridge holds 30 distinct games. Here each pair is one game with both cartridge versions in it: pick the one you want in the game's settings or on its details, or tune the Den to channel 31 or 32. Finishing a run with each version lights its own lamp on the Counter, so all 32 can still glow.</p>` +
     `</section>` +
     `<section><h2>The thirty games</h2>` +
     `<div class="table-scroll"><table class="about-table"><caption>Our games and the originals that inspired them</caption>` +

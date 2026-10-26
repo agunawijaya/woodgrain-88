@@ -28,3 +28,4 @@ export * from './store/schema.ts';
 export * from './store/transfer.ts';
 export * from './store/types.ts';
 export * from './types.ts';
+export * from './versions.ts';

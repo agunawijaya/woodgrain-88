@@ -2,8 +2,10 @@
  * Test-only fake game: two paddles and a ball, for two seats or one seat
  * against a bot. It exists to prove the whole contract through the real
  * chrome (mount, loop, two-seat input, pause, events, two channels, a patch,
- * a micro-challenge, daily mode, challenge links, Hall-presented results and
- * demo() on the Den's TV). Only hall/harness.html loads it; it is never in the
+ * a micro-challenge, daily mode, challenge links, Hall-presented results,
+ * two cartridge versions and demo() on the Den's TV). The harness puts it in
+ * slot 11 in place of the first merged game, so its second version owns
+ * Counter lamp 31. Only hall/harness.html loads it; it is never in the
  * registry or the built site, and `pnpm check` asserts that.
  */
 import type {
@@ -19,13 +21,18 @@ import type {
 export const FAKE_GAME_ID = 'test-paddles';
 const WIDTH = 480;
 const HEIGHT = 360;
-const PADDLE = { width: 10, height: 64, inset: 24, speed: 300 };
+const PADDLE = { width: 10, inset: 24, speed: 300 };
+// The two cartridge versions differ only in paddle height, which is enough to
+// see the chosen version arrive in the game.
+const PADDLE_HEIGHT = { standard: 64, tall: 96 } as const;
+const paddleHeightFor = (version: string | undefined) =>
+  version === 'tall' ? PADDLE_HEIGHT.tall : PADDLE_HEIGHT.standard;
 const BALL_SIZE = 10;
 const POINTS_TO_WIN = 3;
 
 export const fakeManifest: GameManifest = {
   id: FAKE_GAME_ID,
-  slot: 20,
+  slot: 11,
   title: 'Test Paddles',
   tagline: 'A fixture that proves the contract, not a real game.',
   teaser: 'Two paddles and a ball, used only by the test harness to drive the Hall end to end.',
@@ -49,7 +56,7 @@ export const fakeManifest: GameManifest = {
     uiTitle: 'the test fixture',
     publisher: 'Woodgrain',
     year: null,
-    cartridgeSlots: [21],
+    cartridgeSlots: [11, 19],
   },
   controls: [
     { keys: ['W', 'S'], does: 'move', seat: 1 },
@@ -64,17 +71,33 @@ export const fakeManifest: GameManifest = {
     { type: 'point', description: 'A seat scored a point.', fields: { seat: 'number' } },
     { type: 'rally', description: 'A rally ended.', fields: { hits: 'number' } },
   ],
+  versions: [
+    {
+      id: 'standard',
+      label: 'Standard',
+      cartridgeSlot: 19,
+      description: 'Paddles of the usual height.',
+    },
+    {
+      id: 'tall',
+      label: 'Tall paddles',
+      cartridgeSlot: 11,
+      description: 'Paddles half as tall again.',
+    },
+  ],
 };
 
 interface Court {
+  paddleHeight: number;
   paddles: [number, number];
   ball: { x: number; y: number; vx: number; vy: number };
   score: [number, number];
   hits: number;
 }
 
-function newCourt(speed: number, serveDirection: number): Court {
+function newCourt(speed: number, serveDirection: number, paddleHeight: number): Court {
   return {
+    paddleHeight,
     paddles: [HEIGHT / 2, HEIGHT / 2],
     ball: { x: WIDTH / 2, y: HEIGHT / 2, vx: speed * serveDirection, vy: speed * 0.45 },
     score: [0, 0],
@@ -94,7 +117,7 @@ function stepBall(court: Court, dt: number): 0 | 1 | null {
     if (
       facing &&
       Math.abs(ball.x - paddleX) < PADDLE.width &&
-      Math.abs(ball.y - court.paddles[seat]) < PADDLE.height / 2
+      Math.abs(ball.y - court.paddles[seat]) < court.paddleHeight / 2
     ) {
       ball.vx *= -1.06;
       ball.vy += (ball.y - court.paddles[seat]) * 3;
@@ -127,15 +150,15 @@ function draw(
   for (let y = 0; y < HEIGHT; y += 24) context.fillRect(WIDTH / 2 - 2, y, 4, 12);
   context.fillRect(
     PADDLE.inset - PADDLE.width / 2,
-    court.paddles[0] - PADDLE.height / 2,
+    court.paddles[0] - court.paddleHeight / 2,
     PADDLE.width,
-    PADDLE.height,
+    court.paddleHeight,
   );
   context.fillRect(
     WIDTH - PADDLE.inset - PADDLE.width / 2,
-    court.paddles[1] - PADDLE.height / 2,
+    court.paddles[1] - court.paddleHeight / 2,
     PADDLE.width,
-    PADDLE.height,
+    court.paddleHeight,
   );
   context.fillStyle = dark ? '#ffd27a' : '#b8481a';
   context.fillRect(
@@ -159,10 +182,13 @@ function mount(host: HTMLElement, ctx: GameContext): GameInstance {
   canvas.height = HEIGHT;
   canvas.className = 'fake-game-canvas';
   canvas.setAttribute('aria-label', 'Test Paddles court');
+  // Tests read which version the game was handed.
+  canvas.dataset.version = ctx.run.version ?? '';
   host.append(canvas);
   const drawing = canvas.getContext('2d');
   const speed = ctx.run.channel === 'fast' ? 360 : 180;
-  let court = newCourt(speed, 1);
+  const paddleHeight = paddleHeightFor(ctx.run.version);
+  let court = newCourt(speed, 1, paddleHeight);
   let state: 'menu' | 'play' | 'over' = 'menu';
   let versus = false;
   let startedAt = 0;
@@ -175,7 +201,7 @@ function mount(host: HTMLElement, ctx: GameContext): GameInstance {
 
   const start = (twoPlayers: boolean) => {
     versus = twoPlayers;
-    court = newCourt(speed, ctx.rng.chance(0.5) ? 1 : -1);
+    court = newCourt(speed, ctx.rng.chance(0.5) ? 1 : -1, paddleHeight);
     state = 'play';
     startedAt = elapsed;
     ctx.setView('play');
@@ -208,7 +234,7 @@ function mount(host: HTMLElement, ctx: GameContext): GameInstance {
     if (versus) court.paddles[1] += seatAxis(2) * PADDLE.speed * dt;
     else botMove(court, 1, dt);
     court.paddles = court.paddles.map((y) =>
-      Math.max(PADDLE.height / 2, Math.min(HEIGHT - PADDLE.height / 2, y)),
+      Math.max(paddleHeight / 2, Math.min(HEIGHT - paddleHeight / 2, y)),
     ) as [number, number];
     const scorer = stepBall(court, dt);
     if (scorer === null) return;
@@ -275,7 +301,8 @@ function demo(host: HTMLElement, seed: number, context: DemoContext): DemoHandle
   host.append(surface);
   const drawing = surface.getContext('2d');
   let dark = context.appearance === 'dark';
-  let court = newCourt(200, seed % 2 === 0 ? 1 : -1);
+  const paddleHeight = paddleHeightFor(context.version);
+  let court = newCourt(200, seed % 2 === 0 ? 1 : -1, paddleHeight);
   let frame: number | null = null;
   let last = performance.now();
   const tick = (now: number) => {
@@ -283,7 +310,8 @@ function demo(host: HTMLElement, seed: number, context: DemoContext): DemoHandle
     last = now;
     botMove(court, 0, dt);
     botMove(court, 1, dt);
-    if (stepBall(court, dt) !== null) court = newCourt(200, court.ball.vx > 0 ? -1 : 1);
+    if (stepBall(court, dt) !== null)
+      court = newCourt(200, court.ball.vx > 0 ? -1 : 1, paddleHeight);
     if (drawing) draw(drawing, court, dark, '');
     frame = context.reducedMotion ? null : requestAnimationFrame(tick);
   };

@@ -12,12 +12,12 @@ describe('hash router', () => {
     expect(parseRoute('#/list')).toEqual({ name: 'list' });
     expect(parseRoute('#/records')).toEqual({ name: 'records' });
     expect(parseRoute('#/about')).toEqual({ name: 'about' });
-    expect(parseRoute('#/game/paint-tanks')).toEqual({ name: 'game', id: 'paint-tanks' });
+    expect(parseRoute('#/game/tank-duel')).toEqual({ name: 'game', id: 'tank-duel' });
 
-    const playRoute = parseRoute('#/play/paint-tanks?mode=daily&ch=classic');
+    const playRoute = parseRoute('#/play/tank-duel?mode=daily&ch=classic');
     expect(playRoute.name).toBe('play');
     if (playRoute.name === 'play') {
-      expect(playRoute.id).toBe('paint-tanks');
+      expect(playRoute.id).toBe('tank-duel');
       expect(playRoute.params.get('mode')).toBe('daily');
       expect(playRoute.params.get('ch')).toBe('classic');
     }
@@ -38,9 +38,19 @@ describe('hash router', () => {
     expect(routeHash(parseRoute('#/list'))).toBe('#/list');
     expect(routeHash(parseRoute('#/records'))).toBe('#/records');
     expect(routeHash(parseRoute('#/about'))).toBe('#/about');
-    expect(routeHash(parseRoute('#/game/paint-tanks'))).toBe('#/game/paint-tanks');
-    expect(routeHash(parseRoute('#/play/paint-tanks?mode=daily&ch=classic'))).toBe(
-      '#/play/paint-tanks?mode=daily&ch=classic',
+    expect(routeHash(parseRoute('#/game/tank-duel'))).toBe('#/game/tank-duel');
+    expect(routeHash(parseRoute('#/play/tank-duel?mode=daily&ch=classic'))).toBe(
+      '#/play/tank-duel?mode=daily&ch=classic',
     );
+  });
+
+  it('parses cartridge version on game routes and round-trips while dropping invalid version formats', () => {
+    const route = parseRoute('#/game/lane-hopper?version=rabbit');
+    expect(route).toEqual({ name: 'game', id: 'lane-hopper', version: 'rabbit' });
+    expect(routeHash(route)).toBe('#/game/lane-hopper?version=rabbit');
+
+    const invalidRoute = parseRoute('#/game/lane-hopper?version=Not_Ok');
+    expect(invalidRoute).toEqual({ name: 'game', id: 'lane-hopper' });
+    expect(routeHash(invalidRoute)).toBe('#/game/lane-hopper');
   });
 });

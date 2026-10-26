@@ -60,10 +60,10 @@ describe('daily clock', () => {
     const dayOneNight = new Date('2026-10-25T22:45:00.000Z');
     const dayTwo = new Date('2026-10-26T08:00:00.000Z');
 
-    expect(dailySeed('paint-tanks', dayOneMorning)).toBe(hashSeed('daily/paint-tanks/1'));
-    expect(dailySeed('paint-tanks', dayOneNight)).toBe(dailySeed('paint-tanks', dayOneMorning));
-    expect(dailySeed('paint-tanks', dayTwo)).toBe(hashSeed('daily/paint-tanks/2'));
-    expect(dailySeed('paint-tanks', dayOneMorning)).not.toBe(dailySeed('sky-duel', dayOneMorning));
+    expect(dailySeed('tank-duel', dayOneMorning)).toBe(hashSeed('daily/tank-duel/1'));
+    expect(dailySeed('tank-duel', dayOneNight)).toBe(dailySeed('tank-duel', dayOneMorning));
+    expect(dailySeed('tank-duel', dayTwo)).toBe(hashSeed('daily/tank-duel/2'));
+    expect(dailySeed('tank-duel', dayOneMorning)).not.toBe(dailySeed('sky-duel', dayOneMorning));
   });
 
   it('returns null from powerCycleOfTheDay when no games are playable', () => {
@@ -71,7 +71,7 @@ describe('daily clock', () => {
     expect(powerCycleOfTheDay([], date)).toBeNull();
 
     const comingSoonOnly: TestGame[] = [
-      { id: 'paint-tanks', status: 'coming-soon' },
+      { id: 'tank-duel', status: 'coming-soon' },
       { id: 'sky-duel', status: 'coming-soon' },
     ];
     expect(powerCycleOfTheDay(comingSoonOnly, date)).toBeNull();
@@ -82,7 +82,7 @@ describe('daily clock', () => {
       { id: 'aqua-plane', status: 'playable' },
       { id: 'burn-rubber', status: 'coming-soon' },
       { id: 'green-nine', status: 'playable' },
-      { id: 'paint-tanks', status: 'playable' },
+      { id: 'tank-duel', status: 'playable' },
       { id: 'sky-duel', status: 'coming-soon' },
       { id: 'tower-stack', status: 'playable' },
     ];
@@ -91,7 +91,7 @@ describe('daily clock', () => {
       { id: 'sky-duel', status: 'coming-soon' },
       { id: 'green-nine', status: 'playable' },
       { id: 'aqua-plane', status: 'playable' },
-      { id: 'paint-tanks', status: 'playable' },
+      { id: 'tank-duel', status: 'playable' },
       { id: 'burn-rubber', status: 'coming-soon' },
     ];
 
@@ -109,7 +109,7 @@ describe('daily clock', () => {
     const candidates: TestGame[] = [
       { id: 'aqua-plane', status: 'playable' },
       { id: 'green-nine', status: 'playable' },
-      { id: 'paint-tanks', status: 'playable' },
+      { id: 'tank-duel', status: 'playable' },
     ];
     const count = candidates.length;
 
@@ -138,9 +138,9 @@ describe('daily clock', () => {
     expect(todayPick?.id).not.toBe(yesterdayPick?.id);
 
     // With a single playable game, it must still return that game.
-    const single: TestGame[] = [{ id: 'paint-tanks', status: 'playable' }];
-    expect(powerCycleOfTheDay(single, yesterday)?.id).toBe('paint-tanks');
-    expect(powerCycleOfTheDay(single, today)?.id).toBe('paint-tanks');
+    const single: TestGame[] = [{ id: 'tank-duel', status: 'playable' }];
+    expect(powerCycleOfTheDay(single, yesterday)?.id).toBe('tank-duel');
+    expect(powerCycleOfTheDay(single, today)?.id).toBe('tank-duel');
   });
 
   it('checks whether an ISO timestamp falls on the same UTC day as now', () => {
@@ -154,21 +154,21 @@ describe('daily clock', () => {
 
   it('formats the daily share line with optional score and squares', () => {
     const date = new Date('2026-11-05T15:00:00.000Z'); // Daily #12
-    const baseLine = dailyShareLine({ title: 'Paint Tanks', date });
-    expect(baseLine).toBe("Woodgrain '88 · Daily #12 · Paint Tanks");
+    const baseLine = dailyShareLine({ title: 'Tank Duel', date });
+    expect(baseLine).toBe("Woodgrain '88 · Daily #12 · Tank Duel");
 
-    const scoredLine = dailyShareLine({ title: 'Paint Tanks', date, score: '3–1' });
-    expect(scoredLine).toBe("Woodgrain '88 · Daily #12 · Paint Tanks · 3–1");
+    const scoredLine = dailyShareLine({ title: 'Tank Duel', date, score: '3–1' });
+    expect(scoredLine).toBe("Woodgrain '88 · Daily #12 · Tank Duel · 3–1");
 
     const fullLine = dailyShareLine({
-      title: 'Paint Tanks',
+      title: 'Tank Duel',
       date,
       score: '3–1',
       squares: ['[+]', '[+]', '[-]', '[+]'],
     });
-    expect(fullLine).toBe("Woodgrain '88 · Daily #12 · Paint Tanks · 3–1 [+][+][-][+]");
+    expect(fullLine).toBe("Woodgrain '88 · Daily #12 · Tank Duel · 3–1 [+][+][-][+]");
 
-    const squaresOnly = dailyShareLine({ title: 'Paint Tanks', date, squares: ['[+]', '[+]'] });
-    expect(squaresOnly).toBe("Woodgrain '88 · Daily #12 · Paint Tanks [+][+]");
+    const squaresOnly = dailyShareLine({ title: 'Tank Duel', date, squares: ['[+]', '[+]'] });
+    expect(squaresOnly).toBe("Woodgrain '88 · Daily #12 · Tank Duel [+][+]");
   });
 });

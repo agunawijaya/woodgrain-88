@@ -7,7 +7,7 @@ describe('raster check', () => {
   it('allows screenshots in media folders and refuses images anywhere else', () => {
     const problems = checkRaster([
       'docs/media/hero/a-den-day.png',
-      'games/paint-tanks/docs/media/shot.png',
+      'games/tank-duel/docs/media/shot.png',
       'hall/src/logo.png',
       'packages/kit/src/icon.svg',
     ]);

@@ -15,6 +15,8 @@ export interface Challenge {
   seed: number;
   /** The score to beat. */
   score: number;
+  /** The cartridge version the score was set on, for a game with versions. */
+  version?: string;
 }
 
 const KEBAB_ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -37,7 +39,10 @@ function escapeXml(value: string): string {
 
 /** Six base-36 characters derived from the canonical form of the challenge. */
 export function challengeChecksum(challenge: Challenge): string {
-  const canonical = `${challenge.game}|${challenge.channel}|${challenge.seed}|${challenge.score}`;
+  // A version joins the signed text only when present, so links made before
+  // versions existed still verify.
+  const version = challenge.version === undefined ? '' : `|${challenge.version}`;
+  const canonical = `${challenge.game}|${challenge.channel}|${challenge.seed}|${challenge.score}${version}`;
   const text = `woodgrain-88/challenge/${canonical}`;
   let hash = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
@@ -48,7 +53,7 @@ export function challengeChecksum(challenge: Challenge): string {
   return base36.padStart(6, '0').slice(-6);
 }
 
-/** "#/play/<game>?mode=challenge&ch=<channel>&seed=<seed>&beat=<score>&sig=<checksum>" */
+/** "#/play/<game>?mode=challenge&ch=<channel>&seed=<seed>&beat=<score>[&ver=<version>]&sig=<checksum>" */
 export function encodeChallenge(challenge: Challenge): string {
   const sig = challengeChecksum(challenge);
   const game = encodeURIComponent(challenge.game);
@@ -56,7 +61,8 @@ export function encodeChallenge(challenge: Challenge): string {
   const seed = encodeURIComponent(String(challenge.seed));
   const beat = encodeURIComponent(String(challenge.score));
   const encodedSig = encodeURIComponent(sig);
-  return `#/play/${game}?mode=challenge&ch=${ch}&seed=${seed}&beat=${beat}&sig=${encodedSig}`;
+  const ver = challenge.version === undefined ? '' : `&ver=${encodeURIComponent(challenge.version)}`;
+  return `#/play/${game}?mode=challenge&ch=${ch}&seed=${seed}&beat=${beat}${ver}&sig=${encodedSig}`;
 }
 
 function decodePathSegment(segment: string): string | null {
@@ -103,13 +109,16 @@ export function decodeChallenge(hash: string): Challenge | null {
   if (!Number.isInteger(seed) || seed < 0 || seed > MAX_UINT32) return null;
   if (!Number.isFinite(score) || score < -MAX_ABS_SCORE || score > MAX_ABS_SCORE) return null;
 
-  const challenge: Challenge = { game, channel, seed, score };
+  const version = params.get('ver');
+  if (version !== null && !KEBAB_ID_RE.test(version)) return null;
+
+  const challenge: Challenge = { game, channel, seed, score, ...(version === null ? {} : { version }) };
   if (sig !== challengeChecksum(challenge)) return null;
   return challenge;
 }
 
 export interface ShareCardInput {
-  /** The game's title, e.g. "Paint Tanks". */
+  /** The game's title, e.g. "Tank Duel". */
   title: string;
   /** e.g. "Daily #12" or "Channel: Ricochet Alley". */
   subtitle: string;
@@ -214,6 +223,9 @@ export async function copyText(text: string): Promise<boolean> {
   }
 }
 
+/** Long enough for any browser to have read the blob into its download. */
+export const BLOB_URL_LIFETIME_MS = 60_000;
+
 /** Offers text as a file download through a temporary object URL. */
 export function downloadText(fileName: string, text: string, mimeType: string): void {
   const blob = new Blob([text], { type: mimeType });
@@ -224,5 +236,7 @@ export function downloadText(fileName: string, text: string, mimeType: string): 
   document.body.appendChild(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  // The download reads the blob after this task ends; revoking at once can
+  // leave the browser with nothing to save.
+  setTimeout(() => URL.revokeObjectURL(url), BLOB_URL_LIFETIME_MS);
 }

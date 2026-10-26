@@ -1,15 +1,15 @@
 /**
- * Skyline Gallery, slot 18: registered as coming soon. Its own prompt replaces
- * this placeholder with the real manifest in games/skyline-gallery/.
+ * Shore Battery, slot 18: registered as coming soon. Its own prompt replaces
+ * this placeholder with the real manifest in games/shore-battery/.
  */
 import type { GameManifest } from '@woodgrain-88/kit';
 
 export const manifest: GameManifest = {
-  id: 'skyline-gallery',
+  id: 'shore-battery',
   slot: 18,
-  title: "Skyline Gallery",
-  tagline: "A harbour fair of balloons, kites and toy boats.",
-  teaser: "Pop the balloons, clip the kites, splash the toy boats bobbing in the harbour. Two stalls side by side, one prize for the sharper eye.",
+  title: "Shore Battery",
+  tagline: "Planes overhead, ships below, two gunners racing for the score.",
+  teaser: "Two gun batteries on the shore, bombers crossing overhead and ships steaming past below. Lead your shots, time each shell and outscore the gunner beside you.",
   family: 'arcade',
   players: '1–2P',
   versus: 'local+bot',
@@ -17,17 +17,17 @@ export const manifest: GameManifest = {
   status: 'coming-soon',
   scoreOrder: 'higher',
   accent: { day: '#5a2bc0', night: '#c9a8ff' },
-  emblem: "M12 3a5 6 0 1 0 0 12 5 6 0 1 0 0-12M12 15l-1 2h2l-1 2v2",
+  emblem: "M3.5 8.5h11.5l3.5-1.5M9.5 8.5 7 12.5h2l3-4M5 8.5 3.5 5h1.8l2.2 3.5M14 17.5l2.5-5M3 20q2.25-2.5 4.5 0t4.5 0 4.5 0 4.5 0",
   label: {
-    pattern: 'dots',
-    paper: '#ffd6e5',
-    ink: '#ff8fab',
-    band: '#3a0ca3',
-    bandText: '#ffffff',
+    pattern: "waves",
+    paper: "#d3e6f1",
+    ink: "#93bdd6",
+    band: "#14213d",
+    bandText: "#ffffff",
   },
   inspiredBy: {
     originalTitle: "Air-Sea Battle",
-    uiTitle: "the shooting gallery",
+    uiTitle: "the air and sea gunnery game",
     publisher: "Atari",
     year: null,
     cartridgeSlots: [18],

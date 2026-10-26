@@ -8,7 +8,7 @@
  */
 import { FAMILIES, type Family, type GameEntry, type GameManifest } from '@woodgrain-88/kit';
 import { manifest as baseline } from './coming-soon/baseline.ts';
-import { manifest as bigTopSplash } from './coming-soon/big-top-splash.ts';
+import { manifest as bigTopCannon } from './coming-soon/big-top-cannon.ts';
 import { manifest as bumperChase } from './coming-soon/bumper-chase.ts';
 import { manifest as chalkTalk } from './coming-soon/chalk-talk.ts';
 import { manifest as crownJump } from './coming-soon/crown-jump.ts';
@@ -22,16 +22,16 @@ import { manifest as hoverBlast } from './coming-soon/hover-blast.ts';
 import { manifest as laneHopper } from './coming-soon/lane-hopper.ts';
 import { manifest as laneTen } from './coming-soon/lane-ten.ts';
 import { manifest as lassoRun } from './coming-soon/lasso-run.ts';
-import { manifest as paintTanks } from './coming-soon/paint-tanks.ts';
+import { manifest as tankDuel } from './coming-soon/tank-duel.ts';
 import { manifest as pierDerby } from './coming-soon/pier-derby.ts';
 import { manifest as pocketLinks } from './coming-soon/pocket-links.ts';
 import { manifest as puttParlor } from './coming-soon/putt-parlor.ts';
 import { manifest as quadCube } from './coming-soon/quad-cube.ts';
-import { manifest as quickdrawSplash } from './coming-soon/quickdraw-splash.ts';
-import { manifest as reelPuzzle } from './coming-soon/reel-puzzle.ts';
+import { manifest as quickdraw } from './coming-soon/quickdraw.ts';
+import { manifest as luckyReels } from './coming-soon/lucky-reels.ts';
 import { manifest as sandlotSlugger } from './coming-soon/sandlot-slugger.ts';
 import { manifest as saucerPatrol } from './coming-soon/saucer-patrol.ts';
-import { manifest as skylineGallery } from './coming-soon/skyline-gallery.ts';
+import { manifest as shoreBattery } from './coming-soon/shore-battery.ts';
 import { manifest as slalomLine } from './coming-soon/slalom-line.ts';
 import { manifest as sumRush } from './coming-soon/sum-rush.ts';
 import { manifest as swarmGarden } from './coming-soon/swarm-garden.ts';
@@ -39,7 +39,7 @@ import { manifest as tableTwentyone } from './coming-soon/table-21.ts';
 import { manifest as trailblaze } from './coming-soon/trailblaze.ts';
 
 export const BASE_ENTRIES: readonly GameEntry[] = [
-  { manifest: baseline }, { manifest: bigTopSplash }, { manifest: bumperChase }, { manifest: chalkTalk }, { manifest: crownJump }, { manifest: discDuel }, { manifest: dropZone }, { manifest: gloveBox }, { manifest: gravityDuel }, { manifest: hoopDuel }, { manifest: hotAndCold }, { manifest: hoverBlast }, { manifest: laneHopper }, { manifest: laneTen }, { manifest: lassoRun }, { manifest: paintTanks }, { manifest: pierDerby }, { manifest: pocketLinks }, { manifest: puttParlor }, { manifest: quadCube }, { manifest: quickdrawSplash }, { manifest: reelPuzzle }, { manifest: sandlotSlugger }, { manifest: saucerPatrol }, { manifest: skylineGallery }, { manifest: slalomLine }, { manifest: sumRush }, { manifest: swarmGarden }, { manifest: tableTwentyone }, { manifest: trailblaze },
+  { manifest: baseline }, { manifest: bigTopCannon }, { manifest: bumperChase }, { manifest: chalkTalk }, { manifest: crownJump }, { manifest: discDuel }, { manifest: dropZone }, { manifest: gloveBox }, { manifest: gravityDuel }, { manifest: hoopDuel }, { manifest: hotAndCold }, { manifest: hoverBlast }, { manifest: laneHopper }, { manifest: laneTen }, { manifest: lassoRun }, { manifest: tankDuel }, { manifest: pierDerby }, { manifest: pocketLinks }, { manifest: puttParlor }, { manifest: quadCube }, { manifest: quickdraw }, { manifest: luckyReels }, { manifest: sandlotSlugger }, { manifest: saucerPatrol }, { manifest: shoreBattery }, { manifest: slalomLine }, { manifest: sumRush }, { manifest: swarmGarden }, { manifest: tableTwentyone }, { manifest: trailblaze },
 ];
 
 export interface Registry {

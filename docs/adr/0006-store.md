@@ -15,7 +15,7 @@ storage, and be portable without a server.
 - **One door.** Only `packages/kit/src/store/` touches `localStorage`; `pnpm check` fails any other
   use in shipped code. The before-paint appearance script lives there too for the same reason.
 - **Repositories** over one adapter: `profile`, `settings`, `progress` (patches, channel unlocks,
-  secrets found), `records` (top ten per game, channel and mode), `stats`, `saves` (one versioned
+  cartridge versions finished; schema v2 since prompt 00a), `records` (top ten per game, channel and mode), `stats`, `saves` (one versioned
   slot per game), `event-log` (session summaries, newest 200). Each is one JSON document under
   `wg88:<name>` wrapped as `{ "v": version, "data": … }`.
 - **Read path**: parse → upgrade through `MIGRATIONS` one version at a time → `sanitize` into the

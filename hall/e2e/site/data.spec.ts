@@ -6,12 +6,12 @@ import { collectErrors, skipIntro } from '../helpers.ts';
 
 test.describe('Settings save data transfer', () => {
   test('exports JSON save file and imports it in a fresh context', async ({ page }) => {
-    // Two full Hall pages, each with its own picture tube, share the machine
-    // with the other workers.
+    // Two browsers in one test, so give it room; both work from the About
+    // page, where no picture tube competes with the other workers for the CPU.
     test.slow();
     const errors = collectErrors(page);
     await skipIntro(page);
-    await page.goto('/');
+    await page.goto('/#/about');
 
     await page.locator('.topbar button[data-action="settings"]').click();
     await expect(page.locator('.dialog--settings')).toBeVisible();
@@ -33,7 +33,7 @@ test.describe('Settings save data transfer', () => {
     const freshErrors = collectErrors(freshPage);
 
     await skipIntro(freshPage);
-    await freshPage.goto('/');
+    await freshPage.goto('/#/about');
 
     await freshPage.locator('.topbar button[data-action="settings"]').click();
     await expect(freshPage.locator('.dialog--settings')).toBeVisible();

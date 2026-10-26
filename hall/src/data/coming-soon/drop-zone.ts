@@ -9,7 +9,7 @@ export const manifest: GameManifest = {
   slot: 25,
   title: "Drop Zone",
   tagline: "Read the wind and land on the moving target.",
-  teaser: "Jump, fall, open the chute at the last good moment, and steer onto the target. Land it for the crowd; miss and you drop into a soft hay bale.",
+  teaser: "Jump, fall, open the chute at the last good moment, and steer onto the target. Land it for the crowd; miss and it is a crash landing.",
   family: 'arcade',
   players: '1–2P',
   versus: 'local+bot',

@@ -22,6 +22,6 @@ _Fresh features such as channels, micro-challenges, rival bots, and patch object
 
 _Obsolete conventions, hardware-limitation workarounds, dead time, and unfair failure states._
 
-## All-ages reframes
+## Presentation
 
-_Visual and thematic shifts replacing violence or cruelty with gentle, playful competition._
+_How the original's theme is shown today: arcade-style effects for hits, explosions and crashes, no gore; play money only for chips and credits._

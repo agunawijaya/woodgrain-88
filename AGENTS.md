@@ -19,8 +19,11 @@ These rules apply to every lead (Claude Code) and every crew member (Gemini thro
    default System; react live to changes.
 5. **Accessible, web first.** Full keyboard play, `:focus-visible` for keyboard users, reduced
    motion honoured, AA contrast, gamepads for couch versus, small screens not broken.
-6. **Players first.** No gambling mechanics, no pressure or guilt copy, streaks forgive, all ages:
-   paint, water pistols and soft landings.
+6. **Faithful to the originals.** Each game keeps its real theme and mechanics: tanks and planes
+   fire and explode, gunfighters carry six-shooters, boxers go for the knockout, crashes are
+   crashes, Blackjack has chips and bets, the slot machine has credits. Chips and credits are play
+   money inside the game; no real money, nothing for sale, no ads. Arcade presentation, no gore.
+   No pressure or guilt copy to pull players back, and streaks forgive.
 7. **Local first.** Only `packages/kit/src/store/` touches browser storage.
 8. **Humanized code.** Intention-revealing names, small functions, comments that explain why, no
    dead or commented-out code, TypeScript strict, ESLint and Prettier clean.

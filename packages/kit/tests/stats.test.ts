@@ -12,7 +12,7 @@ describe('stats book', () => {
     const repo = memoryRepo<StatsData>({ games: {} });
     const book = createStatsBook(repo, () => new Date('2026-10-25T12:00:00.000Z'));
 
-    expect(book.game('paint-tanks')).toEqual({
+    expect(book.game('tank-duel')).toEqual({
       plays: 0,
       best: null,
       timePlayedMs: 0,
@@ -33,7 +33,7 @@ describe('stats book', () => {
     const repo = memoryRepo<StatsData>({ games: {} });
     const book = createStatsBook(repo, () => clock);
 
-    const first = book.recordPlay('paint-tanks', {
+    const first = book.recordPlay('tank-duel', {
       durationMs: 45_000,
       score: 120,
       order: 'higher',
@@ -47,21 +47,21 @@ describe('stats book', () => {
     });
 
     clock = new Date('2026-10-25T11:00:00.000Z');
-    book.recordPlay('paint-tanks', {
+    book.recordPlay('tank-duel', {
       durationMs: -500,
       score: 90,
       order: 'higher',
       versusWinner: 1,
     });
     clock = new Date('2026-10-25T12:00:00.000Z');
-    book.recordPlay('paint-tanks', {
+    book.recordPlay('tank-duel', {
       durationMs: Number.NaN,
       score: 180,
       order: 'higher',
       versusWinner: 2,
     });
     clock = new Date('2026-10-25T13:00:00.000Z');
-    const afterFour = book.recordPlay('paint-tanks', {
+    const afterFour = book.recordPlay('tank-duel', {
       durationMs: Number.POSITIVE_INFINITY,
       order: 'higher',
       versusWinner: 1,
@@ -101,14 +101,14 @@ describe('stats book', () => {
     const book = createStatsBook(repo, () => clock);
 
     // Game 1: two plays, one versus win for seat 1.
-    book.recordPlay('paint-tanks', {
+    book.recordPlay('tank-duel', {
       durationMs: 30_000,
       score: 10,
       order: 'higher',
       versusWinner: 1,
     });
     clock = new Date('2026-10-25T10:00:00.000Z');
-    book.recordPlay('paint-tanks', {
+    book.recordPlay('tank-duel', {
       durationMs: 40_000,
       score: 15,
       order: 'higher',

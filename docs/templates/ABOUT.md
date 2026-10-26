@@ -16,7 +16,7 @@ _Bullet points highlighting modern gameplay enhancements, quality-of-life additi
 
 ## Who it is for
 
-_Target audience notes covering solo play, couch versus, and accessible skill curves for all ages._
+_Who will love it: solo play, couch versus, and how the skill curve welcomes newcomers and rewards experts._
 
 ## Light and dark
 

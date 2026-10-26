@@ -46,14 +46,16 @@ flowchart TB
 | `share.ts`               | Tamper-evident challenge links in the hash; SVG share cards; copy and download                                                            |
 | `color.ts`               | Parsing, mixing, WCAG contrast, `ensureContrast`                                                                                          |
 | `profile.ts`             | Display name rules, avatar descriptor                                                                                                     |
+| `versions.ts`            | Cartridge versions of a merged game: `VERSION_SETTING`, `defaultVersion`, `alternateVersions`, `findVersion`, `resolveVersion`            |
 
 ## The Hall's data layer (`hall/src/data`)
 
 - `coming-soon/<id>.ts`: thirty manifests, one file each. A game's own prompt moves its manifest to
   `games/<id>/` and gives `BASE_ENTRIES` a `load` function.
 - `registry.ts`: `BASE_ENTRIES`, `createRegistry(overrides)` (the harness swaps the fake game into
-  slot 20), `wallRows`, `FAMILY_NAMES`.
-- `cycle.ts`: the 32 Counter places, `nextSlot` with wrap-around, the two locked secret slots.
+  slot 11, so its second version owns Counter place 31), `wallRows`, `FAMILY_NAMES`.
+- `cycle.ts`: the 32 Counter places (`counterPlaces`: games 1–30 in their default versions, 31 and
+  32 the merged games' other versions), `placeFinished` for the lamps, `nextSlot` with wrap-around.
 
 ## The Den's scene graph and anchors (`hall/src/den`)
 
@@ -61,17 +63,17 @@ The room is one SVG on a 1600×900 core (`geometry.ts` holds every position), dr
 `tv.ts`, `console.ts`, `wall.ts`, `label.ts`, `lighting.ts` and assembled in `scene.ts`.
 `den-view.ts` lays it out, puts the CRT over the screen and runs the moments.
 
-| Anchor                   | Selector                                         | Used by                                             |
-| ------------------------ | ------------------------------------------------ | --------------------------------------------------- |
-| TV                       | `[data-ref="tv"]`                                | details                                             |
-| POWER / RESET levers     | `[data-ref="power"]`, `[data-ref="reset"]`       | the power switch                                    |
-| Difficulty switches      | `[data-ref="switch-1"]`, `[data-ref="switch-2"]` | prompt 01: the Pro switch                           |
-| Counter digits and lamps | `[data-ref="counter-digit-0                      | 1"]`, `[data-ref="counter-lamps"] .lamp[data-slot]` | prompt 01: patches light lamps |
-| Wall cartridges          | `.cartridge[data-game][data-slot]`               | tuning, details                                     |
-| Calendar                 | `[data-ref="calendar"]`, `calendar-month         | day                                                 | daily` text                    | prompt 01: streaks |
-| Jacket                   | `[data-ref="jacket"]` with `.patch-places`       | prompt 01: the jacket                               |
-| Pads                     | `[data-ref="pads"]`                              | prompt 01: Versus Night                             |
-| Focus indicator          | `[data-ref="focus-indicator"]`                   | keyboard focus above the night layer                |
+| Anchor                   | Selector                                                                                                                                          | Used by                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| TV                       | `[data-ref="tv"]`                                                                                                                                 | details                                                                    |
+| POWER / RESET levers     | `[data-ref="power"]`, `[data-ref="reset"]`                                                                                                        | the power switch                                                           |
+| Difficulty switches      | `[data-ref="switch-1"]`, `[data-ref="switch-2"]`                                                                                                  | prompt 01: the Pro switch                                                  |
+| Counter digits and lamps | `[data-ref="counter-digit-0"]`, `[data-ref="counter-digit-1"]`, `[data-ref="counter-lamps"] .lamp[data-slot]`, hover cells `.lamp-hit[data-slot]` | prompt 01: patches light lamps; 31 and 32 are the other cartridge versions |
+| Wall cartridges          | `.cartridge[data-game][data-slot]`                                                                                                                | tuning, details                                                            |
+| Calendar                 | `[data-ref="calendar"]`; texts `calendar-month`, `calendar-day`, `calendar-daily`                                                                 | prompt 01: streaks                                                         |
+| Jacket                   | `[data-ref="jacket"]` with `.patch-places`                                                                                                        | prompt 01: the jacket                                                      |
+| Pads                     | `[data-ref="pads"]`                                                                                                                               | prompt 01: Versus Night                                                    |
+| Focus indicator          | `[data-ref="focus-indicator"]`                                                                                                                    | keyboard focus above the night layer                                       |
 
 ```mermaid
 stateDiagram-v2
@@ -101,7 +103,7 @@ sequenceDiagram
     participant B as EventBus
     participant P as PatchTracker
     participant S as Store
-    G->>C: emit({ type: 'splat', data })
+    G->>C: emit({ type: 'hit', data })
     C->>B: emit (stamped with game, mode, channel, time)
     B-->>P: deliver (microtask)
     P->>S: progress.update

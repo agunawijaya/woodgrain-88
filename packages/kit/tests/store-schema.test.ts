@@ -273,7 +273,7 @@ describe('sanitize', () => {
             },
             channels: { main: { unlockedAt: '2026-10-25T12:00:00.000Z' } },
             firstPlayedAt: null,
-            secretsFound: { retro: '2026-10-25T12:00:00.000Z' },
+            versionsFinished: { rabbit: '2026-10-25T12:00:00.000Z' },
           },
         },
       },
@@ -301,6 +301,60 @@ describe('upgrade', () => {
       displayName: 'Robin',
       avatar: { hue: 28, shape: 'round', pattern: 'plain' },
       createdAt: '2026-10-25T12:00:00.000Z',
+    });
+  });
+
+  it('upgrades progress v1 to v2 dropping secretsFound and sanitises v2 dropping non-string or empty versionsFinished times', () => {
+    const ctx = makeContext();
+    const v1Data = {
+      games: {
+        'tank-duel': {
+          secretsFound: { secret1: '2026-10-25T12:00:00.000Z' },
+          patches: {},
+          channels: {},
+          firstPlayedAt: '2026-10-25T12:00:00.000Z',
+        },
+      },
+    };
+
+    const upgraded = upgrade('progress', { v: 1, data: v1Data }, ctx);
+    expect(upgraded).toEqual({
+      games: {
+        'tank-duel': {
+          patches: {},
+          channels: {},
+          firstPlayedAt: '2026-10-25T12:00:00.000Z',
+          versionsFinished: {},
+        },
+      },
+    });
+    const tankGame = upgraded?.games['tank-duel'];
+    expect(tankGame && 'secretsFound' in tankGame).toBe(false);
+
+    // Sanitising v2 data drops non-string or empty versionsFinished times
+    const sanitized = sanitize(
+      'progress',
+      {
+        games: {
+          'lane-hopper': {
+            patches: {},
+            channels: {},
+            firstPlayedAt: null,
+            versionsFinished: {
+              valid: ' 2026-10-25T12:00:00.000Z ',
+              empty: '   ',
+              num: 12345,
+              bool: true,
+              obj: {},
+            },
+          },
+        },
+      },
+      ctx,
+    );
+
+    expect(sanitized?.games['lane-hopper']?.versionsFinished).toEqual({
+      valid: '2026-10-25T12:00:00.000Z',
     });
   });
 });

@@ -4,11 +4,11 @@
  * Seat 2; prompt 01 turns them into the Pro switch), the cartridge in its slot
  * wearing the current game's label, and The Counter: two flip digits showing
  * the slot (01–32) above 32 lamps, the last two shaped differently because
- * they belong to the hidden reskins.
+ * they stand for the merged games' other cartridge versions.
  *
  * Moving parts are groups with data-ref attributes; den-view.ts animates them.
  */
-import { COUNTER_SLOTS, isSecretSlot } from '../data/cycle.ts';
+import { COUNTER_SLOTS, isVersionPlace } from '../data/cycle.ts';
 import { LAYOUT } from './geometry.ts';
 import { LABEL_SIZE } from './label.ts';
 import { n, roundedRectPath, woodgrainPath } from './svg.ts';
@@ -143,9 +143,11 @@ function counter(): string {
     const col = (slot - 1) % 16;
     const lx = lampsLeft + col * lampPitch;
     const ly = c.y + 94 + row * 9;
-    lamps += isSecretSlot(slot)
-      ? `<path class="lamp lamp--secret" data-slot="${slot}" d="M${n(lx)} ${ly - 2.8}l2.8 2.8l-2.8 2.8l-2.8 -2.8Z"/>`
+    lamps += isVersionPlace(slot)
+      ? `<path class="lamp lamp--version" data-slot="${slot}" d="M${n(lx)} ${ly - 2.8}l2.8 2.8l-2.8 2.8l-2.8 -2.8Z"/>`
       : `<circle class="lamp" data-slot="${slot}" cx="${n(lx)}" cy="${ly}" r="2.2"/>`;
+    // The lamps are tiny; an unpainted cell around each makes it easy to hover.
+    lamps += `<rect class="lamp-hit" data-slot="${slot}" x="${n(lx - lampPitch / 2)}" y="${ly - 4.5}" width="${lampPitch}" height="9" fill="transparent"/>`;
   }
   const digitsLeft = c.x + (c.width - 64) / 2;
   const bodyHeight = c.height - 8;
@@ -166,7 +168,7 @@ function counter(): string {
     `<path d="${roundedRectPath(digitsLeft - 8, c.y + 26, 80, 56, 5)}" fill="#0f0d0c" stroke="url(#den-chrome)" stroke-width="2"/>` +
     flipDigit(0, digitsLeft, c.y + 32) +
     flipDigit(1, digitsLeft + 34, c.y + 32) +
-    // The 32 lamps, 31 and 32 shaped for the hidden reskins.
+    // The 32 lamps, 31 and 32 shaped for the other cartridge versions.
     `<rect x="${c.x + 6}" y="${c.y + 86}" width="${c.width - 12}" height="26" rx="4" fill="#0f0d0c"/>` +
     `<g data-ref="counter-lamps">${lamps}</g>` +
     `</g>`

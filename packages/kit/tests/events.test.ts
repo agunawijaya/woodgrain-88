@@ -39,19 +39,19 @@ describe('createEventBus', () => {
       received.push(event);
     });
 
-    bus.beginSession({ game: 'paint-tanks', mode: 'normal', channel: 'open-field' });
+    bus.beginSession({ game: 'tank-duel', mode: 'normal', channel: 'open-field' });
     expect(bus.session).toEqual({
-      game: 'paint-tanks',
+      game: 'tank-duel',
       mode: 'normal',
       channel: 'open-field',
       startedAt: '2026-10-25T18:00:00.000Z',
     });
 
     clock.advance(1500);
-    bus.emit({ type: 'splat', data: { distance: 40, label: 'far' } });
+    bus.emit({ type: 'hit', data: { distance: 40, label: 'far' } });
 
     clock.advance(2000);
-    bus.emit({ type: 'splat', data: { distance: 95, label: 'direct' } });
+    bus.emit({ type: 'hit', data: { distance: 95, label: 'direct' } });
 
     clock.advance(1500);
     const summary = bus.endSession();
@@ -61,15 +61,15 @@ describe('createEventBus', () => {
 
     expect(received.map((e) => ({ type: e.type, seq: e.seq }))).toEqual([
       { type: 'session-start', seq: 1 },
-      { type: 'splat', seq: 2 },
-      { type: 'splat', seq: 3 },
+      { type: 'hit', seq: 2 },
+      { type: 'hit', seq: 3 },
       { type: 'session-end', seq: 4 },
     ]);
 
     expect(received[1]).toEqual({
-      type: 'splat',
+      type: 'hit',
       data: { distance: 40, label: 'far' },
-      game: 'paint-tanks',
+      game: 'tank-duel',
       mode: 'normal',
       channel: 'open-field',
       at: '2026-10-25T18:00:01.500Z',
@@ -77,7 +77,7 @@ describe('createEventBus', () => {
     });
 
     expect(summary).toEqual({
-      game: 'paint-tanks',
+      game: 'tank-duel',
       mode: 'normal',
       channel: 'open-field',
       startedAt: '2026-10-25T18:00:00.000Z',
@@ -85,11 +85,11 @@ describe('createEventBus', () => {
       durationMs: 5000,
       counts: {
         'session-start': 1,
-        splat: 2,
+        hit: 2,
         'session-end': 1,
       },
       maxima: {
-        'splat.distance': 95,
+        'hit.distance': 95,
         'session-end.durationMs': 5000,
       },
     });
@@ -165,8 +165,8 @@ describe('createEventBus', () => {
       received.push(event);
     });
 
-    bus.emit({ type: 'splat' });
-    bus.emit({ type: 'splat' });
+    bus.emit({ type: 'hit' });
+    bus.emit({ type: 'hit' });
 
     expect(warnSpy).toHaveBeenCalledTimes(2);
     expect(received).toHaveLength(0);
@@ -284,8 +284,8 @@ describe('createEventBus', () => {
 describe('validateEvent and validateEventSchemas', () => {
   const schemas: readonly GameEventSchema[] = [
     {
-      type: 'splat',
-      description: 'A paint shell hit an opponent tank.',
+      type: 'hit',
+      description: 'A shell hit an opponent tank.',
       fields: { distance: 'number', ricochet: 'boolean', tag: 'string' },
     },
     {
@@ -295,7 +295,7 @@ describe('validateEvent and validateEventSchemas', () => {
   ];
 
   it('accepts valid events and flags unknown, kit-reserved, extra-field, and wrong-type events', () => {
-    const valid = { type: 'splat', data: { distance: 25, ricochet: true, tag: 'bank' } };
+    const valid = { type: 'hit', data: { distance: 25, ricochet: true, tag: 'bank' } };
     expect(validateEvent(valid, schemas)).toEqual([]);
     expect(validateEvent({ type: 'round-won' }, schemas)).toEqual([]);
 
@@ -303,9 +303,9 @@ describe('validateEvent and validateEventSchemas', () => {
     expect(validateEvent({ type: 'session-start' }, schemas).length).toBeGreaterThan(0);
     expect(validateEvent({ type: 'result' }, schemas).length).toBeGreaterThan(0);
 
-    const extraField = validateEvent({ type: 'splat', data: { undeclared: 1 } }, schemas);
-    const wrongType = validateEvent({ type: 'splat', data: { distance: 'far' } }, schemas);
-    const nanNumber = validateEvent({ type: 'splat', data: { distance: Number.NaN } }, schemas);
+    const extraField = validateEvent({ type: 'hit', data: { undeclared: 1 } }, schemas);
+    const wrongType = validateEvent({ type: 'hit', data: { distance: 'far' } }, schemas);
+    const nanNumber = validateEvent({ type: 'hit', data: { distance: Number.NaN } }, schemas);
     expect(extraField.length).toBeGreaterThan(0);
     expect(wrongType.length).toBeGreaterThan(0);
     expect(nanNumber.length).toBeGreaterThan(0);
@@ -315,8 +315,8 @@ describe('validateEvent and validateEventSchemas', () => {
     expect(validateEventSchemas(schemas)).toEqual([]);
 
     const badSchemas: readonly GameEventSchema[] = [
-      { type: 'splat', description: 'First declaration.' },
-      { type: 'splat', description: 'Duplicate declaration.' },
+      { type: 'hit', description: 'First declaration.' },
+      { type: 'hit', description: 'Duplicate declaration.' },
       { type: 'session-end', description: 'Reserved kit type.' },
       { type: 'Bad_Type', description: 'Not kebab-case.' },
       { type: 'empty-desc', description: '   ' },

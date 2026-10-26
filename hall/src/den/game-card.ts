@@ -2,25 +2,26 @@
  * The card beside the TV for whatever is on: the game's emblem and title, its
  * tagline, who it is for (with a "Couch versus" badge where two people can
  * play), your best and your patches, and the two ways in, Play and Details.
- * On the locked channels 31 and 32 it shows the hidden reskin's hint instead.
+ * For a merged game it names the cartridge version the channel plays, and
+ * both ways in open that version.
  */
 import type { GameManifest } from '@woodgrain-88/kit';
 import type { Services } from '../app/services.ts';
-import { counterDigits } from '../data/cycle.ts';
+import { counterDigits, type CounterPlace } from '../data/cycle.ts';
 import { FAMILY_NAMES } from '../data/registry.ts';
 import { escapeXml } from './svg.ts';
 
 export interface GameCard {
   readonly element: HTMLElement;
-  show(manifest: GameManifest | null, slot: number): void;
+  show(place: CounterPlace): void;
   focusPrimary(): void;
   dispose(): void;
 }
 
 export interface GameCardOptions {
   services: Services;
-  onPlay(id: string): void;
-  onDetails(id: string): void;
+  onPlay(id: string, version?: string): void;
+  onDetails(id: string, version?: string): void;
 }
 
 function playersText(manifest: GameManifest): string {
@@ -43,28 +44,17 @@ export function createGameCard(options: GameCardOptions): GameCard {
   const element = document.createElement('article');
   element.className = 'game-card';
   element.setAttribute('aria-live', 'polite');
-  let currentId: string | null = null;
+  let current: CounterPlace | null = null;
 
   element.addEventListener('click', (event) => {
     const button = (event.target as Element).closest<HTMLButtonElement>('button[data-action]');
-    if (!button || !currentId || button.getAttribute('aria-disabled') === 'true') return;
-    if (button.dataset.action === 'play') options.onPlay(currentId);
-    if (button.dataset.action === 'details') options.onDetails(currentId);
+    if (!button || !current || button.getAttribute('aria-disabled') === 'true') return;
+    const { manifest, version } = current;
+    if (button.dataset.action === 'play') options.onPlay(manifest.id, version?.id);
+    if (button.dataset.action === 'details') options.onDetails(manifest.id, version?.id);
   });
 
-  const renderLocked = (slot: number) => {
-    const secret = options.services.registry.manifests
-      .flatMap((m) => m.secrets ?? [])
-      .find((s) => s.counterSlot === slot);
-    element.style.removeProperty('--card-accent');
-    element.innerHTML =
-      `<p class="game-card-kicker">CH ${counterDigits(slot)} · Hidden</p>` +
-      `<h2 class="game-card-title">Something's on this channel</h2>` +
-      `<p class="game-card-tagline">${escapeXml(secret?.hint ?? 'Nobody has tuned it in yet.')}</p>` +
-      `<p class="game-card-note">Find it inside one of the games and this lamp on the Counter lights up.</p>`;
-  };
-
-  const renderGame = (manifest: GameManifest) => {
+  const renderGame = ({ slot, manifest, version }: CounterPlace) => {
     const { services } = options;
     const best = services.records.bestOverall(manifest.id, manifest.scoreOrder);
     const patches = services.patches.status(manifest.id);
@@ -75,7 +65,7 @@ export function createGameCard(options: GameCardOptions): GameCard {
     element.style.setProperty('--card-accent-night', manifest.accent.night);
     element.innerHTML =
       `<div class="game-card-head">${emblemBadge(manifest)}<div>` +
-      `<p class="game-card-kicker">CH ${counterDigits(manifest.slot)} · ${FAMILY_NAMES[manifest.family]}</p>` +
+      `<p class="game-card-kicker">CH ${counterDigits(slot)} · ${FAMILY_NAMES[manifest.family]}${version ? ` · ${escapeXml(version.label)} version` : ''}</p>` +
       `<h2 class="game-card-title">${escapeXml(manifest.title)}</h2></div></div>` +
       `<p class="game-card-tagline">${escapeXml(manifest.tagline)}</p>` +
       `<ul class="game-card-facts">` +
@@ -97,13 +87,12 @@ export function createGameCard(options: GameCardOptions): GameCard {
 
   return {
     element,
-    show(manifest, slot) {
-      currentId = manifest?.id ?? null;
+    show(place) {
+      current = place;
       element.classList.remove('is-arriving');
       void element.getBoundingClientRect();
       element.classList.add('is-arriving');
-      if (manifest) renderGame(manifest);
-      else renderLocked(slot);
+      renderGame(place);
     },
     focusPrimary() {
       const target =

@@ -7,6 +7,7 @@ import {
   challengeChecksum,
   copyText,
   decodeChallenge,
+  BLOB_URL_LIFETIME_MS,
   downloadText,
   encodeChallenge,
   renderShareCard,
@@ -15,7 +16,7 @@ import {
 
 describe('challengeChecksum, encodeChallenge and decodeChallenge', () => {
   const sample: Challenge = {
-    game: 'paint-tanks',
+    game: 'tank-duel',
     channel: 'ricochet-alley',
     seed: 28491032,
     score: 14,
@@ -34,7 +35,7 @@ describe('challengeChecksum, encodeChallenge and decodeChallenge', () => {
     const encoded = encodeChallenge(sample);
     const sig = challengeChecksum(sample);
     expect(encoded).toBe(
-      `#/play/paint-tanks?mode=challenge&ch=ricochet-alley&seed=28491032&beat=14&sig=${sig}`,
+      `#/play/tank-duel?mode=challenge&ch=ricochet-alley&seed=28491032&beat=14&sig=${sig}`,
     );
     expect(decodeChallenge(encoded)).toEqual(sample);
     expect(decodeChallenge(encoded.slice(1))).toEqual(sample);
@@ -53,7 +54,7 @@ describe('challengeChecksum, encodeChallenge and decodeChallenge', () => {
 
   it('returns null when score, seed, parameters, ids or path are invalid or tampered', () => {
     const sig = challengeChecksum(sample);
-    const base = '#/play/paint-tanks?mode=challenge&ch=ricochet-alley';
+    const base = '#/play/tank-duel?mode=challenge&ch=ricochet-alley';
     expect(decodeChallenge(`${base}&seed=28491032&beat=15&sig=${sig}`)).toBeNull();
     expect(decodeChallenge(`${base}&seed=28491033&beat=14&sig=${sig}`)).toBeNull();
     expect(decodeChallenge(`${base}&seed=28491032&beat=14`)).toBeNull();
@@ -64,21 +65,71 @@ describe('challengeChecksum, encodeChallenge and decodeChallenge', () => {
     ).toBeNull();
     expect(
       decodeChallenge(
-        `#/play/paint-tanks?mode=challenge&ch=Ricochet_Alley&seed=28491032&beat=14&sig=${sig}`,
+        `#/play/tank-duel?mode=challenge&ch=Ricochet_Alley&seed=28491032&beat=14&sig=${sig}`,
       ),
     ).toBeNull();
     expect(decodeChallenge(`${base}&seed=4294967296&beat=14&sig=${sig}`)).toBeNull();
     expect(decodeChallenge(`${base}&seed=-1&beat=14&sig=${sig}`)).toBeNull();
     expect(
       decodeChallenge(
-        `#/games/paint-tanks?mode=challenge&ch=ricochet-alley&seed=28491032&beat=14&sig=${sig}`,
+        `#/games/tank-duel?mode=challenge&ch=ricochet-alley&seed=28491032&beat=14&sig=${sig}`,
       ),
     ).toBeNull();
     expect(
       decodeChallenge(
-        `#/play/paint-tanks?mode=daily&ch=ricochet-alley&seed=28491032&beat=14&sig=${sig}`,
+        `#/play/tank-duel?mode=daily&ch=ricochet-alley&seed=28491032&beat=14&sig=${sig}`,
       ),
     ).toBeNull();
+  });
+
+  it('encodes and decodes a challenge with a version, fails when ver is modified, and preserves legacy checksum without a version', () => {
+    const versioned: Challenge = {
+      game: 'lane-hopper',
+      channel: 'classic',
+      seed: 12345,
+      score: 10,
+      version: 'rabbit',
+    };
+
+    const encoded = encodeChallenge(versioned);
+    expect(encoded).toContain('&ver=rabbit');
+    expect(encoded).toBe(
+      `#/play/lane-hopper?mode=challenge&ch=classic&seed=12345&beat=10&ver=rabbit&sig=${challengeChecksum(versioned)}`,
+    );
+
+    const decoded = decodeChallenge(encoded);
+    expect(decoded).toEqual(versioned);
+
+    // Changing ver in the link fails verification
+    const tamperedVer = encoded.replace('&ver=rabbit', '&ver=chicken');
+    expect(decodeChallenge(tamperedVer)).toBeNull();
+
+    // A challenge without a version decodes without one
+    const unversioned: Challenge = {
+      game: 'tank-duel',
+      channel: 'ricochet-alley',
+      seed: 28491032,
+      score: 14,
+    };
+    const unversionedEncoded = encodeChallenge(unversioned);
+    expect(unversionedEncoded).not.toContain('&ver=');
+    const unversionedDecoded = decodeChallenge(unversionedEncoded);
+    expect(unversionedDecoded).toEqual(unversioned);
+    expect(unversionedDecoded?.version).toBeUndefined();
+
+    // Link and checksum are exactly what they were before versions existed
+    // (compute expected checksum from canonical text: game|channel|seed|score)
+    const canonicalText = `woodgrain-88/challenge/${unversioned.game}|${unversioned.channel}|${unversioned.seed}|${unversioned.score}`;
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < canonicalText.length; i++) {
+      hash ^= canonicalText.charCodeAt(i);
+      hash = Math.imul(hash, 0x01000193);
+    }
+    const expectedSig = (hash >>> 0).toString(36).padStart(6, '0').slice(-6);
+    expect(challengeChecksum(unversioned)).toBe(expectedSig);
+    expect(unversionedEncoded).toBe(
+      `#/play/tank-duel?mode=challenge&ch=ricochet-alley&seed=28491032&beat=14&sig=${expectedSig}`,
+    );
   });
 });
 
@@ -135,7 +186,8 @@ describe('copyText and downloadText', () => {
     expect(await copyText('hello')).toBe(false);
   });
 
-  it('triggers a temporary anchor download and revokes the object URL', () => {
+  it('triggers a temporary anchor download and revokes the object URL once it has been read', () => {
+    vi.useFakeTimers();
     const createSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
     const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
     const clickSpy = vi
@@ -146,8 +198,11 @@ describe('copyText and downloadText', () => {
 
     expect(createSpy).toHaveBeenCalledTimes(1);
     expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect(revokeSpy).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(BLOB_URL_LIFETIME_MS);
     expect(revokeSpy).toHaveBeenCalledWith('blob:test-url');
 
+    vi.useRealTimers();
     createSpy.mockRestore();
     revokeSpy.mockRestore();
     clickSpy.mockRestore();

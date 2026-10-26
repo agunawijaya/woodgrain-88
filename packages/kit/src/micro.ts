@@ -1,5 +1,5 @@
 /**
- * Micro-challenges: 45-second goals inside a game's channel ("splat three
+ * Micro-challenges: 45-second goals inside a game's channel ("hit three
  * tanks without being hit"), the building blocks of prompt 01's Power Cycle
  * Run. A game that supports them lists them in its module; the kit starts the
  * game with `run.micro` set, counts its events against the goal and decides
@@ -17,7 +17,7 @@ export interface MicroChallengeDef {
   channel: string;
   /** At most 32 characters. */
   title: string;
-  /** The one line shown before and during the challenge, e.g. "Splat 3 tanks". */
+  /** The one line shown before and during the challenge, e.g. "Hit 3 tanks". */
   goal: string;
   /** Default MICRO_DEFAULT_SECONDS. */
   seconds?: number;

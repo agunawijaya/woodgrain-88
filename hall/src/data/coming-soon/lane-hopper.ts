@@ -42,12 +42,18 @@ export const manifest: GameManifest = {
   ],
   supports: { daily: false, challengeLinks: false, proSwitch: false, microChallenges: false },
   events: [],
-  secrets: [
+  versions: [
     {
-      id: 'long-ears',
-      counterSlot: 31,
-      title: 'Long Ears',
-      hint: 'Something with longer ears is said to cross at first light.',
+      id: 'chicken',
+      label: 'Chicken',
+      cartridgeSlot: 19,
+      description: 'A chicken crosses a road marked with solid lane lines.',
+    },
+    {
+      id: 'rabbit',
+      label: 'Rabbit',
+      cartridgeSlot: 11,
+      description: 'A rabbit crosses a road with dashed lane lines and its own colours, with the cars and trucks trading lanes.',
     },
   ],
 };

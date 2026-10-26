@@ -4,13 +4,20 @@
  * a big emblem badge, the title sits on a lower-third band, a channel bug
  * blinks "SOON", and a tiny family-flavoured animation runs in the corner
  * (two dots chasing for duels, cells lighting for brain games, a ball arcing
- * for sports, stars streaming for arcade). Locked counter slots 31 and 32 get
- * a scrambled channel instead.
+ * for sports, stars streaming for arcade). A merged game's slate also says
+ * which cartridge version the channel plays.
  *
  * It implements the same DemoHandle contract as a real game's demo(), so the
  * Den treats both the same way.
  */
-import type { Appearance, DemoContext, DemoHandle, GameManifest } from '@woodgrain-88/kit';
+import {
+  findVersion,
+  type Appearance,
+  type CartridgeVersion,
+  type DemoContext,
+  type DemoHandle,
+  type GameManifest,
+} from '@woodgrain-88/kit';
 import { counterDigits } from '../data/cycle.ts';
 import { LABEL_FIELD, patternLayers } from './label.ts';
 
@@ -24,7 +31,8 @@ function emblemPath(manifest: GameManifest): Path2D {
   return new Path2D(manifest.label.motif ?? manifest.emblem);
 }
 
-function gameSlate(manifest: GameManifest): Painter {
+/** `channel` is the Counter place showing it: the game's slot, or 31/32 for another version. */
+function gameSlate(manifest: GameManifest, channel: number, version: CartridgeVersion | undefined): Painter {
   const { label } = manifest;
   const layers = patternLayers(label.pattern, manifest.id).map((layer) => ({ ...layer, path: new Path2D(layer.d) }));
   const emblem = emblemPath(manifest);
@@ -117,7 +125,7 @@ function gameSlate(manifest: GameManifest): Painter {
       roundRect(context, 16, 16, 74, 32, 8);
       context.fill();
       context.fillStyle = '#fff6e6';
-      context.fillText(`CH ${counterDigits(manifest.slot)}`, 26, 40);
+      context.fillText(`CH ${counterDigits(channel)}`, 26, 40);
       const on = Math.floor(seconds * 1.4) % 2 === 0;
       context.fillStyle = 'rgba(0,0,0,0.45)';
       roundRect(context, width - 106, 16, 90, 32, 16);
@@ -128,6 +136,18 @@ function gameSlate(manifest: GameManifest): Painter {
       context.fill();
       context.fillStyle = '#fff6e6';
       context.fillText('SOON', width - 74, 40);
+
+      // Which cartridge version this channel plays, under the channel bug.
+      if (version) {
+        const text = `${version.label.toUpperCase()} VERSION`;
+        context.font = '800 19px Big Shoulders Display Variable, Arial Narrow, sans-serif';
+        const pill = context.measureText(text).width + 24;
+        context.fillStyle = label.band;
+        roundRect(context, 16, 56, pill, 30, 15);
+        context.fill();
+        context.fillStyle = label.bandText;
+        context.fillText(text, 28, 77);
+      }
 
       if (appearance === 'dark') {
         context.fillStyle = 'rgba(10,6,20,0.12)';
@@ -214,37 +234,6 @@ function familyAnimation(manifest: GameManifest): FamilyPainter {
   }
 }
 
-/** Counter slots 31 and 32 before their secret is found: a scrambled channel. */
-function lockedSlate(slot: number): Painter {
-  return {
-    draw(context, seconds) {
-      const { width, height } = SLATE_SIZE;
-      context.fillStyle = '#16121c';
-      context.fillRect(0, 0, width, height);
-      // Rolling colour bars, torn sideways, as from a channel the set cannot lock onto.
-      const bars = ['#c4501a', '#d9a21b', '#1d6f6c', '#5a3e7a', '#b8433a', '#2f5d8a'];
-      for (let row = 0; row < height; row += 4) {
-        const tear = Math.sin(row * 0.09 + seconds * 7) * 24 + Math.sin(row * 0.31 + seconds * 3) * 8;
-        bars.forEach((colour, i) => {
-          context.fillStyle = colour;
-          context.globalAlpha = 0.5;
-          context.fillRect(((i * width) / bars.length + tear + seconds * 60) % width, (row + seconds * 90) % height, width / bars.length, 4);
-        });
-      }
-      context.globalAlpha = 1;
-      context.fillStyle = 'rgba(0,0,0,0.55)';
-      roundRect(context, width / 2 - 150, height / 2 - 60, 300, 120, 16);
-      context.fill();
-      context.fillStyle = '#fff6e6';
-      context.textAlign = 'center';
-      context.font = '800 64px Big Shoulders Display Variable, Arial Narrow, sans-serif';
-      context.fillText(`${counterDigits(slot)} ?`, width / 2, height / 2 + 6);
-      context.font = '600 16px Atkinson Hyperlegible Next Variable, system-ui, sans-serif';
-      context.fillText('Something is hidden on this channel', width / 2, height / 2 + 38);
-    },
-  };
-}
-
 function createPainterDemo(host: HTMLElement, painter: Painter, context: DemoContext): DemoHandle {
   const surface = document.createElement('canvas');
   surface.width = SLATE_SIZE.width;
@@ -291,10 +280,12 @@ function createPainterDemo(host: HTMLElement, painter: Painter, context: DemoCon
   };
 }
 
-export function slateDemo(host: HTMLElement, manifest: GameManifest, context: DemoContext): DemoHandle {
-  return createPainterDemo(host, gameSlate(manifest), context);
-}
-
-export function lockedDemo(host: HTMLElement, slot: number, context: DemoContext): DemoHandle {
-  return createPainterDemo(host, lockedSlate(slot), context);
+/** The coming-soon slate; `channel` defaults to the game's own slot. */
+export function slateDemo(
+  host: HTMLElement,
+  manifest: GameManifest,
+  context: DemoContext,
+  channel = manifest.slot,
+): DemoHandle {
+  return createPainterDemo(host, gameSlate(manifest, channel, findVersion(manifest, context.version)), context);
 }

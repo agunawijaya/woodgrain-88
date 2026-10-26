@@ -1,15 +1,15 @@
 /**
- * Reel Puzzle, slot 21: registered as coming soon. Its own prompt replaces
- * this placeholder with the real manifest in games/reel-puzzle/.
+ * Lucky Reels, slot 21: registered as coming soon. Its own prompt replaces
+ * this placeholder with the real manifest in games/lucky-reels/.
  */
 import type { GameManifest } from '@woodgrain-88/kit';
 
 export const manifest: GameManifest = {
-  id: 'reel-puzzle',
+  id: 'lucky-reels',
   slot: 21,
-  title: "Reel Puzzle",
-  tagline: "A timing and pattern puzzle. No bets, no credits.",
-  teaser: "Stop the reels to build patterns against a quiet clock. It looks like the old fruit reels and plays like a puzzle: nothing to bet, nothing to buy.",
+  title: "Lucky Reels",
+  tagline: "Pick your paylines, place your bet, pull the lever.",
+  teaser: "A proper slot machine: choose how many paylines to play, set your bet in credits, pull the lever and watch the reels stop one by one. Credits are play money in this game only; nothing is ever bought.",
   family: 'brain',
   players: '1P',
   versus: 'none',
@@ -17,7 +17,7 @@ export const manifest: GameManifest = {
   status: 'coming-soon',
   scoreOrder: 'higher',
   accent: { day: '#9a5a0d', night: '#ffcf6b' },
-  emblem: "M3 6h18v12H3ZM9 6v12M15 6v12M5.5 12h1M11.5 10v4M17 11h1",
+  emblem: "M3 6h14v12H3ZM7.67 6v12M12.33 6v12M3 12h14M20.5 7v7.5H17M20.5 5.2h0",
   label: {
     pattern: 'stripes',
     angle: 90,
@@ -28,7 +28,7 @@ export const manifest: GameManifest = {
   },
   inspiredBy: {
     originalTitle: "Slot Machine",
-    uiTitle: "the fruit-reel cartridge",
+    uiTitle: "the slot machine",
     publisher: "Atari",
     year: null,
     cartridgeSlots: [22],

@@ -13,19 +13,19 @@ import type { EventLogData, ProgressData } from '../src/store/types.ts';
 import { fakeRepo } from './helpers/fake-repo.ts';
 
 const EVENT_SCHEMAS: readonly GameEventSchema[] = [
-  { type: 'splat', description: 'Opponent splatted.', fields: { points: 'number', tag: 'string' } },
+  { type: 'hit', description: 'Opponent hit.', fields: { points: 'number', tag: 'string' } },
   { type: 'combo', description: 'Multi-hit chain.', fields: { chain: 'number' } },
   { type: 'bank-shot', description: 'Ricochet hit.' },
 ];
 
 const PATCHES: readonly PatchDef[] = [
   {
-    id: 'first-splats',
+    id: 'first-hits',
     tier: 'club',
     title: 'Paint Starter',
-    description: 'Splat 2 tanks across any mode.',
+    description: 'Hit 2 tanks across any mode.',
     goal: {
-      metric: { kind: 'count', event: 'splat' },
+      metric: { kind: 'count', event: 'hit' },
       target: 2,
     },
   },
@@ -33,9 +33,9 @@ const PATCHES: readonly PatchDef[] = [
     id: 'point-collector',
     tier: 'pro',
     title: 'Paint Bucket',
-    description: 'Accumulate 100 splat points.',
+    description: 'Accumulate 100 hit points.',
     goal: {
-      metric: { kind: 'sum', event: 'splat', field: 'points' },
+      metric: { kind: 'sum', event: 'hit', field: 'points' },
       target: 100,
     },
   },
@@ -66,7 +66,7 @@ const PATCHES: readonly PatchDef[] = [
 
 function stamp(partial: Partial<StampedEvent> & { type: string }, seq = 1): StampedEvent {
   return {
-    game: partial.game ?? 'paint-tanks',
+    game: partial.game ?? 'tank-duel',
     mode: partial.mode ?? 'normal',
     channel: partial.channel ?? 'open-field',
     at: partial.at ?? '2026-10-25T20:00:00.000Z',
@@ -81,7 +81,7 @@ describe('createPatchTracker', () => {
     const progress = fakeRepo<ProgressData>({ games: {} });
     const earnedLog: PatchEarned[] = [];
     const tracker = createPatchTracker({
-      games: [{ id: 'paint-tanks', patches: PATCHES }],
+      games: [{ id: 'tank-duel', patches: PATCHES }],
       progress,
       isPro: () => false,
       now: () => new Date('2026-10-25T20:00:00.000Z'),
@@ -91,26 +91,26 @@ describe('createPatchTracker', () => {
       earnedLog.push(earned);
     });
 
-    expect(tracker.handle(stamp({ game: 'unknown-game', type: 'splat' }))).toEqual([]);
+    expect(tracker.handle(stamp({ game: 'unknown-game', type: 'hit' }))).toEqual([]);
     expect(tracker.status('unknown-game')).toEqual([]);
 
     // Missing or non-numeric fields leave sum unchanged.
-    tracker.handle(stamp({ type: 'splat' }, 1));
-    tracker.handle(stamp({ type: 'splat', data: { tag: 'no-points' } }, 2));
-    const sumBefore = tracker.status('paint-tanks').find((s) => s.def.id === 'point-collector');
+    tracker.handle(stamp({ type: 'hit' }, 1));
+    tracker.handle(stamp({ type: 'hit', data: { tag: 'no-points' } }, 2));
+    const sumBefore = tracker.status('tank-duel').find((s) => s.def.id === 'point-collector');
     expect(sumBefore?.value).toBe(0);
     expect(sumBefore?.earned).toBe(false);
 
     // 40 + 50 = 90 (below 100); next +15 = 105 crosses 100 and earns the sum patch.
-    const step1 = tracker.handle(stamp({ type: 'splat', data: { points: 40 } }, 3));
-    const step2 = tracker.handle(stamp({ type: 'splat', data: { points: 50 } }, 4));
+    const step1 = tracker.handle(stamp({ type: 'hit', data: { points: 40 } }, 3));
+    const step2 = tracker.handle(stamp({ type: 'hit', data: { points: 50 } }, 4));
     expect(step1).toEqual([]);
     expect(step2).toEqual([]);
 
-    const crossed = tracker.handle(stamp({ type: 'splat', data: { points: 15 } }, 5));
+    const crossed = tracker.handle(stamp({ type: 'hit', data: { points: 15 } }, 5));
     expect(crossed).toEqual([
       {
-        game: 'paint-tanks',
+        game: 'tank-duel',
         patch: PATCHES[1],
         gold: false,
         at: '2026-10-25T20:00:00.000Z',
@@ -118,7 +118,7 @@ describe('createPatchTracker', () => {
       },
     ]);
 
-    const sumAfter = tracker.status('paint-tanks').find((s) => s.def.id === 'point-collector');
+    const sumAfter = tracker.status('tank-duel').find((s) => s.def.id === 'point-collector');
     expect(sumAfter?.value).toBe(105);
     expect(sumAfter?.progress).toBe(1);
     expect(sumAfter?.earned).toBe(true);
@@ -128,7 +128,7 @@ describe('createPatchTracker', () => {
   it('filters max patches by channel and mode and ignores non-matching events', () => {
     const progress = fakeRepo<ProgressData>({ games: {} });
     const tracker = createPatchTracker({
-      games: [{ id: 'paint-tanks', patches: PATCHES }],
+      games: [{ id: 'tank-duel', patches: PATCHES }],
       progress,
       isPro: () => true,
       now: () => new Date('2026-10-25T20:00:00.000Z'),
@@ -142,7 +142,7 @@ describe('createPatchTracker', () => {
       stamp({ type: 'combo', channel: 'billiard-walls', mode: 'normal', data: { chain: 8 } }, 2),
     );
 
-    const before = tracker.status('paint-tanks').find((s) => s.def.id === 'daily-billiard-ace');
+    const before = tracker.status('tank-duel').find((s) => s.def.id === 'daily-billiard-ace');
     expect(before?.value).toBe(0);
     expect(before?.earned).toBe(false);
 
@@ -152,7 +152,7 @@ describe('createPatchTracker', () => {
     );
     // Missing field leaves max unchanged at 3.
     tracker.handle(stamp({ type: 'combo', channel: 'billiard-walls', mode: 'daily' }, 4));
-    const mid = tracker.status('paint-tanks').find((s) => s.def.id === 'daily-billiard-ace');
+    const mid = tracker.status('tank-duel').find((s) => s.def.id === 'daily-billiard-ace');
     expect(mid?.value).toBe(3);
     expect(mid?.progress).toBeCloseTo(0.6);
 
@@ -162,7 +162,7 @@ describe('createPatchTracker', () => {
     );
     expect(earned).toEqual([
       {
-        game: 'paint-tanks',
+        game: 'tank-duel',
         patch: PATCHES[2],
         gold: true,
         at: '2026-10-25T20:00:00.000Z',
@@ -176,14 +176,14 @@ describe('createPatchTracker', () => {
     let proMode = false;
     let clockIso = '2026-10-25T20:00:00.000Z';
     const tracker = createPatchTracker({
-      games: [{ id: 'paint-tanks', patches: PATCHES }],
+      games: [{ id: 'tank-duel', patches: PATCHES }],
       progress,
       isPro: () => proMode,
       now: () => new Date(clockIso),
     });
 
     // Earn point-collector on Amateur.
-    const firstEarn = tracker.handle(stamp({ type: 'splat', data: { points: 100 } }, 1));
+    const firstEarn = tracker.handle(stamp({ type: 'hit', data: { points: 100 } }, 1));
     expect(firstEarn).toHaveLength(1);
     expect(firstEarn[0]?.gold).toBe(false);
     expect(firstEarn[0]?.upgradedToGold).toBe(false);
@@ -192,13 +192,13 @@ describe('createPatchTracker', () => {
     // (it does complete the separate count patch, which is not under test here).
     proMode = true;
     clockIso = '2026-10-25T20:05:00.000Z';
-    const unchanged = tracker.handle(stamp({ type: 'splat' }, 2));
+    const unchanged = tracker.handle(stamp({ type: 'hit' }, 2));
     expect(unchanged.filter((e) => e.patch.id === 'point-collector')).toEqual([]);
 
     // Now an event that changes the sum metric while at/above target upgrades it to gold.
-    const upgraded = tracker.handle(stamp({ type: 'splat', data: { points: 10 } }, 3));
+    const upgraded = tracker.handle(stamp({ type: 'hit', data: { points: 10 } }, 3));
     expect(upgraded.find((e) => e.patch.id === 'point-collector')).toEqual({
-      game: 'paint-tanks',
+      game: 'tank-duel',
       patch: PATCHES[1],
       gold: true,
       at: '2026-10-25T20:05:00.000Z',
@@ -206,26 +206,26 @@ describe('createPatchTracker', () => {
     });
 
     // Further events do not re-trigger gold.
-    expect(tracker.handle(stamp({ type: 'splat', data: { points: 20 } }, 4))).toEqual([]);
+    expect(tracker.handle(stamp({ type: 'hit', data: { points: 20 } }, 4))).toEqual([]);
   });
 
   it('shows a secret patch hint before earning and its description after earning', () => {
     const progress = fakeRepo<ProgressData>({ games: {} });
     const tracker = createPatchTracker({
-      games: [{ id: 'paint-tanks', patches: PATCHES }],
+      games: [{ id: 'tank-duel', patches: PATCHES }],
       progress,
       isPro: () => false,
       now: () => new Date('2026-10-25T20:00:00.000Z'),
     });
 
-    const before = tracker.status('paint-tanks').find((s) => s.def.id === 'triple-angle');
+    const before = tracker.status('tank-duel').find((s) => s.def.id === 'triple-angle');
     expect(before?.earned).toBe(false);
     expect(before?.visibleDescription).toBe('The walls are on your side.');
 
     tracker.handle(stamp({ type: 'bank-shot' }, 1));
     tracker.handle(stamp({ type: 'bank-shot' }, 2));
 
-    const after = tracker.status('paint-tanks').find((s) => s.def.id === 'triple-angle');
+    const after = tracker.status('tank-duel').find((s) => s.def.id === 'triple-angle');
     expect(after?.earned).toBe(true);
     expect(after?.visibleDescription).toBe('Land 2 bank shots.');
   });
@@ -241,20 +241,20 @@ describe('createPatchTracker', () => {
       },
     });
     const tracker = createPatchTracker({
-      games: [{ id: 'paint-tanks', patches: PATCHES }],
+      games: [{ id: 'tank-duel', patches: PATCHES }],
       progress,
       isPro: () => false,
       now: () => new Date('2026-10-25T20:00:00.000Z'),
     });
 
     const disconnect = tracker.connect(bus);
-    bus.beginSession({ game: 'paint-tanks', mode: 'normal', channel: 'open-field' });
-    bus.emit({ type: 'splat' });
-    expect(tracker.status('paint-tanks')[0]?.value).toBe(1);
+    bus.beginSession({ game: 'tank-duel', mode: 'normal', channel: 'open-field' });
+    bus.emit({ type: 'hit' });
+    expect(tracker.status('tank-duel')[0]?.value).toBe(1);
 
     disconnect();
-    bus.emit({ type: 'splat' });
-    expect(tracker.status('paint-tanks')[0]?.value).toBe(1);
+    bus.emit({ type: 'hit' });
+    expect(tracker.status('tank-duel')[0]?.value).toBe(1);
   });
 });
 
@@ -270,14 +270,14 @@ describe('validatePatches', () => {
         title: 'Secret One',
         description: 'Desc',
         hint: 'Hint 1',
-        goal: { metric: { kind: 'count', event: 'splat' }, target: 1 },
+        goal: { metric: { kind: 'count', event: 'hit' }, target: 1 },
       },
       {
         id: 'sec-2',
         tier: 'secret',
         title: 'Secret Two',
         description: 'Desc',
-        goal: { metric: { kind: 'count', event: 'splat' }, target: 1 },
+        goal: { metric: { kind: 'count', event: 'hit' }, target: 1 },
       },
     ];
     expect(validatePatches(badTiers, EVENT_SCHEMAS).length).toBeGreaterThanOrEqual(4);
@@ -289,14 +289,14 @@ describe('validatePatches', () => {
         tier: 'club',
         title: 'Club Patch',
         description: 'Desc',
-        goal: { metric: { kind: 'count', event: 'splat' }, target: 1 },
+        goal: { metric: { kind: 'count', event: 'hit' }, target: 1 },
       },
       {
         id: 'dup-patch',
         tier: 'pro',
         title: 'This Patch Title Exceeds Twenty Eight Characters',
         description: 'Desc',
-        goal: { metric: { kind: 'max', event: 'splat', field: 'tag' }, target: 0 },
+        goal: { metric: { kind: 'max', event: 'hit', field: 'tag' }, target: 0 },
       },
       {
         id: 'dup-patch',

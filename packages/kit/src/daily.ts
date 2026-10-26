@@ -68,7 +68,7 @@ export function isSameUtcDay(at: IsoTime | null, now: Date): boolean {
 
 /**
  * The one-line share text, e.g.
- * "Woodgrain '88 · Daily #12 · Paint Tanks · 3–1" (a score line is optional,
+ * "Woodgrain '88 · Daily #12 · Tank Duel · 3–1" (a score line is optional,
  * and so is a row of emoji squares appended after a space).
  */
 export function dailyShareLine(input: {
