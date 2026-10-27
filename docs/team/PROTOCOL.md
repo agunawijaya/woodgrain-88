@@ -20,9 +20,9 @@ sequenceDiagram
     L->>L: Write .team/orders/<id>.md (interface, tests, fence)
     L->>B: pnpm crew dispatch .team/orders/<id>.md
     B->>B: Validate order, pin model, claim a slot
-    B->>S: Copy the repo (no reference folders, no .team)
+    B->>S: Copy the repo (no reference folders, no .team), install node_modules, fit the gate hook
     B->>C: agy -p CREW.md + order, accept-edits, sandbox, JSON
-    C->>S: Edits files (shell commands are denied)
+    C->>S: Edits files, runs tsc, eslint and prettier --check until they pass
     C-->>B: JSON result + report block
     B->>B: Fence: apply inside, keep outside in rejected/
     B->>B: Restore original/ and src/ if touched
@@ -68,9 +68,12 @@ Copy [`.team/orders/TEMPLATE.md`](../../.team/orders/TEMPLATE.md) to `.team/orde
   `.team/`, `.claude/`, `.git/`, `node_modules/` or a root-level wildcard (the bridge refuses them).
   Put the tests inside the fence.
 - **Acceptance.** Commands the bridge runs in the real repo after applying the changes, scoped to
-  the order's files (`pnpm vitest run <path>`, `pnpm exec eslint <paths>`,
+  the order's files (`pnpm exec vitest run <path>`, `pnpm exec eslint <paths>`,
   `pnpm exec prettier --check <paths>`, `pnpm exec tsc -p <project>`). They execute crew-written
-  code with your permissions, so keep them to test and lint commands.
+  code with your permissions, so keep them to test and lint commands. The crew runs the eslint,
+  prettier and tsc ones itself before it reports, in exactly these forms with plain repo paths (at
+  most four); tests only the bridge can run. The agy rules for this come from `pnpm crew allow`,
+  run once per machine; `pnpm crew ping` says when they are missing.
 - **Reads.** Files the crew should read first. Paths under `src/` or `original/` are passed to agy
   as read-only references by absolute path; everything else is in the staging copy.
 - **Body.** Goal · Context · Interface to implement (your exact signatures) · Behaviour and edge

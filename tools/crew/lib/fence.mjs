@@ -13,7 +13,7 @@
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { matchesAny } from './glob.mjs';
-import { diffTrees, hashBuffer, hashFile, hashTree, listFiles } from './tree.mjs';
+import { CREW_HOOK_ROOT, diffTrees, hashBuffer, hashFile, hashTree, listFiles } from './tree.mjs';
 
 function currentHash(repoRoot, rel) {
   const absolute = join(repoRoot, rel);
@@ -29,7 +29,7 @@ function keepForReview(stagingDir, rejectedDir, rel) {
 }
 
 export function enforceFence({ repoRoot, stagingDir, baseline, fence, rejectedDir }) {
-  const after = hashTree(stagingDir);
+  const after = hashTree(stagingDir, { excludeRoots: [CREW_HOOK_ROOT] });
   const { added, modified, deleted } = diffTrees(baseline, after);
   const changes = [
     ...added.map((path) => ({ path, change: 'added' })),

@@ -11,6 +11,7 @@
  *               [--lead-tokens N] [--solo-tokens N] [--note "..."]
  *   crew status
  *   crew ping
+ *   crew allow        (lets the crew run its check commands; see lib/permissions.mjs)
  *
  * Every command prints one JSON object on stdout.
  */
@@ -26,6 +27,7 @@ import {
 } from './lib/agy.mjs';
 import { readLedger, recordReview, writeLedger } from './lib/ledger.mjs';
 import { DEFAULT_MODEL_BY_KIND } from './lib/order.mjs';
+import { installCrewRules, missingCrewRules, readAgySettings } from './lib/permissions.mjs';
 import { dispatchOrder, followUp, readState } from './lib/run.mjs';
 import { activeClaims, withLock } from './lib/slots.mjs';
 
@@ -87,10 +89,15 @@ async function ping() {
     byModel[model] = ready ? 'ready' : `${verdict.outcome}${quotaNote ? ` (${quotaNote})` : ''}`;
   }
   const ready = Object.values(byModel).filter((state) => state === 'ready').length;
+  const missingRules = missingCrewRules(readAgySettings()).length;
   return {
     ok: ready === defaults.length && geminiModels.length > 0,
     geminiModels,
     defaultModels: byModel,
+    crewChecks:
+      missingRules === 0
+        ? 'ready'
+        : `${missingRules} agy rules missing; run \`crew allow\` so the crew can run its checks`,
     message:
       ready === defaults.length
         ? 'crew is reachable on every default model'
@@ -165,8 +172,10 @@ async function main(argv) {
       return status();
     case 'ping':
       return ping();
+    case 'allow':
+      return installCrewRules();
     default:
-      throw new Error('Commands: dispatch, followup, review, status, ping');
+      throw new Error('Commands: dispatch, followup, review, status, ping, allow');
   }
 }
 

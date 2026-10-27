@@ -27,6 +27,7 @@ import {
 } from './prompt.mjs';
 import { claimSlot, releaseSlot, withLock } from './slots.mjs';
 import { captureProtected, createStagingCopy } from './tree.mjs';
+import { prepareWorkspace } from './workspace.mjs';
 
 export const CREW_GUIDE = 'docs/team/CREW.md';
 export const MAX_FOLLOWUPS = 3;
@@ -96,6 +97,7 @@ function writeReport(dir, round) {
     `- Conflicts with lead edits (kept in rejected/conflicts/): ${round.conflicts.map((entry) => entry.path).join(', ') || 'none'}`,
     `- Protected files restored: ${round.restored.map((entry) => entry.path).join(', ') || 'none'}`,
     `- Denied crew actions: ${round.deniedActions.map((action) => action.display_name ?? action.action).join(', ') || 'none'}`,
+    `- Crew checks: ${round.workspace.installed ? `available (dependencies ${round.workspace.note} in ${round.workspace.seconds} s)` : `unavailable (${round.workspace.note})`}`,
     '',
     '## Acceptance',
     '',
@@ -152,6 +154,7 @@ async function executeRound({
   try {
     const stagingDir = stagingDirFor(repoRoot, order.id);
     const baseline = createStagingCopy(repoRoot, stagingDir);
+    const workspace = await prepareWorkspace(stagingDir, env);
     const captured = captureProtected(repoRoot, PROTECTED_REFERENCE_ROOTS);
     const { addDirs } = splitReads(repoRoot, order.reads);
     const timeoutSeconds = timeoutSecondsFor(order.kind);
@@ -212,6 +215,7 @@ async function executeRound({
       tokens: subtractUsage(usageOf(verdict.result), conversationId ? previousUsage : undefined),
       conversationId: verdict.result?.conversation_id ?? conversationId ?? null,
       deniedActions: verdict.result?.denied_actions ?? [],
+      workspace,
       ...fenceResult,
       acceptance,
       crewReport: extractCrewReport(verdict.result?.response),

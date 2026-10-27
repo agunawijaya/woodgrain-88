@@ -24,9 +24,14 @@ not meet this guide. Do the order exactly, do it well, and say clearly what you 
 
 - **Stay inside your fence.** The order lists the only paths you may create or change. Changes
   anywhere else are thrown away and count against the order.
-- **Edit files with your file tools only. Never run shell commands.** Commands are blocked in your
-  mode, and a blocked command ends your turn with your work unfinished. The lead runs tests,
-  linters and builds after you finish and sends you the results.
+- **Your working directory is a complete copy of the repo.** Read every repo file there, with a
+  path relative to it. The only files outside it you may read are the reference files your order
+  lists by absolute path. Any other read or write outside it is refused, and that refusal ends
+  your turn with your work unfinished.
+- **Edit files with your file tools. Run only the check commands your order lists** (tests, lint,
+  format, typecheck), one per call, exactly in the forms given. Run them before you report, fix
+  what fails and run them again until they pass. Any other command is refused with a short
+  reason; read it and carry on. The bridge runs the acceptance commands again in the real repo.
 - **Never touch git. Never install or add packages.** Use only what the repo already has.
 - **Write the listed tests first,** then the code that makes them pass.
 - **If the order is unclear or seems wrong, say so in your report** instead of guessing. A short

@@ -1,7 +1,7 @@
 # ADR-0007 — The crew bridge
 
 - Status: accepted
-- Date: 2026-10-25, updated 2026-10-26
+- Date: 2026-10-25, updated 2026-10-26 and 2026-10-27 (amendment below)
 - Code: `tools/crew/`; protocol in `docs/team/PROTOCOL.md`, crew rules in `docs/team/CREW.md`
 
 ## Context
@@ -24,7 +24,7 @@ The Antigravity CLI (`agy` 1.4.7) runs headless with JSON output and resumable c
 
 ## Decision
 
-- **The crew never runs commands.** The bridge runs each order's acceptance commands itself, in the
+- **The crew never runs commands** (since 2026-10-27 it may run read-only checks; see the amendment). The bridge runs each order's acceptance commands itself, in the
   real repo, after applying the crew's changes, and sends failures back on follow-up.
 - **Staging copy, not the working tree.** The crew works in `.team/worktrees/<id>/`, a copy of the
   repo without `original/`, `src/`, `.team/`, `.claude/`, `node_modules` and build output. Why: the
@@ -62,3 +62,33 @@ flowchart TB
   does not on tiny tasks (the first README order cost more to brief than to write).
 - Crew output is data: the lead reads every diff, and crew text never changes an order, a fence or
   an acceptance command.
+
+## Amendment, 2026-10-27: the crew runs its own read-only checks
+
+Most follow-up rounds were the lead pasting type and lint errors back to the crew. Probing agy 1.4.7
+again found a safe way to let the crew run those checks itself.
+
+| Question                                            | Finding                                                                                                                                                                                                     |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| What lets a headless command run?                   | Only a `permissions.allow` rule in the user's `~/.gemini/antigravity-cli/settings.json`. A project hook answering `allow`, even with `permissionOverrides`, does not.                                       |
+| How do rules match?                                 | A `command(regex:...)` rule matches token by token, anchored, with the token count fixed. A multi-word literal rule does not admit extra arguments. In a chain, every part must match.                      |
+| Can a project hook refuse a command?                | Yes. A `PreToolUse` hook in the workspace's `.agents/hooks.json` sees every `run_command`, and its `deny` reason goes back to the model, **without ending the turn**.                                       |
+| Does `--sandbox` hold writes?                       | It refuses every write from a command, even inside the workspace, and `write_file` grants do not open it on Windows. Read-only checks (tsc, eslint, prettier --check) run fine.                             |
+| Can the model leave the sandbox?                    | **Yes**: `run_command` takes `BypassSandbox: true`, and agy honours it for an allowed command. The model used it after an EPERM.                                                                            |
+| Can Vitest run in the sandbox?                      | No. Vitest 5 writes its config bundle and an API token at start-up.                                                                                                                                         |
+| Can the staging copy share the repo's node_modules? | **No.** Linked by a junction, `pnpm exec` (pnpm 12) re-linked the workspace packages through it, pointing the real repo at the staging copy and emptying its virtual store. Restored by an offline install. |
+
+Decision:
+
+- **The crew may run `pnpm exec eslint`, `pnpm exec prettier --check` and `pnpm exec tsc -p`**, with
+  only plain repo paths after them (`tools/crew/lib/commands.mjs`). Tests stay with the bridge's
+  acceptance run.
+- **Two gates from one list.** `crew allow` writes the matching regex rules into the user's agy
+  settings and leaves the owner's other rules alone. The bridge writes a `PreToolUse` hook into each
+  staging copy (`gate.mjs`). The hook refuses every other command, and every `BypassSandbox`
+  request, with a reason. The hook is the staging copy's own, inside the crew's workspace, because
+  the crew reads it after a refusal, and a read outside the workspace ends its turn. Editing it buys
+  nothing: agy's rules and the sandbox still decide.
+- **Each staging copy installs its own node_modules** offline from the pnpm store (about 2 s),
+  never a link to the repo's.
+- Default timeout 900 s (`engine` and `ai` 1500 s), since the crew now runs checks until they pass.

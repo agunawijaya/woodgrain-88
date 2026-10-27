@@ -4,6 +4,7 @@
  * follow-up, the bridge's findings and the lead's numbered notes.
  */
 import { join } from 'node:path';
+import { describeCrewCommands, isCrewCommand } from './commands.mjs';
 
 // Windows caps a command line at 32,767 characters and the prompt travels as
 // one argument; staying well below leaves room for the other flags.
@@ -49,11 +50,18 @@ export function composeDispatchPrompt({ crewGuide, order, repoRoot }) {
     'Read-only reference files outside your workspace. Read them with absolute paths; never modify, copy or quote them:',
     bulletList(referenceReads, '(none)'),
     '',
-    'The lead will run these acceptance commands after you finish. Do not run them yourself:',
+    'The bridge runs these acceptance commands in the real repo after you finish. Run the ones you may run yourself, fix what fails, and run them again until they pass before you report:',
     bulletList(
-      order.acceptance.map((command) => `\`${command}\``),
+      order.acceptance.map((command) =>
+        isCrewCommand(command)
+          ? `\`${command}\``
+          : `\`${command}\` (the bridge only; do not run it)`,
+      ),
       '(none; the lead reviews by reading)',
     ),
+    '',
+    'The only shell commands you may run, one per call, exactly in these forms (anything else is refused):',
+    bulletList(describeCrewCommands(), ''),
     '',
     order.body,
   ].join('\n');
@@ -68,7 +76,7 @@ export function composeFollowupPrompt({ order, round, previous, message }) {
   const sections = [
     `# Follow-up from the lead on work order ${order.id}, round ${round}`,
     '',
-    'Same rules as before: stay inside your fence, edit files with your editing tools, never run shell commands, end with the JSON report block.',
+    'Same rules as before: stay inside your fence, edit files with your editing tools, run only the check commands from your order, and end with the JSON report block.',
     '',
     'Your fence:',
     bulletList(order.fence, '(none)'),
@@ -82,7 +90,9 @@ export function composeFollowupPrompt({ order, round, previous, message }) {
     );
   }
   if (failed.length) {
-    sections.push('These acceptance commands failed after your last round:');
+    sections.push(
+      'These acceptance commands failed after your last round; fix them and run them again before you report:',
+    );
     for (const result of failed) {
       sections.push(
         `- \`${result.command}\` exited with ${result.exitCode}. Last lines:`,

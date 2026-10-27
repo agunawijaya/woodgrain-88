@@ -21,12 +21,15 @@ const SKIPPED_DIR_NAMES = new Set([
   '.vite',
 ]);
 
+/** Where the bridge puts agy's hook config in a staging copy; never carried back. */
+export const CREW_HOOK_ROOT = '.agents';
+
 /**
  * Root entries left out of the staging copy. The reference folders are read in
  * place through --add-dir rather than copied; .team/ and .claude/ are the
- * lead's own machinery.
+ * lead's own machinery, and .agents/ in a staging copy is written by the bridge.
  */
-export const STAGING_EXCLUDED_ROOTS = ['original', 'src', '.team', '.claude'];
+export const STAGING_EXCLUDED_ROOTS = ['original', 'src', '.team', '.claude', CREW_HOOK_ROOT];
 
 const toPosix = (path) => path.split(sep).join('/');
 

@@ -25,15 +25,24 @@ export const DEFAULT_MODEL_BY_KIND = {
   plumbing: LIGHT_MODEL,
 };
 
-const TIMEOUT_SECONDS_BY_KIND = { dossier: 900, engine: 1500 };
-const DEFAULT_TIMEOUT_SECONDS = 600;
+// Sized for a crew that runs its own checks until they pass, not just edits.
+const TIMEOUT_SECONDS_BY_KIND = { dossier: 900, engine: 1500, ai: 1500 };
+const DEFAULT_TIMEOUT_SECONDS = 900;
 
 /**
  * Folders no fence may reach. original/ and src/ are the owner's reference
- * material; .team/ holds the orders and ledger the crew is judged by; the rest
- * is tooling the crew has no business changing.
+ * material; .team/ holds the orders and ledger the crew is judged by; .agents/
+ * holds the gate hook; the rest is tooling the crew has no business changing.
  */
-export const PROTECTED_ROOTS = ['original', 'src', '.git', '.claude', '.team', 'node_modules'];
+export const PROTECTED_ROOTS = [
+  'original',
+  'src',
+  '.git',
+  '.claude',
+  '.team',
+  '.agents',
+  'node_modules',
+];
 
 const ID_PATTERN = /^[a-z0-9][a-z0-9-]{2,63}$/;
 

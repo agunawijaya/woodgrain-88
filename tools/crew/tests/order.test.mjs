@@ -122,5 +122,6 @@ test('heavy kinds default to Argon, light kinds to Flash', () => {
 test('timeouts follow the kind', () => {
   assert.equal(timeoutSecondsFor('dossier'), 900);
   assert.equal(timeoutSecondsFor('engine'), 1500);
-  assert.equal(timeoutSecondsFor('docs'), 600);
+  assert.equal(timeoutSecondsFor('ai'), 1500);
+  assert.equal(timeoutSecondsFor('docs'), 900);
 });
