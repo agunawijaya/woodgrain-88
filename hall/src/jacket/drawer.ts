@@ -17,7 +17,16 @@ export function earnedDrawer(
     patchesFor(manifest.id).flatMap((def) => {
       const earned = progress.games[manifest.id]?.patches[def.id];
       if (!earned?.earnedAt) return [];
-      return [{ game: manifest.id, patch: def.id, tier: def.tier, family: manifest.family, gold: earned.gold, slot: manifest.slot }];
+      return [
+        {
+          game: manifest.id,
+          patch: def.id,
+          tier: def.tier,
+          family: manifest.family,
+          gold: earned.gold,
+          slot: manifest.slot,
+        },
+      ];
     }),
   );
   return [...denDrawer(progress), ...games];

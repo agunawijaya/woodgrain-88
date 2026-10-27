@@ -5,10 +5,16 @@
  * Ladder beside them, climbed one kid at a time from Pip up to Grandpa Lou.
  * A win with your switch on A gets its own little gold "A" on the ladder.
  */
-import { BLOCK_LADDER, blockLadder, KIDS, type DenLifeData, type KidId } from '@woodgrain-88/kit';
+import {
+  BLOCK_LADDER,
+  blockLadder,
+  KIDS,
+  kidPortraitSvg,
+  type DenLifeData,
+  type KidId,
+} from '@woodgrain-88/kit';
 import type { Services } from '../app/services.ts';
 import { portraitImage } from '../den/corkboard.ts';
-import { kidPortraitSvg } from '../den/kid-portrait.ts';
 import { escapeXml } from '../den/svg.ts';
 
 export interface KidsView {
@@ -47,9 +53,15 @@ function ladderSvg(kids: DenLifeData['kids']): string {
       `<g clip-path="url(#ladder-face-${kid})">${portraitImage(kid, 70, y - 67, 54, 68)}</g>` +
       `<text x="184" y="${y - 38}" font-family="var(--font-hand)" font-size="22" fill="var(--ink)">${escapeXml(name)}</text>` +
       `<text x="184" y="${y - 18}" font-family="var(--font-ui)" font-weight="700" font-size="13" fill="var(--ink-soft)">${climbed ? 'Beaten' : next ? 'Next up' : ''}</text>` +
-      (climbed ? `<path d="M126 ${y - 66}l3 6 6.6.9-4.8 4.6 1.2 6.6-6-3.2-5.9 3.2 1.1-6.6-4.8-4.6 6.6-.9Z" fill="#f2c14e" stroke="#b8862a" stroke-width="1"/>` : '') +
-      (onA ? `<g transform="translate(250 ${y - 24})"><circle r="11" fill="url(#ladder-gold)" stroke="#8a5f12"/><text y="5" text-anchor="middle" font-family="var(--font-label)" font-weight="800" font-size="14" fill="#4a3208">A</text></g>` : '') +
-      (next ? `<path class="ladder-next" d="M8 ${y - 36}h14m-6 -6l6 6-6 6" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>` : '') +
+      (climbed
+        ? `<path d="M126 ${y - 66}l3 6 6.6.9-4.8 4.6 1.2 6.6-6-3.2-5.9 3.2 1.1-6.6-4.8-4.6 6.6-.9Z" fill="#f2c14e" stroke="#b8862a" stroke-width="1"/>`
+        : '') +
+      (onA
+        ? `<g transform="translate(250 ${y - 24})"><circle r="11" fill="url(#ladder-gold)" stroke="#8a5f12"/><text y="5" text-anchor="middle" font-family="var(--font-label)" font-weight="800" font-size="14" fill="#4a3208">A</text></g>`
+        : '') +
+      (next
+        ? `<path class="ladder-next" d="M8 ${y - 36}h14m-6 -6l6 6-6 6" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`
+        : '') +
       `</g>`
     );
   }).join('');
@@ -93,7 +105,9 @@ export function createKidsView(options: { services: Services; onBack(): void }):
         `<span class="kid-tack" aria-hidden="true"></span>` +
         `<span class="kid-photo">${kidPortraitSvg(kid, { expression: 'photo', idPrefix: `kids-${id}` })}</span>` +
         `<figcaption id="kid-${id}-name">${escapeXml(kid.name)}</figcaption>` +
-        (beaten ? `<span class="kid-star" role="img" aria-label="Beaten at least once"></span>` : '') +
+        (beaten
+          ? `<span class="kid-star" role="img" aria-label="Beaten at least once"></span>`
+          : '') +
         `</figure>` +
         `<div class="kid-index-card">` +
         `<p class="kid-style">${escapeXml(kid.style)}</p>` +

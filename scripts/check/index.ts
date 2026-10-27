@@ -3,7 +3,12 @@
  * check lists its problems and any problem fails the run. The build checks
  * need `pnpm build` first and are skipped, with a note, when there is none.
  */
-import { buildExists, checkFixtureNotShipped, checkNetworkUrls } from './build-output.ts';
+import {
+  buildExists,
+  checkFixtureNotShipped,
+  checkNetworkUrls,
+  checkThreeKeptOut,
+} from './build-output.ts';
 import { repoFiles, type Problem } from './files.ts';
 import { checkFonts } from './fonts.ts';
 import { checkNames } from './names.ts';
@@ -25,6 +30,7 @@ if (buildExists()) {
   checks.push(
     ['No network URLs in the build', checkNetworkUrls],
     ['Test fixtures and the dev showcase kept out of the build', checkFixtureNotShipped],
+    ['three.js only in game chunks, never in the Hall up front', checkThreeKeptOut],
   );
 } else {
   console.warn('· No build in hall/dist: run `pnpm build` to include the build checks.');

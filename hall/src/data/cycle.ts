@@ -38,7 +38,9 @@ export function counterPlaces(manifests: readonly GameManifest[]): CounterPlace[
     const version = defaultVersion(manifest);
     return version ? { slot: manifest.slot, manifest, version } : { slot: manifest.slot, manifest };
   });
-  const others = inSlotOrder.flatMap((manifest) => alternateVersions(manifest).map((version) => ({ manifest, version })));
+  const others = inSlotOrder.flatMap((manifest) =>
+    alternateVersions(manifest).map((version) => ({ manifest, version })),
+  );
   others.slice(0, COUNTER_SLOTS - GAME_SLOTS).forEach((other, index) => {
     places.push({ slot: GAME_SLOTS + 1 + index, ...other });
   });

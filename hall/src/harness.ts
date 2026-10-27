@@ -16,7 +16,13 @@ import './styles/chrome.css';
 import './styles/pages.css';
 import './styles/den-life.css';
 
-import { fakeGame, fakeManifest, turnGame, turnManifest, virtualRunGames } from '../tests/fixtures/index.ts';
+import {
+  fakeGame,
+  fakeManifest,
+  turnGame,
+  turnManifest,
+  virtualRunGames,
+} from '../tests/fixtures/index.ts';
 import { boot } from './app/boot.ts';
 import { showcaseFromUrl } from './dev/showcase-boot.ts';
 

@@ -22,7 +22,6 @@ import { manifest as hoverBlast } from './coming-soon/hover-blast.ts';
 import { manifest as laneHopper } from './coming-soon/lane-hopper.ts';
 import { manifest as laneTen } from './coming-soon/lane-ten.ts';
 import { manifest as lassoRun } from './coming-soon/lasso-run.ts';
-import { manifest as tankDuel } from './coming-soon/tank-duel.ts';
 import { manifest as pierDerby } from './coming-soon/pier-derby.ts';
 import { manifest as pocketLinks } from './coming-soon/pocket-links.ts';
 import { manifest as puttParlor } from './coming-soon/putt-parlor.ts';
@@ -37,9 +36,43 @@ import { manifest as sumRush } from './coming-soon/sum-rush.ts';
 import { manifest as swarmGarden } from './coming-soon/swarm-garden.ts';
 import { manifest as tableTwentyone } from './coming-soon/table-21.ts';
 import { manifest as trailblaze } from './coming-soon/trailblaze.ts';
+import { manifest as tankDuel } from '@woodgrain-88/tank-duel/manifest';
 
 export const BASE_ENTRIES: readonly GameEntry[] = [
-  { manifest: baseline }, { manifest: bigTopCannon }, { manifest: bumperChase }, { manifest: chalkTalk }, { manifest: crownJump }, { manifest: discDuel }, { manifest: dropZone }, { manifest: gloveBox }, { manifest: gravityDuel }, { manifest: hoopDuel }, { manifest: hotAndCold }, { manifest: hoverBlast }, { manifest: laneHopper }, { manifest: laneTen }, { manifest: lassoRun }, { manifest: tankDuel }, { manifest: pierDerby }, { manifest: pocketLinks }, { manifest: puttParlor }, { manifest: quadCube }, { manifest: quickdraw }, { manifest: luckyReels }, { manifest: sandlotSlugger }, { manifest: saucerPatrol }, { manifest: shoreBattery }, { manifest: slalomLine }, { manifest: sumRush }, { manifest: swarmGarden }, { manifest: tableTwentyone }, { manifest: trailblaze },
+  { manifest: baseline },
+  { manifest: bigTopCannon },
+  { manifest: bumperChase },
+  { manifest: chalkTalk },
+  { manifest: crownJump },
+  { manifest: discDuel },
+  { manifest: dropZone },
+  { manifest: gloveBox },
+  { manifest: gravityDuel },
+  { manifest: hoopDuel },
+  { manifest: hotAndCold },
+  { manifest: hoverBlast },
+  { manifest: laneHopper },
+  { manifest: laneTen },
+  { manifest: lassoRun },
+  // three.js and the diorama arrive with this chunk only, never in the Hall's own bundle.
+  {
+    manifest: tankDuel,
+    load: () => import('@woodgrain-88/tank-duel/module').then((module) => module.tankDuel),
+  },
+  { manifest: pierDerby },
+  { manifest: pocketLinks },
+  { manifest: puttParlor },
+  { manifest: quadCube },
+  { manifest: quickdraw },
+  { manifest: luckyReels },
+  { manifest: sandlotSlugger },
+  { manifest: saucerPatrol },
+  { manifest: shoreBattery },
+  { manifest: slalomLine },
+  { manifest: sumRush },
+  { manifest: swarmGarden },
+  { manifest: tableTwentyone },
+  { manifest: trailblaze },
 ];
 
 export interface Registry {
@@ -70,10 +103,9 @@ export function createRegistry(overrides: readonly GameEntry[] = []): Registry {
 
 /** The Label Wall's four rows, one per family, each in slot order. */
 export function wallRows(manifests: readonly GameManifest[]): Record<Family, GameManifest[]> {
-  const rows = Object.fromEntries(FAMILIES.map((family) => [family, [] as GameManifest[]])) as Record<
-    Family,
-    GameManifest[]
-  >;
+  const rows = Object.fromEntries(
+    FAMILIES.map((family) => [family, [] as GameManifest[]]),
+  ) as Record<Family, GameManifest[]>;
   for (const manifest of manifests) rows[manifest.family].push(manifest);
   for (const family of FAMILIES) rows[family].sort((a, b) => a.slot - b.slot);
   return rows;

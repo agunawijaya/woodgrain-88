@@ -1112,6 +1112,342 @@
       "note": "Specs well aimed and found three real app bugs (Versus games all draws when a Kid reports won only, Kid results lost the same way, undo losing focus); lead fixed those, fixed four test assumptions (optional leave confirmation, locate by data-key, drop on a free spot after scrolling, series length), formatting",
       "startedAt": "2026-10-26T08:32:28.182Z",
       "updatedAt": "2026-10-26T08:53:50.372Z"
+    },
+    {
+      "id": "tank-bounce",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 2,
+      "status": "accepted",
+      "seconds": 943.8,
+      "crewTokens": {
+        "input": 233895,
+        "output": 109897,
+        "thinking": 78694,
+        "cacheRead": 3710933,
+        "total": 343792
+      },
+      "violations": 0,
+      "leadTokens": 9000,
+      "soloTokens": 40000,
+      "note": "Two rounds: round 1 had a wrong test (trace started inside a solid box) and terse names; lead ran Prettier on the test after round 2.",
+      "startedAt": "2026-10-26T10:24:07.619Z",
+      "updatedAt": "2026-10-26T10:32:15.751Z"
+    },
+    {
+      "id": "tank-arenas",
+      "kind": "data",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 2,
+      "status": "accepted",
+      "seconds": 817.3,
+      "crewTokens": {
+        "input": 212701,
+        "output": 100788,
+        "thinking": 70600,
+        "cacheRead": 2385827,
+        "total": 313489
+      },
+      "violations": 0,
+      "leadTokens": 7000,
+      "soloTokens": 35000,
+      "note": "Two rounds: round 2 split the validator and compiler into small checks; lead fixed one leftover optional chain.",
+      "startedAt": "2026-10-26T10:26:07.125Z",
+      "updatedAt": "2026-10-26T10:32:45.805Z"
+    },
+    {
+      "id": "arena-noise",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 558.5,
+      "crewTokens": {
+        "input": 217426,
+        "output": 64284,
+        "thinking": 46819,
+        "cacheRead": 1730060,
+        "total": 281710
+      },
+      "violations": 0,
+      "leadTokens": 6000,
+      "soloTokens": 30000,
+      "note": "Accepted after lead fixed two for-of lint errors, ran Prettier and rewrote the two header comments.",
+      "startedAt": "2026-10-26T10:26:26.009Z",
+      "updatedAt": "2026-10-26T10:27:48.656Z"
+    },
+    {
+      "id": "arena-core-tests",
+      "kind": "tests",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 442.4,
+      "crewTokens": {
+        "input": 145159,
+        "output": 47701,
+        "thinking": 36761,
+        "cacheRead": 1360807,
+        "total": 192860
+      },
+      "violations": 0,
+      "leadTokens": 3000,
+      "soloTokens": 25000,
+      "note": "58 tests pass; lead fixed two dot-notation lint errors and formatting.",
+      "startedAt": "2026-10-26T10:43:27.362Z",
+      "updatedAt": "2026-10-26T10:45:02.334Z"
+    },
+    {
+      "id": "tank-aim",
+      "kind": "ai",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 459.4,
+      "crewTokens": {
+        "input": 137222,
+        "output": 59881,
+        "thinking": 50850,
+        "cacheRead": 507668,
+        "total": 197103
+      },
+      "violations": 0,
+      "leadTokens": 7000,
+      "soloTokens": 35000,
+      "note": "Solver correct; two tests assumed impossible scenes (no 16-heading bank between spawns exists; threat point off the path). Lead replaced them with proven scenes and rewrote the header.",
+      "startedAt": "2026-10-26T12:08:28.278Z",
+      "updatedAt": "2026-10-26T12:15:20.876Z"
+    },
+    {
+      "id": "tank-vehicles",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 697.2,
+      "crewTokens": {
+        "input": 211899,
+        "output": 70104,
+        "thinking": 51632,
+        "cacheRead": 3473048,
+        "total": 282003
+      },
+      "violations": 0,
+      "leadTokens": 9000,
+      "soloTokens": 40000,
+      "note": "Lead: push-back now allowed when it backs away from a touching tank; aircraft speed lookup typed; two tests corrected (speed easing, overlap); unused imports and notes cleaned.",
+      "startedAt": "2026-10-26T12:11:29.157Z",
+      "updatedAt": "2026-10-26T12:15:20.970Z"
+    },
+    {
+      "id": "tank-match",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 2,
+      "status": "accepted",
+      "seconds": 1347.7,
+      "crewTokens": {
+        "input": 518103,
+        "output": 138678,
+        "thinking": 82996,
+        "cacheRead": 10926748,
+        "total": 656781
+      },
+      "violations": 0,
+      "leadTokens": 16000,
+      "soloTokens": 70000,
+      "note": "Three rounds. Engine logic right from round 1; tests repeatedly mis-staged scenes (Open Field spawns face up, timing windows, float boundaries) and the lead fixed the last five. Lead found and fixed a real rule bug: an empty Ace Duel tank refilled while the afterburner was held. advanceShellsAndHits (226 lines) to be split later.",
+      "startedAt": "2026-10-26T12:32:04.596Z",
+      "updatedAt": "2026-10-26T12:46:26.281Z"
+    },
+    {
+      "id": "tank-ai",
+      "kind": "ai",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 2,
+      "status": "accepted",
+      "seconds": 975.6,
+      "crewTokens": {
+        "input": 351641,
+        "output": 105346,
+        "thinking": 66625,
+        "cacheRead": 3527270,
+        "total": 456987
+      },
+      "violations": 0,
+      "leadTokens": 14000,
+      "soloTokens": 60000,
+      "note": "Two rounds (round 1 timed out before the commander). Lead fixed imports from the wrong module, exactOptional shapes, a stick lint, and rebuilt the unreachable-pocket test on a hand-made arena (valid arenas cannot have pockets). Tuning to balance targets follows from simulations.",
+      "startedAt": "2026-10-26T12:46:20.329Z",
+      "updatedAt": "2026-10-26T12:57:53.541Z"
+    },
+    {
+      "id": "tank-sim",
+      "kind": "ai",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 604.9,
+      "crewTokens": {
+        "input": 176193,
+        "output": 54614,
+        "thinking": 41239,
+        "cacheRead": 2301212,
+        "total": 230807
+      },
+      "violations": 0,
+      "leadTokens": 4000,
+      "soloTokens": 30000,
+      "note": "Runner, novice, sweep, report script and guarded balance tests; lead fixed two lint errors and allowed console in game scripts.",
+      "startedAt": "2026-10-26T13:08:07.762Z",
+      "updatedAt": "2026-10-26T13:12:40.093Z"
+    },
+    {
+      "id": "tank-progress",
+      "kind": "data",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 460.3,
+      "crewTokens": {
+        "input": 165394,
+        "output": 36940,
+        "thinking": 26219,
+        "cacheRead": 2188059,
+        "total": 202334
+      },
+      "violations": 0,
+      "leadTokens": 14000,
+      "soloTokens": 45000,
+      "note": "Accepted with lead fixes: one test expected a single award where the same win earns three; lint (empty arrow, dot notation); patch descriptions joined into one line; secret hint rewritten so it does not give the goal away.",
+      "startedAt": "2026-10-26T13:48:38.311Z",
+      "updatedAt": "2026-10-26T13:50:08.538Z"
+    },
+    {
+      "id": "tank-result",
+      "kind": "data",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 311.7,
+      "crewTokens": {
+        "input": 139512,
+        "output": 27800,
+        "thinking": 21777,
+        "cacheRead": 1456124,
+        "total": 167312
+      },
+      "violations": 0,
+      "leadTokens": 9000,
+      "soloTokens": 30000,
+      "note": "Accepted; tsc failure was the lead's in-progress files. Lead tidied comments and rewrote repetitive parts (settings parser table, save readers).",
+      "startedAt": "2026-10-26T14:11:20.530Z",
+      "updatedAt": "2026-10-26T14:15:34.192Z"
+    },
+    {
+      "id": "tank-save",
+      "kind": "data",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 354.2,
+      "crewTokens": {
+        "input": 136704,
+        "output": 37321,
+        "thinking": 26225,
+        "cacheRead": 1177266,
+        "total": 174025
+      },
+      "violations": 0,
+      "leadTokens": 9000,
+      "soloTokens": 30000,
+      "note": "Accepted; tsc failure was the lead's in-progress files. Lead tidied comments and rewrote repetitive parts (settings parser table, save readers).",
+      "startedAt": "2026-10-26T14:12:07.540Z",
+      "updatedAt": "2026-10-26T14:15:34.469Z"
+    },
+    {
+      "id": "tank-replay",
+      "kind": "data",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 2,
+      "status": "accepted",
+      "seconds": 819.9,
+      "crewTokens": {
+        "input": 205306,
+        "output": 91751,
+        "thinking": 81737,
+        "cacheRead": 2366179,
+        "total": 297057
+      },
+      "violations": 0,
+      "leadTokens": 10000,
+      "soloTokens": 35000,
+      "note": "Round 1 timed out without output; round 2 delivered. Lead fixed tests that guessed the spawn position (now plant the shell beside the real enemy tank) and the Shell import.",
+      "startedAt": "2026-10-26T14:16:02.451Z",
+      "updatedAt": "2026-10-26T14:26:57.634Z"
+    },
+    {
+      "id": "tank-screens-match",
+      "kind": "plumbing",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 2,
+      "status": "accepted",
+      "seconds": 865.8,
+      "crewTokens": {
+        "input": 610315,
+        "output": 84195,
+        "thinking": 48761,
+        "cacheRead": 6336482,
+        "total": 694510
+      },
+      "violations": 0,
+      "leadTokens": 16000,
+      "soloTokens": 40000,
+      "note": "Two rounds; lead rewrote the Kid lines (syntax and voice) and finished lint.",
+      "startedAt": "2026-10-26T14:41:04.732Z",
+      "updatedAt": "2026-10-26T15:13:16.775Z"
+    },
+    {
+      "id": "tank-screens-sheets",
+      "kind": "plumbing",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 2,
+      "status": "accepted",
+      "seconds": 1024.7,
+      "crewTokens": {
+        "input": 551235,
+        "output": 93892,
+        "thinking": 62009,
+        "cacheRead": 5411293,
+        "total": 645127
+      },
+      "violations": 0,
+      "leadTokens": 8000,
+      "soloTokens": 35000,
+      "note": "Two rounds; lead fixed a closure narrowing type error.",
+      "startedAt": "2026-10-26T14:41:13.135Z",
+      "updatedAt": "2026-10-26T15:13:16.985Z"
+    },
+    {
+      "id": "tank-harness",
+      "kind": "plumbing",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 603.8,
+      "crewTokens": {
+        "input": 287298,
+        "output": 54573,
+        "thinking": 40951,
+        "cacheRead": 4037563,
+        "total": 341871
+      },
+      "violations": 0,
+      "leadTokens": 7000,
+      "soloTokens": 25000,
+      "note": "Lead replaced window.confirm (blocks automation), removed console.debug, fixed null handling.",
+      "startedAt": "2026-10-26T14:42:21.566Z",
+      "updatedAt": "2026-10-26T15:13:17.208Z"
     }
   ]
 }

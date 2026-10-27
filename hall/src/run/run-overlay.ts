@@ -51,8 +51,20 @@ export interface RunOverlayOptions {
 function pips(state: RunState): string {
   return Array.from({ length: RUN_ROUNDS }, (_, index) => {
     const result = state.results[index];
-    const kind = result ? (result.passed ? 'passed' : 'missed') : index === state.roundIndex ? 'current' : 'ahead';
-    const label = result ? (result.passed ? 'passed' : 'missed') : index === state.roundIndex ? 'this round' : 'to come';
+    const kind = result
+      ? result.passed
+        ? 'passed'
+        : 'missed'
+      : index === state.roundIndex
+        ? 'current'
+        : 'ahead';
+    const label = result
+      ? result.passed
+        ? 'passed'
+        : 'missed'
+      : index === state.roundIndex
+        ? 'this round'
+        : 'to come';
     return `<li class="run-pip run-pip--${kind}"><span class="sr-only">Round ${index + 1}: ${label}</span></li>`;
   }).join('');
 }
@@ -60,7 +72,8 @@ function pips(state: RunState): string {
 export function createRunOverlay(options: RunOverlayOptions): RunOverlay {
   const { services, den } = options;
   const { powerRun, denLife, registry } = services;
-  const titleOf = (id: string) => registry.manifests.find((manifest) => manifest.id === id)?.title ?? id;
+  const titleOf = (id: string) =>
+    registry.manifests.find((manifest) => manifest.id === id)?.title ?? id;
 
   const hud = document.createElement('div');
   hud.className = 'run-hud';
@@ -76,7 +89,8 @@ export function createRunOverlay(options: RunOverlayOptions): RunOverlay {
   const showHud = (state: RunState | null) => {
     hud.hidden = state === null;
     if (!state) return;
-    const kind = powerRun.kind() === 'daily' ? `Daily run #${dailyNumber(new Date())}` : 'Power Cycle Run';
+    const kind =
+      powerRun.kind() === 'daily' ? `Daily run #${dailyNumber(new Date())}` : 'Power Cycle Run';
     hud.innerHTML = `<span class="run-hud-title">${kind}</span><ol class="run-pips" aria-label="Rounds">${pips(state)}</ol><span class="run-hud-score">${runScore(state).toLocaleString('en-GB')} pts</span>`;
   };
 
@@ -114,7 +128,8 @@ export function createRunOverlay(options: RunOverlayOptions): RunOverlay {
   };
 
   /** The run as a shareable line; the daily run carries its number, a free run none. */
-  const shareLine = (state: RunState) => runShareLine(state, powerRun.kind() === 'daily' ? dailyNumber(new Date()) : undefined);
+  const shareLine = (state: RunState) =>
+    runShareLine(state, powerRun.kind() === 'daily' ? dailyNumber(new Date()) : undefined);
 
   const showResults = (state: RunState) => {
     card.dataset.phase = 'results';
@@ -184,7 +199,10 @@ export function createRunOverlay(options: RunOverlayOptions): RunOverlay {
       showIntro();
     }
     if (action === 'exit') options.onExit();
-    if (action === 'share' && state) void copyText(shareLine(state)).then((copied) => toast(copied ? 'Run copied' : shareLine(state)));
+    if (action === 'share' && state)
+      void copyText(shareLine(state)).then((copied) =>
+        toast(copied ? 'Run copied' : shareLine(state)),
+      );
   });
 
   // The run needs every playable game's challenges; they arrive with the modules.

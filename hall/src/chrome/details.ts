@@ -100,7 +100,10 @@ export function openDetails(options: DetailsOptions): Dialog {
     `</div>` +
     `</div>` +
     `<section class="details-section"><h3>Controls</h3><ul class="details-controls">${manifest.controls
-      .map((hint) => `<li>${hint.keys.map((key) => `<span class="kbd">${escapeXml(key)}</span>`).join(' ')} <span>${escapeXml(hint.does)}${hint.seat ? ` (seat ${hint.seat})` : ''}</span></li>`)
+      .map(
+        (hint) =>
+          `<li>${hint.keys.map((key) => `<span class="kbd">${escapeXml(key)}</span>`).join(' ')} <span>${escapeXml(hint.does)}${hint.seat ? ` (seat ${hint.seat})` : ''}</span></li>`,
+      )
       .join('')}</ul></section>` +
     switchesMarkup(manifest) +
     `<section class="details-section"><h3>Channels</h3>` +
@@ -133,7 +136,11 @@ export function openDetails(options: DetailsOptions): Dialog {
     crt.setSource(handle.surface);
   };
   const showPickedDemo = () =>
-    showDemo(module ? module.demo(offscreen, manifest.slot, demoContext()) : slateDemo(offscreen, manifest, demoContext()));
+    showDemo(
+      module
+        ? module.demo(offscreen, manifest.slot, demoContext())
+        : slateDemo(offscreen, manifest, demoContext()),
+    );
   showPickedDemo();
   void crt.powerOn({ snowMs: 220 });
 
@@ -154,7 +161,17 @@ export function openDetails(options: DetailsOptions): Dialog {
             const earned = status.get(patch.id)?.earned ?? false;
             const hidden = patch.tier === 'secret' && !earned;
             const text = hidden ? (patch.hint ?? '') : patch.description;
-            const art = patchArt({ manifest, patchId: patch.id, tier: patch.tier, state: earned ? 'earned' : hidden ? 'secret' : 'locked', gold: status.get(patch.id)?.gold ?? false }, 44, 'details');
+            const art = patchArt(
+              {
+                manifest,
+                patchId: patch.id,
+                tier: patch.tier,
+                state: earned ? 'earned' : hidden ? 'secret' : 'locked',
+                gold: status.get(patch.id)?.gold ?? false,
+              },
+              44,
+              'details',
+            );
             return `<li class="patch patch--${patch.tier}${earned ? ' is-earned' : ''}"><button type="button" class="details-patch" data-patch="${patch.id}"><span class="details-patch-art" aria-hidden="true">${art}</span><strong>${escapeXml(hidden ? 'A secret patch' : patch.title)}</strong> <span>${escapeXml(text)}</span></button></li>`;
           })
           .join('')}</ul>`;
@@ -181,7 +198,8 @@ export function openDetails(options: DetailsOptions): Dialog {
         },
       });
     }
-    const patchId = (event.target as Element).closest<HTMLButtonElement>('[data-patch]')?.dataset.patch;
+    const patchId = (event.target as Element).closest<HTMLButtonElement>('[data-patch]')?.dataset
+      .patch;
     const def = module?.patches.find((patch) => patch.id === patchId);
     if (def) openPatchPopover({ services, manifest, def });
   });

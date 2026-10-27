@@ -452,7 +452,9 @@
   font-weight: 700;
   font-size: 1.65em;
   line-height: 1.05;
-  font-variation-settings: 'SOFT' 100, 'WONK' 1;
+  font-variation-settings:
+    'SOFT' 100,
+    'WONK' 1;
 }
 
 .game-card-tagline {

@@ -47,7 +47,7 @@ describe('defaults', () => {
       crtEffects: true,
       colorBlindHints: false,
       roomAmbience: false,
-      controls: { layout: 'split', bindings: null, padSeats: [1, 2] },
+      controls: { bindings: null, padSeats: [1, 2] },
       introSeen: false,
       hintsSeen: {},
       games: {},
@@ -183,7 +183,6 @@ describe('sanitize', () => {
       colorBlindHints: false,
       roomAmbience: false,
       controls: {
-        layout: 'solo',
         bindings: DEFAULT_BINDINGS,
         padSeats: [2, 1],
       },
@@ -210,7 +209,6 @@ describe('sanitize', () => {
     );
 
     expect(badControls?.controls).toEqual({
-      layout: 'split',
       bindings: null,
       padSeats: [1, 2],
     });
@@ -969,6 +967,8 @@ describe('upgrade', () => {
     const upgraded = upgrade('settings', { v: 1, data: v1Settings }, ctx);
     expect(upgraded).toEqual({
       ...v1Settings,
+      // The keyboard layout is no longer a setting: a game sets it from how many people play.
+      controls: { bindings: null, padSeats: [2, 1] },
       difficulty: { left: 'B', right: 'B' },
       showGrowth: true,
       shareWithName: false,

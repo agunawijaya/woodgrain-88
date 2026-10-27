@@ -24,8 +24,11 @@ export function createVersusNight(registry: Pick<Registry, 'manifests'>): Versus
   const current = (): ChalkboardScore | null => {
     if (!series) return null;
     const [first, second] = series.setup.seats;
-    const playing = series.phase === 'playing' || series.phase === 'between' ? series.current : null;
-    const title = playing ? registry.manifests.find((manifest) => manifest.id === playing)?.title : undefined;
+    const playing =
+      series.phase === 'playing' || series.phase === 'between' ? series.current : null;
+    const title = playing
+      ? registry.manifests.find((manifest) => manifest.id === playing)?.title
+      : undefined;
     return {
       names: [seatName(first), seatName(second)],
       wins: series.wins,

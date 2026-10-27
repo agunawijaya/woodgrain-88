@@ -56,7 +56,9 @@ function bigChalkboard(series: VersusSeries | null, titleOf: (id: string) => str
         wins: series.wins,
         bestOf: series.setup.bestOf,
         winner: series.winner,
-        ...(series.current && series.phase !== 'finished' ? { nowPlaying: titleOf(series.current) } : {}),
+        ...(series.current && series.phase !== 'finished'
+          ? { nowPlaying: titleOf(series.current) }
+          : {}),
       }
     : null;
   return (
@@ -79,11 +81,18 @@ function bigChalkboard(series: VersusSeries | null, titleOf: (id: string) => str
   );
 }
 
-export function createVersusView(options: { services: Services; onBack(): void; onPlay(gameId: string): void }): VersusView {
+export function createVersusView(options: {
+  services: Services;
+  onBack(): void;
+  onPlay(gameId: string): void;
+}): VersusView {
   const { services } = options;
   const { versusNight, registry, repos, settings, audio } = services;
-  const versusGames = registry.manifests.filter((manifest) => manifest.versus !== 'none').sort((a, b) => a.slot - b.slot);
-  const titleOf = (id: string) => registry.manifests.find((manifest) => manifest.id === id)?.title ?? id;
+  const versusGames = registry.manifests
+    .filter((manifest) => manifest.versus !== 'none')
+    .sort((a, b) => a.slot - b.slot);
+  const titleOf = (id: string) =>
+    registry.manifests.find((manifest) => manifest.id === id)?.title ?? id;
   /** Shown instead of the series while the player sets up a new night. */
   let settingUp = versusNight.series() === null;
   let raffling = false;
@@ -95,7 +104,9 @@ export function createVersusView(options: { services: Services; onBack(): void; 
   const kidOptions = (selected: KidId) =>
     BLOCK_LADDER.map((id) => {
       const kid = KIDS.find((candidate) => candidate.id === id);
-      return kid ? `<option value="${id}"${id === selected ? ' selected' : ''}>${escapeXml(kid.name)}: ${escapeXml(kid.style.toLowerCase())}</option>` : '';
+      return kid
+        ? `<option value="${id}"${id === selected ? ' selected' : ''}>${escapeXml(kid.name)}: ${escapeXml(kid.style.toLowerCase())}</option>`
+        : '';
     }).join('');
 
   const setupMarkup = () => {
@@ -110,7 +121,7 @@ export function createVersusView(options: { services: Services; onBack(): void; 
     return (
       `<form class="versus-setup" data-ref="setup" novalidate>` +
       `<div class="versus-setup-main">` +
-      `<h2>Tonight's line-up</h2>`+
+      `<h2>Tonight's line-up</h2>` +
       `<div class="versus-seats">` +
       `<label class="field"><span>Seat 1 (left)</span><input name="seat1" value="${escapeXml(playerName)}" maxlength="20" autocomplete="off" required></label>` +
       `<fieldset class="versus-seat2"><legend>Seat 2 (right)</legend>` +
@@ -133,10 +144,16 @@ export function createVersusView(options: { services: Services; onBack(): void; 
   };
 
   const seriesMarkup = (series: VersusSeries) => {
-    const pool = series.setup.pool.map((id) => registry.manifests.find((manifest) => manifest.id === id)).filter((m): m is GameManifest => m !== undefined);
-    const drawnLabel = (manifest: GameManifest) => series.current === manifest.id && series.phase !== 'drawing';
+    const pool = series.setup.pool
+      .map((id) => registry.manifests.find((manifest) => manifest.id === id))
+      .filter((m): m is GameManifest => m !== undefined);
+    const drawnLabel = (manifest: GameManifest) =>
+      series.current === manifest.id && series.phase !== 'drawing';
     const shelf = pool
-      .map((manifest) => `<li class="raffle-cartridge${drawnLabel(manifest) ? ' is-drawn' : ''}" data-game="${manifest.id}">${labelDocument(manifest, `raffle-${manifest.id}`)}</li>`)
+      .map(
+        (manifest) =>
+          `<li class="raffle-cartridge${drawnLabel(manifest) ? ' is-drawn' : ''}" data-game="${manifest.id}">${labelDocument(manifest, `raffle-${manifest.id}`)}</li>`,
+      )
       .join('');
     const gameNumber = series.games.length + 1;
     const action =
@@ -159,7 +176,10 @@ export function createVersusView(options: { services: Services; onBack(): void; 
       (series.phase === 'finished'
         ? `<ol class="series-games" aria-label="The night, game by game">${series.games
             .map((game, index) => {
-              const who = game.winner === null ? 'a draw' : seatName(series.setup.seats[game.winner === 1 ? 0 : 1]);
+              const who =
+                game.winner === null
+                  ? 'a draw'
+                  : seatName(series.setup.seats[game.winner === 1 ? 0 : 1]);
               return `<li><span>Game ${index + 1}</span><strong>${escapeXml(titleOf(game.game))}</strong><span>${escapeXml(who)}</span></li>`;
             })
             .join('')}</ol>`
@@ -171,12 +191,17 @@ export function createVersusView(options: { services: Services; onBack(): void; 
   };
 
   const rivalryMarkup = () => {
-    const rivalries = Object.values(repos.progress.get().den.versus.rivalries).sort((a, b) => b.lastAt.localeCompare(a.lastAt)).slice(0, 6);
+    const rivalries = Object.values(repos.progress.get().den.versus.rivalries)
+      .sort((a, b) => b.lastAt.localeCompare(a.lastAt))
+      .slice(0, 6);
     if (rivalries.length === 0) return '';
     return (
       `<aside class="rivalries" aria-labelledby="rivalries-title"><h2 id="rivalries-title">Rivalries</h2><ul>` +
       rivalries
-        .map((rivalry) => `<li><span>${escapeXml(rivalry.names[0])}</span><strong>${rivalry.series[0]} – ${rivalry.series[1]}</strong><span>${escapeXml(rivalry.names[1])}</span></li>`)
+        .map(
+          (rivalry) =>
+            `<li><span>${escapeXml(rivalry.names[0])}</span><strong>${rivalry.series[0]} – ${rivalry.series[1]}</strong><span>${escapeXml(rivalry.names[1])}</span></li>`,
+        )
         .join('') +
       `</ul><p class="rivalries-note">Series won, by the same two names.</p></aside>`
     );
@@ -188,7 +213,9 @@ export function createVersusView(options: { services: Services; onBack(): void; 
       `<header class="den-life-head">` +
       `<button type="button" class="button button--quiet" data-do="back">← Back to the Hall</button>` +
       `<div class="den-life-heading"><p class="den-life-kicker">The two pads</p><h1 id="versus-title">Versus Night</h1></div>` +
-      (series && !settingUp ? `<div class="den-life-tools"><button type="button" class="button" data-do="new">New night</button></div>` : '') +
+      (series && !settingUp
+        ? `<div class="den-life-tools"><button type="button" class="button" data-do="new">New night</button></div>`
+        : '') +
       `</header>` +
       `<div class="versus-layout">` +
       (settingUp || !series ? setupMarkup() : seriesMarkup(series)) +
@@ -213,8 +240,16 @@ export function createVersusView(options: { services: Services; onBack(): void; 
     const firstSeat: VersusSeat = { kind: 'human', name: first.ok ? first.value : '' };
     const wanted = data.getAll('pool').map(String);
     // A Kid can only take seat 2 in games that have a bot seat.
-    const pool = second.kind === 'kid' ? wanted.filter((id) => versusGames.find((manifest) => manifest.id === id)?.versus === 'local+bot') : wanted;
-    if (second.kind === 'kid' && wanted.length > 0 && pool.length === 0) problems.push('None of the picked games has a seat for a Kid: pick one marked "Kid can play".');
+    const pool =
+      second.kind === 'kid'
+        ? wanted.filter(
+            (id) => versusGames.find((manifest) => manifest.id === id)?.versus === 'local+bot',
+          )
+        : wanted;
+    if (second.kind === 'kid' && wanted.length > 0 && pool.length === 0)
+      problems.push(
+        'None of the picked games has a seat for a Kid: pick one marked "Kid can play".',
+      );
     const setup: VersusSetup = { seats: [firstSeat, second], bestOf, pool, seed: randomSeed() };
     if (problems.length === 0) problems.push(...validateVersusSetup(setup));
     return { setup, problems };
@@ -255,7 +290,8 @@ export function createVersusView(options: { services: Services; onBack(): void; 
   element.addEventListener('change', (event) => {
     const input = event.target as HTMLInputElement;
     if (input.name !== 'seat2kind') return;
-    for (const field of element.querySelectorAll<HTMLElement>('[data-seat2]')) field.hidden = field.dataset.seat2 !== input.value;
+    for (const field of element.querySelectorAll<HTMLElement>('[data-seat2]'))
+      field.hidden = field.dataset.seat2 !== input.value;
   });
   element.addEventListener('submit', (event) => {
     event.preventDefault();

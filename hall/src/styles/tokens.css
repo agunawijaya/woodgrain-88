@@ -9,8 +9,10 @@
  */
 :root {
   --font-display: 'Fraunces Variable', 'Fraunces', Georgia, serif;
-  --font-ui: 'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
-  --font-label: 'Big Shoulders Display Variable', 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --font-ui:
+    'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+  --font-label:
+    'Big Shoulders Display Variable', 'Big Shoulders Display', 'Arial Narrow', sans-serif;
   --font-hand: 'Patrick Hand', 'Comic Sans MS', cursive;
 
   --radius-s: 6px;

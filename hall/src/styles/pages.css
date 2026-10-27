@@ -78,7 +78,9 @@
   font-weight: 700;
   font-size: 26px;
   line-height: 1.1;
-  font-variation-settings: 'SOFT' 100, 'WONK' 1;
+  font-variation-settings:
+    'SOFT' 100,
+    'WONK' 1;
 }
 
 .dialog-kicker {
@@ -679,7 +681,9 @@
   font-family: var(--font-display);
   font-weight: 700;
   font-size: clamp(32px, 4vw, 48px);
-  font-variation-settings: 'SOFT' 100, 'WONK' 1;
+  font-variation-settings:
+    'SOFT' 100,
+    'WONK' 1;
 }
 
 .page-lede {

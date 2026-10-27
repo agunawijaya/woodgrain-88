@@ -5,7 +5,14 @@
  * Run records, Versus Night rivalries, play statistics, and the save file.
  * There are no initials and no leaderboards: only your own runs.
  */
-import { blockLadder, KIDS, RUN_ROUNDS, type GameManifest, type RunMode, type RunRecord } from '@woodgrain-88/kit';
+import {
+  blockLadder,
+  KIDS,
+  RUN_ROUNDS,
+  type GameManifest,
+  type RunMode,
+  type RunRecord,
+} from '@woodgrain-88/kit';
 import type { Services } from '../app/services.ts';
 import { counterDigits, COUNTER_SLOTS } from '../data/cycle.ts';
 import { escapeXml } from '../den/svg.ts';
@@ -28,10 +35,14 @@ function minutes(ms: number): string {
   return total < 60 ? `${total} min` : `${Math.floor(total / 60)} h ${total % 60} min`;
 }
 
-const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const day = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
 /** Every board's best for one game, as "channel · mode" rows. */
-function boardsFor(manifest: GameManifest, boards: Readonly<Record<string, RunRecord[]>>): { channel: string; mode: RunMode; best: RunRecord }[] {
+function boardsFor(
+  manifest: GameManifest,
+  boards: Readonly<Record<string, RunRecord[]>>,
+): { channel: string; mode: RunMode; best: RunRecord }[] {
   return Object.entries(boards).flatMap(([key, runs]) => {
     const [game, channel = '', mode = 'normal'] = key.split('/');
     const best = runs[0];
@@ -40,7 +51,10 @@ function boardsFor(manifest: GameManifest, boards: Readonly<Record<string, RunRe
   });
 }
 
-export function createRecordsPage(options: { services: Services; onOpenSettings(): void }): RecordsPage {
+export function createRecordsPage(options: {
+  services: Services;
+  onOpenSettings(): void;
+}): RecordsPage {
   const { services } = options;
   const element = document.createElement('article');
   element.className = 'page page--records';
@@ -49,13 +63,21 @@ export function createRecordsPage(options: { services: Services; onOpenSettings(
   const summary = () => {
     const { den, games } = services.repos.progress.get();
     const manifests = services.registry.manifests;
-    const known = manifests.reduce((total, manifest) => total + services.denLife.patchesFor(manifest.id).length, 0);
-    const earnedPatches = Object.values(games).flatMap((game) => Object.values(game.patches).filter((patch) => patch.earnedAt !== null));
+    const known = manifests.reduce(
+      (total, manifest) => total + services.denLife.patchesFor(manifest.id).length,
+      0,
+    );
+    const earnedPatches = Object.values(games).flatMap((game) =>
+      Object.values(game.patches).filter((patch) => patch.earnedAt !== null),
+    );
     const gold = earnedPatches.filter((patch) => patch.gold).length;
     const streak = services.denLife.streak();
     const ladder = blockLadder(den.kids);
     const facts = [
-      ['Streak', `${streak.current} ${streak.current === 1 ? 'day' : 'days'} · best ${streak.best}`],
+      [
+        'Streak',
+        `${streak.current} ${streak.current === 1 ? 'day' : 'days'} · best ${streak.best}`,
+      ],
       ['Patches', `${earnedPatches.length} / ${known}`],
       ['Gold thread', `${gold}`],
       ['Counter lamps', `${services.denLife.litLamps().length} / ${COUNTER_SLOTS}`],
@@ -72,11 +94,15 @@ export function createRecordsPage(options: { services: Services; onOpenSettings(
         const best = services.records.bestOverall(manifest.id, manifest.scoreOrder);
         const stats = services.stats.game(manifest.id);
         const perBoard = boardsFor(manifest, boards);
-        const channelTitle = (id: string) => manifest.channels.find((channel) => channel.id === id)?.title ?? id;
+        const channelTitle = (id: string) =>
+          manifest.channels.find((channel) => channel.id === id)?.title ?? id;
         const detail =
           perBoard.length > 1
             ? `<details class="records-boards"><summary>${perBoard.length} channels and modes</summary><ul>${perBoard
-                .map((board) => `<li>${escapeXml(channelTitle(board.channel))} · ${MODE_NAMES[board.mode]}: <strong>${board.best.score.toLocaleString('en-GB')}</strong> (${day(board.best.at)})</li>`)
+                .map(
+                  (board) =>
+                    `<li>${escapeXml(channelTitle(board.channel))} · ${MODE_NAMES[board.mode]}: <strong>${board.best.score.toLocaleString('en-GB')}</strong> (${day(board.best.at)})</li>`,
+                )
                 .join('')}</ul></details>`
             : '';
         return (
@@ -97,12 +123,24 @@ export function createRecordsPage(options: { services: Services; onOpenSettings(
 
   const runs = () => {
     const { free, daily } = services.repos.progress.get().den.runs;
-    const latestDaily = Object.entries(daily).sort(([a], [b]) => b.localeCompare(a)).slice(0, 5);
-    const passes = (rounds: readonly { passed: boolean }[]) => `${rounds.filter((round) => round.passed).length}/${RUN_ROUNDS}`;
-    if (free.length === 0 && latestDaily.length === 0) return `<p>No runs yet. Hold POWER in the Den, or use the Power Cycle Run chip, once five games are on the shelf.</p>`;
+    const latestDaily = Object.entries(daily)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .slice(0, 5);
+    const passes = (rounds: readonly { passed: boolean }[]) =>
+      `${rounds.filter((round) => round.passed).length}/${RUN_ROUNDS}`;
+    if (free.length === 0 && latestDaily.length === 0)
+      return `<p>No runs yet. Hold POWER in the Den, or use the Power Cycle Run chip, once five games are on the shelf.</p>`;
     return (
       `<div class="records-columns">` +
-      `<div><h3>Best free runs</h3><ol class="records-list">${free.slice(0, 5).map((run) => `<li><strong>${run.score.toLocaleString('en-GB')}</strong> · ${passes(run.rounds)} · ${day(run.at)}</li>`).join('') || '<li>None yet</li>'}</ol></div>` +
+      `<div><h3>Best free runs</h3><ol class="records-list">${
+        free
+          .slice(0, 5)
+          .map(
+            (run) =>
+              `<li><strong>${run.score.toLocaleString('en-GB')}</strong> · ${passes(run.rounds)} · ${day(run.at)}</li>`,
+          )
+          .join('') || '<li>None yet</li>'
+      }</ol></div>` +
       `<div><h3>Daily runs</h3><ol class="records-list">${latestDaily.map(([key, run]) => `<li>${escapeXml(key)} · <strong>${run.score.toLocaleString('en-GB')}</strong> · ${passes(run.rounds)}</li>`).join('') || '<li>None yet</li>'}</ol></div>` +
       `</div>`
     );
@@ -114,19 +152,20 @@ export function createRecordsPage(options: { services: Services; onOpenSettings(
     if (pairs.length === 0) return `<p>No Versus Night yet. Pick up the two pads in the Den.</p>`;
     return (
       `<ul class="records-rivalries">${pairs
-        .map((pair) => `<li><span>${escapeXml(pair.names[0])}</span><strong>${pair.series[0]} – ${pair.series[1]}</strong><span>${escapeXml(pair.names[1])}</span><small>games ${pair.games[0]} – ${pair.games[1]} · last ${day(pair.lastAt)}</small></li>`)
+        .map(
+          (pair) =>
+            `<li><span>${escapeXml(pair.names[0])}</span><strong>${pair.series[0]} – ${pair.series[1]}</strong><span>${escapeXml(pair.names[1])}</span><small>games ${pair.games[0]} – ${pair.games[1]} · last ${day(pair.lastAt)}</small></li>`,
+        )
         .join('')}</ul>` + `<p class="page-note">${recent.length} recent series kept.</p>`
     );
   };
 
   const ladder = () => {
     const kids = services.repos.progress.get().den.kids;
-    return (
-      `<ul class="records-kids">${KIDS.map((kid) => {
-        const record = kids[kid.id];
-        return `<li><strong>${escapeXml(kid.name)}</strong> <span>${record ? `won ${record.wins}, lost ${record.losses}${record.draws ? `, drew ${record.draws}` : ''}${record.winsOnA ? ` · ${record.winsOnA} on A` : ''}` : 'not played yet'}</span></li>`;
-      }).join('')}</ul>`
-    );
+    return `<ul class="records-kids">${KIDS.map((kid) => {
+      const record = kids[kid.id];
+      return `<li><strong>${escapeXml(kid.name)}</strong> <span>${record ? `won ${record.wins}, lost ${record.losses}${record.draws ? `, drew ${record.draws}` : ''}${record.winsOnA ? ` · ${record.winsOnA} on A` : ''}` : 'not played yet'}</span></li>`;
+    }).join('')}</ul>`;
   };
 
   const render = () => {
@@ -153,7 +192,11 @@ export function createRecordsPage(options: { services: Services; onOpenSettings(
   element.addEventListener('click', (event) => {
     if ((event.target as Element).closest('[data-do="data"]')) options.onOpenSettings();
   });
-  const stops = [services.repos.records.onChange(render), services.repos.stats.onChange(render), services.repos.progress.onChange(render)];
+  const stops = [
+    services.repos.records.onChange(render),
+    services.repos.stats.onChange(render),
+    services.repos.progress.onChange(render),
+  ];
   render();
   return {
     element,

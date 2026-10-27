@@ -1,6 +1,6 @@
 # Progress
 
-Updated once at the end of each prompt. Last update: prompt 01 (Den Life), 2026-10-26.
+Updated once at the end of each prompt. Last update: prompt 02 (Tank Duel), 2026-10-27.
 
 ## Foundation (prompt 00)
 
@@ -41,6 +41,24 @@ Updated once at the end of each prompt. Last update: prompt 01 (Den Life), 2026-
 | Hero frames | approved by the owner after two review rounds |
 | Tests | 32 bridge; 182 kit, 105 Hall, 3 scripts (Vitest); 59 Playwright |
 
+## Tank Duel (prompt 02)
+
+| Part | Status |
+|---|---|
+| `packages/arena` (stage, light rigs, post, particles, ribbons, ground paint, effects, shake, framing) | done; ADR-0009; three.js kept out of the Hall's entry (checked in `pnpm check`) |
+| Engine: the 27 original channels and 4 Remix, every 1977 rule and hook, a shell flight cap | done; pure and fixed-step |
+| Our arenas (Open Field, Sandbag Line, Old Quarter, Bumper Yard) and cloud skies | done; validated for symmetry, enclosure, reachability and spawn safety |
+| The Neighbourhood Kids as commanders and pilots | done; fair by construction, human-paced settle; every Kid scores on a still tank on every tank channel |
+| Balance targets | Lou v Pip 84%, novice v Pip 47%, no 0–0 rounds: met. Dee v Moss 60.5%: at the top edge. Score band 10–35 (raised by the owner from 6–20) in 88% of rounds against 90%: short. See NOTES.md |
+| Diorama (tanks, biplanes, bomber, jets), HUD, day and night | done; hero frames approved by the owner; ADR-0010 |
+| Menu, pre-match, results with replay, records, settings, tutorial (six lessons) | done |
+| Modes: Vs a Kid, Versus, Practice; daily, challenge links, micro-challenges, Versus Night | done |
+| Sound (synthesised one-shots and held engine hums) | done; kit `hold()` added |
+| Hall integration (registry, lazy chunk, opponent in results, Den TV demo) | done; the demo holds a still picture under reduced motion or software drawing |
+| Hall fixes found on the way | Details opens the overlay for a playable game (`#/details/<id>`); the Den keeps its channel when you come back; the first key reaches a game; stopped loops are let go (memory no longer grows a match at a time); calendar's spoken name carries what it prints |
+| Performance | 60 fps at 1920 × 1080 on seven channels by day and night; memory flat over ten minutes on the menu (45–46 MB); Hall entry 377 kB (gzip 122), game chunk 825 kB (gzip 225), loaded on demand |
+| Tests | 32 bridge; 185 kit, 110 Hall, 3 scripts, 58 arena, 261 Tank Duel (Vitest; 6 balance checks opt-in); 59 Hall Playwright, 11 Tank Duel flows, 32 screenshot runs |
+
 ## Games
 
 Status values: **coming soon** (manifest, label, slate and details in the Hall; no game yet) ·
@@ -67,7 +85,7 @@ Status values: **coming soon** (manifest, label, slate and details in the Hall; 
 | 17 | Glove Box | Duels | 7 | coming soon | |
 | 18 | Shore Battery | Arcade | 6 | coming soon | Renamed in 00a |
 | 19 | Baseline | Sports | 7 | coming soon | |
-| 20 | Tank Duel | Duels | 1 | coming soon | Pilot wave; renamed in 00a |
+| 20 | Tank Duel | Duels | 1 | playable | Pilot wave; renamed in 00a. Balance notes in the game's NOTES.md |
 | 21 | Lucky Reels | Brain | 10 | coming soon | A real slot machine with credits, play money only; renamed in 00a |
 | 22 | Slalom Line | Sports | 9 | coming soon | Random courses in two variations of the original |
 | 23 | Lasso Run | Arcade | 8 | coming soon | |

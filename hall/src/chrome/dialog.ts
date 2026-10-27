@@ -48,7 +48,9 @@ export function openDialog(options: DialogOptions): Dialog {
   element.innerHTML =
     `<section class="dialog" role="dialog" aria-modal="true" aria-labelledby="${id}-title">` +
     `<h2 id="${id}-title" class="dialog-title${options.hideTitle ? ' sr-only' : ''}">${escapeXml(options.title)}</h2>` +
-    (options.closeButton ? `<button type="button" class="dialog-close" aria-label="Close">×</button>` : '') +
+    (options.closeButton
+      ? `<button type="button" class="dialog-close" aria-label="Close">×</button>`
+      : '') +
     `<div class="dialog-body"></div>` +
     `</section>`;
   const dialogElement = element.querySelector<HTMLElement>('.dialog');
@@ -119,7 +121,8 @@ export function openDialog(options: DialogOptions): Dialog {
     const preferred =
       dialogElement.querySelector<HTMLElement>('[data-autofocus]') ??
       focusables(dialogElement).find(
-        (item) => item.getAttribute('aria-disabled') !== 'true' && !item.classList.contains('dialog-close'),
+        (item) =>
+          item.getAttribute('aria-disabled') !== 'true' && !item.classList.contains('dialog-close'),
       );
     (preferred ?? dialogElement).focus();
   });

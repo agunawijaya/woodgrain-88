@@ -80,7 +80,8 @@ function minBy<T>(items: readonly T[], score: (item: T) => number): T | undefine
   return best;
 }
 
-const distance = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
+const distance = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+  Math.hypot(a.x - b.x, a.y - b.y);
 
 /** Degrees folded into -165..180, the range the rotate buttons step through. */
 export function normalizeRotation(degrees: number): number {
@@ -108,21 +109,39 @@ const others = (placements: readonly PatchPlacement[], side: JacketSide, ignoreK
   placements.filter((p) => p.side === side && patchKey(p) !== ignoreKey);
 
 /** Spots with no placement centre within SPOT_SPACING / 2 (ignoring `ignoreKey`). */
-export function freeSpots(side: JacketSide, placements: readonly PatchPlacement[], ignoreKey?: string): Spot[] {
+export function freeSpots(
+  side: JacketSide,
+  placements: readonly PatchPlacement[],
+  ignoreKey?: string,
+): Spot[] {
   const taken = others(placements, side, ignoreKey);
-  return jacketSpots(side).filter((spot) => taken.every((p) => distance(p, spot) > SPOT_SPACING / 2));
+  return jacketSpots(side).filter((spot) =>
+    taken.every((p) => distance(p, spot) > SPOT_SPACING / 2),
+  );
 }
 
 /** The placement whose centre is within PATCH_UNITS / 2 of (x, y) on that side, topmost z first; null if none. */
-export function patchAt(side: JacketSide, x: number, y: number, placements: readonly PatchPlacement[], ignoreKey?: string): PatchPlacement | null {
-  const under = others(placements, side, ignoreKey).filter((p) => distance(p, { x, y }) <= PATCH_UNITS / 2);
+export function patchAt(
+  side: JacketSide,
+  x: number,
+  y: number,
+  placements: readonly PatchPlacement[],
+  ignoreKey?: string,
+): PatchPlacement | null {
+  const under = others(placements, side, ignoreKey).filter(
+    (p) => distance(p, { x, y }) <= PATCH_UNITS / 2,
+  );
   return minBy(under, (p) => -p.z) ?? null;
 }
 
-const topZ = (placements: readonly PatchPlacement[]) => placements.reduce((max, p) => Math.max(max, p.z), 0);
+const topZ = (placements: readonly PatchPlacement[]) =>
+  placements.reduce((max, p) => Math.max(max, p.z), 0);
 
 /** Replaces the placements with these keys, keeps the rest, and never shares objects with the input. */
-function withReplaced(placements: readonly PatchPlacement[], replacements: ReadonlyMap<string, PatchPlacement>): PatchPlacement[] {
+function withReplaced(
+  placements: readonly PatchPlacement[],
+  replacements: ReadonlyMap<string, PatchPlacement>,
+): PatchPlacement[] {
   return placements.map((p) => ({ ...(replacements.get(patchKey(p)) ?? p) }));
 }
 
@@ -149,28 +168,66 @@ export function dropPatch(
 
   if (target) {
     const targetKey = patchKey(target);
-    const moved = { game: patch.game, patch: patch.patch, side: target.side, x: target.x, y: target.y, z };
+    const moved = {
+      game: patch.game,
+      patch: patch.patch,
+      side: target.side,
+      x: target.x,
+      y: target.y,
+      z,
+    };
     if (!dragged) {
-      return { placements: withReplaced(placements, new Map([[targetKey, { ...moved, rotation: 0 }]])), reason: null };
+      return {
+        placements: withReplaced(placements, new Map([[targetKey, { ...moved, rotation: 0 }]])),
+        reason: null,
+      };
     }
-    const swapped = { ...target, side: dragged.side, x: dragged.x, y: dragged.y, rotation: dragged.rotation };
+    const swapped = {
+      ...target,
+      side: dragged.side,
+      x: dragged.x,
+      y: dragged.y,
+      rotation: dragged.rotation,
+    };
     return {
-      placements: withReplaced(placements, new Map([[key, { ...moved, rotation: target.rotation }], [targetKey, swapped]])),
+      placements: withReplaced(
+        placements,
+        new Map([
+          [key, { ...moved, rotation: target.rotation }],
+          [targetKey, swapped],
+        ]),
+      ),
       reason: null,
     };
   }
 
-  const spot = minBy(freeSpots(side, placements, key), (candidate) => distance(candidate, { x, y }));
+  const spot = minBy(freeSpots(side, placements, key), (candidate) =>
+    distance(candidate, { x, y }),
+  );
   if (!spot) return { placements: placements.map((p) => ({ ...p })), reason: NO_ROOM };
-  const placed: PatchPlacement = { game: patch.game, patch: patch.patch, side, x: spot.x, y: spot.y, rotation: dragged?.rotation ?? 0, z };
+  const placed: PatchPlacement = {
+    game: patch.game,
+    patch: patch.patch,
+    side,
+    x: spot.x,
+    y: spot.y,
+    rotation: dragged?.rotation ?? 0,
+    z,
+  };
   return dragged
     ? { placements: withReplaced(placements, new Map([[key, placed]])), reason: null }
     : { placements: [...placements.map((p) => ({ ...p })), placed], reason: null };
 }
 
 /** Rotate by `step` × 15 degrees, normalised to -165..180. */
-export function rotatePatch(placements: readonly PatchPlacement[], key: string, step: 1 | -1): PatchPlacement[] {
-  return placements.map((p) => (patchKey(p) === key ? { ...p, rotation: normalizeRotation(p.rotation + step * 15) } : { ...p }));
+export function rotatePatch(
+  placements: readonly PatchPlacement[],
+  key: string,
+  step: 1 | -1,
+): PatchPlacement[] {
+  return placements.map((p) =>
+    patchKey(p) === key ? { ...p, rotation: normalizeRotation(p.rotation + step * 15) } : { ...p },
+  );
 }
 
 /** How far a spot lies in a direction (negative when behind) and how far off to the side. */
@@ -191,7 +248,11 @@ function offsets(direction: Direction, dx: number, dy: number): { along: number;
  * Keyboard move: to the nearest free spot in that direction on the same side; unchanged if none.
  * Sideways distance counts double, so "up" climbs the same column before it jumps to a sleeve.
  */
-export function nudgePatch(placements: readonly PatchPlacement[], key: string, direction: Direction): PatchPlacement[] {
+export function nudgePatch(
+  placements: readonly PatchPlacement[],
+  key: string,
+  direction: Direction,
+): PatchPlacement[] {
   const moving = placements.find((p) => patchKey(p) === key);
   if (!moving) return placements.map((p) => ({ ...p }));
   const ahead = freeSpots(moving.side, placements, key)
@@ -214,9 +275,11 @@ const BACK_PANEL_CENTRE = { x: 300, y: 407 };
 function arrangeOrder(): Spot[] {
   const back = jacketSpots('back');
   const front = jacketSpots('front');
-  const inZones = (spots: Spot[], ...zones: string[]) => spots.filter((spot) => zones.includes(spot.zone));
+  const inZones = (spots: Spot[], ...zones: string[]) =>
+    spots.filter((spot) => zones.includes(spot.zone));
   const panel = inZones(back, 'panel').sort(
-    (a, b) => distance(a, BACK_PANEL_CENTRE) - distance(b, BACK_PANEL_CENTRE) || a.y - b.y || a.x - b.x,
+    (a, b) =>
+      distance(a, BACK_PANEL_CENTRE) - distance(b, BACK_PANEL_CENTRE) || a.y - b.y || a.x - b.x,
   );
   return [
     ...panel,
@@ -245,13 +308,28 @@ export function autoArrange(drawer: readonly DrawerPatch[]): PatchPlacement[] {
   const centred = new Set(legends.map(patchKey));
   const rest = unique
     .filter((p) => !centred.has(patchKey(p)))
-    .sort((a, b) => ARRANGE_TIER_ORDER[a.tier] - ARRANGE_TIER_ORDER[b.tier] || a.slot - b.slot || patchKey(a).localeCompare(patchKey(b)));
+    .sort(
+      (a, b) =>
+        ARRANGE_TIER_ORDER[a.tier] - ARRANGE_TIER_ORDER[b.tier] ||
+        a.slot - b.slot ||
+        patchKey(a).localeCompare(patchKey(b)),
+    );
   return [...legends, ...rest].slice(0, spots.length).flatMap((p, index) => {
     const spot = spots[index];
     if (!spot) return [];
     const rng = createRng(patchKey(p));
     const rotation = rng.chance(0.25) ? rng.pick([-15, 15] as const) : 0;
-    return [{ game: p.game, patch: p.patch, side: spot.side, x: spot.x, y: spot.y, rotation, z: index + 1 }];
+    return [
+      {
+        game: p.game,
+        patch: p.patch,
+        side: spot.side,
+        x: spot.x,
+        y: spot.y,
+        rotation,
+        z: index + 1,
+      },
+    ];
   });
 }
 
@@ -273,11 +351,19 @@ export function filterDrawer(drawer: readonly DrawerPatch[], filter: DrawerFilte
         (filter.gold === undefined || p.gold === filter.gold),
     )
     .map((p) => ({ ...p }))
-    .sort((a, b) => a.slot - b.slot || DRAWER_TIER_ORDER[a.tier] - DRAWER_TIER_ORDER[b.tier] || patchKey(a).localeCompare(patchKey(b)));
+    .sort(
+      (a, b) =>
+        a.slot - b.slot ||
+        DRAWER_TIER_ORDER[a.tier] - DRAWER_TIER_ORDER[b.tier] ||
+        patchKey(a).localeCompare(patchKey(b)),
+    );
 }
 
 /** Drawer patches not yet on the jacket. */
-export function unsewn(drawer: readonly DrawerPatch[], placements: readonly PatchPlacement[]): DrawerPatch[] {
+export function unsewn(
+  drawer: readonly DrawerPatch[],
+  placements: readonly PatchPlacement[],
+): DrawerPatch[] {
   const sewn = new Set(placements.map(patchKey));
   return drawer.filter((p) => !sewn.has(patchKey(p))).map((p) => ({ ...p }));
 }

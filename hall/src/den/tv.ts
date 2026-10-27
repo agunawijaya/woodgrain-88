@@ -82,8 +82,17 @@ function antenna(): string {
 
 function cabinet(): string {
   const { tv, screen } = LAYOUT;
-  const control = { x: screen.x + screen.width + 22, y: tv.y + 26, width: tv.x + tv.width - (screen.x + screen.width + 22) - 18 };
-  const bezel = { x: screen.x - 14, y: screen.y - 14, width: screen.width + 28, height: screen.height + 28 };
+  const control = {
+    x: screen.x + screen.width + 22,
+    y: tv.y + 26,
+    width: tv.x + tv.width - (screen.x + screen.width + 22) - 18,
+  };
+  const bezel = {
+    x: screen.x - 14,
+    y: screen.y - 14,
+    width: screen.width + 28,
+    height: screen.height + 28,
+  };
   return (
     `<g class="tv">` +
     `<rect x="${tv.x + 6}" y="${tv.y + tv.height - 2}" width="${tv.width - 12}" height="8" fill="#000" opacity="0.35"/>` +

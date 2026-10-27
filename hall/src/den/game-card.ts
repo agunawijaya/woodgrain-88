@@ -98,8 +98,9 @@ export function createGameCard(options: GameCardOptions): GameCard {
     },
     focusPrimary() {
       const target =
-        element.querySelector<HTMLButtonElement>('button[data-action="play"]:not([aria-disabled="true"])') ??
-        element.querySelector<HTMLButtonElement>('button[data-action="details"]');
+        element.querySelector<HTMLButtonElement>(
+          'button[data-action="play"]:not([aria-disabled="true"])',
+        ) ?? element.querySelector<HTMLButtonElement>('button[data-action="details"]');
       target?.focus();
     },
     dispose() {

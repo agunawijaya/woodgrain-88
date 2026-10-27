@@ -7,9 +7,10 @@ import type { GameManifest } from '@woodgrain-88/kit';
 export const manifest: GameManifest = {
   id: 'lane-hopper',
   slot: 11,
-  title: "Lane Hopper",
-  tagline: "Race a friend across ten lanes of traffic.",
-  teaser: "Ten lanes, a ticking clock and a friend in the next lane. Read the gaps, hop through, and get bumped back when you guess wrong.",
+  title: 'Lane Hopper',
+  tagline: 'Race a friend across ten lanes of traffic.',
+  teaser:
+    'Ten lanes, a ticking clock and a friend in the next lane. Read the gaps, hop through, and get bumped back when you guess wrong.',
   family: 'arcade',
   players: '1–2P',
   versus: 'local+bot',
@@ -17,7 +18,7 @@ export const manifest: GameManifest = {
   status: 'coming-soon',
   scoreOrder: 'higher',
   accent: { day: '#5f7a12', night: '#c8f25a' },
-  emblem: "M3 9h4M10 9h4M17 9h4M3 15h4M10 15h4M17 15h4M12 21v-2.5M12 6V3",
+  emblem: 'M3 9h4M10 9h4M17 9h4M3 15h4M10 15h4M17 15h4M12 21v-2.5M12 6V3',
   label: {
     pattern: 'stripes',
     angle: 90,
@@ -27,18 +28,23 @@ export const manifest: GameManifest = {
     bandText: '#1a3300',
   },
   inspiredBy: {
-    originalTitle: "Freeway",
-    uiTitle: "the road-crossing race",
-    publisher: "Activision",
+    originalTitle: 'Freeway',
+    uiTitle: 'the road-crossing race',
+    publisher: 'Activision',
     year: null,
     cartridgeSlots: [11, 19],
   },
   controls: [
-    { keys: ["Arrows or WASD"], does: "move" },
-    { keys: ["Space"], does: "act" },
+    { keys: ['Arrows or WASD'], does: 'move' },
+    { keys: ['Space'], does: 'act' },
   ],
   channels: [
-    { id: 'classic', kind: 'original', title: 'Classic', description: 'The original rules, rebuilt and polished.' },
+    {
+      id: 'classic',
+      kind: 'original',
+      title: 'Classic',
+      description: 'The original rules, rebuilt and polished.',
+    },
   ],
   supports: { daily: false, challengeLinks: false, microChallenges: false },
   events: [],
@@ -53,7 +59,8 @@ export const manifest: GameManifest = {
       id: 'rabbit',
       label: 'Rabbit',
       cartridgeSlot: 11,
-      description: 'A rabbit crosses a road with dashed lane lines and its own colours, with the cars and trucks trading lanes.',
+      description:
+        'A rabbit crosses a road with dashed lane lines and its own colours, with the cars and trucks trading lanes.',
     },
   ],
 };

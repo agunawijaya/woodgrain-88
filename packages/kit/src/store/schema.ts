@@ -7,7 +7,7 @@
  * and gives up only when the document is not an object at all. Old data is
  * upgraded one version at a time with the functions in MIGRATIONS.
  */
-import type { Bindings, Layout, PadInput, Seat, SeatBindings } from '../input.ts';
+import type { Bindings, PadInput, Seat, SeatBindings } from '../input.ts';
 import { KID_IDS, type KidId } from '../kids.ts';
 import {
   RUN_MODES,
@@ -165,10 +165,6 @@ function isReducedMotion(value: unknown): value is SettingsData['reducedMotion']
   return value === 'system' || value === 'on' || value === 'off';
 }
 
-function isLayout(value: unknown): value is Layout {
-  return value === 'solo' || value === 'split';
-}
-
 function isAvatarShape(value: unknown): value is AvatarDescriptor['shape'] {
   return value === 'round' || value === 'square' || value === 'tall';
 }
@@ -301,7 +297,6 @@ function sanitizeSettings(data: Record<string, unknown>): SettingsData {
 
   const rawControls = isPlainObject(data.controls) ? data.controls : {};
   const controls: ControlSettings = {
-    layout: isLayout(rawControls.layout) ? rawControls.layout : 'split',
     bindings: sanitizeBindings(rawControls.bindings),
     padSeats: sanitizePadSeats(rawControls.padSeats),
   };
@@ -934,7 +929,8 @@ function sanitizeEventLog(data: Record<string, unknown>): EventLogData {
  * Fresh data for a repository. Settings defaults: appearance 'system', all
  * volumes 0.8 except ambience 0.4, not muted, reducedMotion 'system',
  * screenShake true, crtEffects true, colorBlindHints false, roomAmbience
- * false, controls { layout 'split', bindings null, padSeats [1, 2] },
+ * false, controls { bindings null, padSeats [1, 2] } (the keyboard layout is the game's to set:
+ * whole for one player, split for two),
  * introSeen false, hintsSeen {}, games {}, difficulty { left 'B', right 'B' },
  * showGrowth true, shareWithName false, versusBestOf 3, runSound 'normal'.
  * Profile defaults: a new id, the display name "Player", avatar { hue 28,

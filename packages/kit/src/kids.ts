@@ -34,13 +34,17 @@ export interface KidPersonality {
   streakiness: number;
 }
 
-/** A 1988 school-photo portrait, drawn from code by the Hall; no real person is depicted. */
+/** A 1988 school-photo portrait, drawn from code by `kidPortraitSvg`; no real person is depicted. */
 export interface KidPortrait {
   /** Skin tone from a small, varied palette. */
   skin: string;
   hair: { style: 'curls' | 'bob' | 'spikes' | 'bald-ring' | 'ponytail' | 'bowl'; colour: string };
   /** The sweater, shirt or jacket in the photo. */
-  top: { style: 'sweater' | 'polo' | 'cardigan' | 'tee' | 'denim' | 'turtleneck'; colour: string; accent: string };
+  top: {
+    style: 'sweater' | 'polo' | 'cardigan' | 'tee' | 'denim' | 'turtleneck';
+    colour: string;
+    accent: string;
+  };
   extra: 'none' | 'glasses' | 'freckles' | 'braces' | 'headband' | 'bow-tie';
   /** How this kid smiles for the camera; each kid's is their own. */
   smile: 'gap-grin' | 'closed' | 'laugh' | 'moustache' | 'braces' | 'buck';

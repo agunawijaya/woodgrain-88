@@ -73,5 +73,5 @@ All self-hosted through the fontsource packages.
 ## Tools and libraries
 
 TypeScript, Vite, Vitest, Playwright, axe-core, ESLint, Prettier, typescript-eslint, happy-dom, tsx,
-pnpm. Built by Claude Code sessions (Anthropic) leading Gemini models through the Antigravity CLI
+pnpm. three.js (MIT licence) draws Tank Duel's diorama; it loads only with the games that use it. Built by Claude Code sessions (Anthropic) leading Gemini models through the Antigravity CLI
 (Google).

@@ -56,7 +56,10 @@ export const TYPE_TIMEOUT_MS = 1500;
 /** The knob sweeps from -150° to +150°; channel 1 at -150, the last at +150. */
 export const DIAL_SWEEP_DEGREES = 300;
 
-export function dialChannels(defs: readonly ChannelDef[], isUnlocked: (id: string) => boolean): DialChannel[] {
+export function dialChannels(
+  defs: readonly ChannelDef[],
+  isUnlocked: (id: string) => boolean,
+): DialChannel[] {
   return defs.map((def, index) => ({
     id: def.id,
     number: index + 1,
@@ -82,7 +85,15 @@ export function dialGroups(channels: readonly DialChannel[]): DialGroup[] {
 export function createDialState(channels: readonly DialChannel[], selected?: string): DialState {
   const first = channels[0];
   if (!first) throw new RangeError('A dial needs at least one channel');
-  return { channels, selected: channels.some((channel) => channel.id === selected) ? (selected ?? first.id) : first.id, typed: '', typedAt: null, message: null };
+  return {
+    channels,
+    selected: channels.some((channel) => channel.id === selected)
+      ? (selected ?? first.id)
+      : first.id,
+    typed: '',
+    typedAt: null,
+    message: null,
+  };
 }
 
 /** The knob's angle for a channel; a single channel sits at 0. */
@@ -133,7 +144,11 @@ function channelNumbered(state: DialState, typed: string): DialChannel | undefin
   return Number.isInteger(number) && number >= 1 ? state.channels[number - 1] : undefined;
 }
 
-const indexOf = (state: DialState) => Math.max(0, state.channels.findIndex((channel) => channel.id === state.selected));
+const indexOf = (state: DialState) =>
+  Math.max(
+    0,
+    state.channels.findIndex((channel) => channel.id === state.selected),
+  );
 
 function moveBy(state: DialState, steps: number): DialState {
   const count = state.channels.length;
@@ -148,7 +163,9 @@ function moveTo(state: DialState, index: number): DialState {
 /** To the first channel of the next or previous group run; no wrapping. */
 function page(state: DialState, direction: 1 | -1): DialState {
   const groups = dialGroups(state.channels);
-  const here = groups.findIndex((group) => group.channels.some((channel) => channel.id === state.selected));
+  const here = groups.findIndex((group) =>
+    group.channels.some((channel) => channel.id === state.selected),
+  );
   const target = groups[here + direction]?.channels[0];
   return select(state, target?.id ?? state.selected);
 }
@@ -178,10 +195,16 @@ function typeDigit(state: DialState, digit: string, at: number): DialState {
   if (state.typed === '' && digit === '0') return state;
   const typed = state.typed + digit;
   const channel = channelNumbered(state, typed);
-  if (!channel) return { ...state, typed: '', typedAt: null, message: `No channel ${Number(typed)}` };
+  if (!channel)
+    return { ...state, typed: '', typedAt: null, message: `No channel ${Number(typed)}` };
   // Complete when no longer number could still be a channel: with 30 channels, 4 is, 2 is not.
   const complete = Number(typed) * 10 > state.channels.length;
-  return { ...state, selected: channel.id, typed: complete ? '' : typed, typedAt: complete ? null : at };
+  return {
+    ...state,
+    selected: channel.id,
+    typed: complete ? '' : typed,
+    typedAt: complete ? null : at,
+  };
 }
 
 function backspace(state: DialState): DialState {
@@ -198,8 +221,14 @@ function backspace(state: DialState): DialState {
 
 /** A half-typed number left long enough counts as typed, then the remote is clear again. */
 function expireTyping(state: DialState, at: number): DialState {
-  if (state.typed === '' || state.typedAt === null || at - state.typedAt < TYPE_TIMEOUT_MS) return state;
-  return { ...state, selected: channelNumbered(state, state.typed)?.id ?? state.selected, typed: '', typedAt: null };
+  if (state.typed === '' || state.typedAt === null || at - state.typedAt < TYPE_TIMEOUT_MS)
+    return state;
+  return {
+    ...state,
+    selected: channelNumbered(state, state.typed)?.id ?? state.selected,
+    typed: '',
+    typedAt: null,
+  };
 }
 
 function onKey(state: DialState, key: string, at: number): DialOutcome {

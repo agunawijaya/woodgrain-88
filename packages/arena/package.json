@@ -1,0 +1,22 @@
+{
+  "name": "@woodgrain-88/arena",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The shared three.js tabletop diorama toolkit that Woodgrain '88's duel and arcade games are drawn with.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@woodgrain-88/kit": "workspace:*",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "@types/three": "0.186.0"
+  }
+}

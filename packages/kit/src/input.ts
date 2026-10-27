@@ -2,10 +2,10 @@
  * Input for one or two players on one machine (docs/adr/0003-loop-input-seats.md).
  *
  * Games ask for actions ("fire"), never keys. Each action belongs to a seat:
- * seat 1 is the left half of the keyboard (WASD + Space/F) or the first
- * gamepad, seat 2 the right half (arrows + Enter/L) or the second gamepad.
- * When one person plays alone ("solo" layout) seat 1 answers to both halves
- * of the keyboard and every gamepad.
+ * seat 1 is the arrow keys (+ Enter/L) or the first gamepad, seat 2 the left
+ * half of the keyboard (WASD + Space/F) or the second gamepad. When one person
+ * plays alone ("solo" layout, which a game sets whenever only one person
+ * plays) seat 1 answers to both halves of the keyboard and every gamepad.
  *
  * Presses are buffered between simulation steps, so a tap that starts and
  * ends between two ticks still arrives as `pressed` (and `released`) on the
@@ -51,19 +51,12 @@ const STANDARD_PAD: SeatBindings['pad'] = {
 /** Gamepad Start pauses, like Escape. */
 const PAD_PAUSE_BUTTON = 9;
 
+/**
+ * The owner's rule: alone, the arrow keys; two on one keyboard, the first player keeps the arrows
+ * and the second takes WASD.
+ */
 export const DEFAULT_BINDINGS: Bindings = {
   1: {
-    keys: {
-      up: ['KeyW'],
-      down: ['KeyS'],
-      left: ['KeyA'],
-      right: ['KeyD'],
-      fire: ['Space'],
-      alt: ['KeyF'],
-    },
-    pad: STANDARD_PAD,
-  },
-  2: {
     keys: {
       up: ['ArrowUp'],
       down: ['ArrowDown'],
@@ -71,6 +64,17 @@ export const DEFAULT_BINDINGS: Bindings = {
       right: ['ArrowRight'],
       fire: ['Enter', 'NumpadEnter'],
       alt: ['KeyL'],
+    },
+    pad: STANDARD_PAD,
+  },
+  2: {
+    keys: {
+      up: ['KeyW'],
+      down: ['KeyS'],
+      left: ['KeyA'],
+      right: ['KeyD'],
+      fire: ['Space'],
+      alt: ['KeyF'],
     },
     pad: STANDARD_PAD,
   },
@@ -132,6 +136,17 @@ export interface InputController {
 }
 
 const STICK_DEADZONE = 0.4;
+
+const CONTROLS =
+  'button, input, select, textarea, a[href], [contenteditable], [role="radio"], [role="switch"], [role="slider"], [role="tab"]';
+
+/** Whether a key event was aimed at a focused form control (a game's own menu, a dialog). */
+function isOnControl(event: KeyboardEvent): boolean {
+  const target = event.target;
+  return (
+    typeof Element !== 'undefined' && target instanceof Element && target.closest(CONTROLS) !== null
+  );
+}
 
 /** Problems with a set of bindings: reserved keys, or one key driving both seats. */
 export function validateBindings(bindings: Bindings, layout: Layout): string[] {
@@ -225,6 +240,8 @@ export function createInput(options: InputOptions = {}): InputController {
       if (!event.repeat) pauseRequests.emit(undefined);
       return;
     }
+    // A key pressed on a menu button, slider or field is that control's, not a seat's.
+    if (isOnControl(event)) return;
     const matches = actionsForCode(event.code);
     if (matches.length === 0) return;
     // Arrows and Space would otherwise scroll the page under the game.

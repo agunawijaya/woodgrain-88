@@ -4,7 +4,7 @@
  * and changing versions from pause settings.
  */
 import { expect, test } from '@playwright/test';
-import { collectErrors, counterText, skipIntro } from '../helpers.ts';
+import { collectErrors, skipIntro, stepTo, tuneTo } from '../helpers.ts';
 
 test.describe('Cartridge versions in harness', () => {
   test('plays version place 31 and marks counter lamp finished on results return', async ({
@@ -17,11 +17,9 @@ test.describe('Cartridge versions in harness', () => {
     await page.goto('/harness.html#/');
 
     // From the Den, go to place 31 using Shift+P
-    while ((await counterText(page)) !== '31') {
-      const prev = await counterText(page);
-      await page.keyboard.press('Shift+P');
-      await expect.poll(() => counterText(page), { timeout: 10_000 }).not.toBe(prev);
-    }
+    // Place 31 is one flip past the last label on the wall.
+    await tuneTo(page, 30);
+    await stepTo(page, 31);
 
     // The card's kicker names the "Tall paddles" version
     await expect(page.locator('.game-card-kicker')).toContainText('Tall paddles');

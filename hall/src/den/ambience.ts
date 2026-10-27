@@ -6,7 +6,13 @@
 import type { Appearance, AudioEngine, SoundDef } from '@woodgrain-88/kit';
 
 const TICK: SoundDef = [
-  { wave: 'noise', freq: 4200, duration: 0.006, gain: 0.18, envelope: { attack: 0.001, decay: 0.005, sustain: 0.1, release: 0.01 } },
+  {
+    wave: 'noise',
+    freq: 4200,
+    duration: 0.006,
+    gain: 0.18,
+    envelope: { attack: 0.001, decay: 0.005, sustain: 0.1, release: 0.01 },
+  },
   { wave: 'triangle', freq: 2100, duration: 0.008, gain: 0.04 },
 ];
 
@@ -43,7 +49,7 @@ export function createAmbience(audio: AudioEngine, appearance: Appearance): Ambi
   let tickTimer: ReturnType<typeof setInterval> | null = null;
   // A tiny counter instead of Math.random: the room's sounds only need to vary, not be random.
   let step = 0;
-  const vary = (span: number) => ((step++ * 7919) % 1000) / 1000 * span;
+  const vary = (span: number) => (((step++ * 7919) % 1000) / 1000) * span;
 
   const scheduleWorld = () => {
     if (!enabled) return;
@@ -54,7 +60,8 @@ export function createAmbience(audio: AudioEngine, appearance: Appearance): Ambi
           scheduleWorld();
           return;
         }
-        if (time === 'dark') audio.playDef(crickets(0.92 + vary(0.16)), { channel: 'ambience', pan: vary(1.6) - 0.8 });
+        if (time === 'dark')
+          audio.playDef(crickets(0.92 + vary(0.16)), { channel: 'ambience', pan: vary(1.6) - 0.8 });
         else audio.playDef(CAR, { channel: 'ambience', pan: vary(1.4) - 0.7 });
         scheduleWorld();
       }, wait),
@@ -74,7 +81,8 @@ export function createAmbience(audio: AudioEngine, appearance: Appearance): Ambi
       stop();
       if (!on) return;
       tickTimer = setInterval(() => {
-        if (document.visibilityState !== 'hidden') audio.playDef(TICK, { channel: 'ambience', pan: 0.35 });
+        if (document.visibilityState !== 'hidden')
+          audio.playDef(TICK, { channel: 'ambience', pan: 0.35 });
       }, 1000);
       scheduleWorld();
     },

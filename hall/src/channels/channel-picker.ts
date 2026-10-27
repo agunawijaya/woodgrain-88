@@ -12,7 +12,16 @@ import type { GameManifest } from '@woodgrain-88/kit';
 import type { Services } from '../app/services.ts';
 import { openDialog, type Dialog } from '../chrome/dialog.ts';
 import { escapeXml, n } from '../den/svg.ts';
-import { channelAtAngle, createDialState, dialAngle, dialChannels, dialGroups, dialReduce, type DialAction, type DialState } from './dial-model.ts';
+import {
+  channelAtAngle,
+  createDialState,
+  dialAngle,
+  dialChannels,
+  dialGroups,
+  dialReduce,
+  type DialAction,
+  type DialState,
+} from './dial-model.ts';
 
 const TICK_MS = 250;
 const KNOB = { cx: 120, cy: 128, r: 70 };
@@ -23,7 +32,8 @@ function bezel(state: DialState): string {
   return state.channels
     .map((channel) => {
       const angle = (dialAngle(state.channels, channel.id) - 90) * (Math.PI / 180);
-      const labelled = count <= 14 || channel.number === 1 || channel.number === count || channel.number % 5 === 0;
+      const labelled =
+        count <= 14 || channel.number === 1 || channel.number === count || channel.number % 5 === 0;
       const inner = KNOB.r + 8;
       const outer = KNOB.r + (labelled ? 18 : 13);
       const x = (r: number) => n(KNOB.cx + r * Math.cos(angle));
@@ -66,15 +76,26 @@ export function openChannelPicker(options: {
   onPlay(channelId: string): void;
 }): Dialog {
   const { services, manifest } = options;
-  const unlocked = new Set(services.channels.list(manifest.id).filter((channel) => channel.unlocked).map((channel) => channel.id));
+  const unlocked = new Set(
+    services.channels
+      .list(manifest.id)
+      .filter((channel) => channel.unlocked)
+      .map((channel) => channel.id),
+  );
   const channels = dialChannels(manifest.channels, (id) => unlocked.has(id));
   let state = createDialState(channels, options.current);
-  const dialog = openDialog({ title: `${manifest.title}: channels`, className: 'dialog--dial', closeButton: true });
+  const dialog = openDialog({
+    title: `${manifest.title}: channels`,
+    className: 'dialog--dial',
+    closeButton: true,
+  });
 
   /** Which patch opens a locked Remix channel, in words. */
   const opensWith = (id: string) => {
     const patchId = manifest.channels.find((channel) => channel.id === id)?.unlockedBy;
-    const patch = services.denLife.patchesFor(manifest.id).find((candidate) => candidate.id === patchId);
+    const patch = services.denLife
+      .patchesFor(manifest.id)
+      .find((candidate) => candidate.id === patchId);
     return patch ? `Opens with the ${patch.title} patch` : 'Opens with one of this game’s patches';
   };
 
@@ -82,13 +103,16 @@ export function openChannelPicker(options: {
     const def = manifest.channels.find((channel) => channel.id === id);
     const channel = state.channels.find((candidate) => candidate.id === id);
     if (!def || !channel) return '';
-    const original = def.originalGame?.length ? ` · Game ${def.originalGame.join(' and ')} on the cartridge` : '';
+    const original = def.originalGame?.length
+      ? ` · Game ${def.originalGame.join(' and ')} on the cartridge`
+      : '';
     return `${def.description}${original}${channel.locked ? ` · ${opensWith(id)}` : ''}`;
   };
 
   const render = () => {
     const selected = state.channels.find((channel) => channel.id === state.selected);
-    const display = state.typed !== '' ? `${state.typed}–` : String(selected?.number ?? '').padStart(2, '0');
+    const display =
+      state.typed !== '' ? `${state.typed}–` : String(selected?.number ?? '').padStart(2, '0');
     const strip = dialGroups(state.channels)
       .map(
         (group) =>
@@ -160,7 +184,11 @@ export function openChannelPicker(options: {
     // Past the bottom of the sweep, stay at whichever end is nearer.
     const folded = angle > 180 ? angle - 360 : angle;
     const target = channelAtAngle(state.channels, folded);
-    if (target.id !== state.selected) apply({ type: 'turn', steps: target.number - (state.channels.find((c) => c.id === state.selected)?.number ?? 1) });
+    if (target.id !== state.selected)
+      apply({
+        type: 'turn',
+        steps: target.number - (state.channels.find((c) => c.id === state.selected)?.number ?? 1),
+      });
   });
   dialog.body.addEventListener('pointerup', () => {
     dragging = false;
@@ -188,8 +216,15 @@ export function openChannelPicker(options: {
     const onStrip = (event.target as Element).closest('[data-pick]');
     // On the strip, Enter and Space press the chip; everywhere else the dial takes the keys.
     if (onStrip && (event.key === 'Enter' || event.key === ' ')) return;
-    if ((event.target as Element).closest('[data-do]') && (event.key === 'Enter' || event.key === ' ')) return;
-    const handled = /^(Arrow(Up|Down|Left|Right)|Home|End|Page(Up|Down)|Enter|Backspace|[0-9sS])$/.test(event.key);
+    if (
+      (event.target as Element).closest('[data-do]') &&
+      (event.key === 'Enter' || event.key === ' ')
+    )
+      return;
+    const handled =
+      /^(Arrow(Up|Down|Left|Right)|Home|End|Page(Up|Down)|Enter|Backspace|[0-9sS])$/.test(
+        event.key,
+      );
     if (!handled) return;
     event.preventDefault();
     apply({ type: 'key', key: event.key, at: performance.now() });
@@ -205,7 +240,8 @@ export function openChannelPicker(options: {
         state = outcome.state;
         const focused = document.activeElement;
         render();
-        if (focused?.classList.contains('dial-svg')) dialog.body.querySelector<HTMLElement>('.dial-svg')?.focus();
+        if (focused?.classList.contains('dial-svg'))
+          dialog.body.querySelector<HTMLElement>('.dial-svg')?.focus();
       }
     }
   }, TICK_MS);

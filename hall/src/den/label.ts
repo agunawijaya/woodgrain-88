@@ -15,7 +15,12 @@ import { attrs, escapeXml, n } from './svg.ts';
 
 export const LABEL_SIZE = { width: 112, height: 88 } as const;
 const BAND_HEIGHT = 28;
-const FIELD = { x: 0, y: BAND_HEIGHT, width: LABEL_SIZE.width, height: LABEL_SIZE.height - BAND_HEIGHT };
+const FIELD = {
+  x: 0,
+  y: BAND_HEIGHT,
+  width: LABEL_SIZE.width,
+  height: LABEL_SIZE.height - BAND_HEIGHT,
+};
 
 /** Rough advance of Big Shoulders Display ExtraBold capitals, in ems; good enough to decide squeezing. */
 const TITLE_ADVANCE_EM = 0.44;
@@ -37,11 +42,17 @@ export function patternLayers(pattern: LabelPattern, seed: string): PatternLayer
   const { x, y, width, height } = FIELD;
   const rng = createRng(seed);
   const fill = (d: string, opacity = 1): PatternLayer => ({ d, kind: 'fill', width: 0, opacity });
-  const stroke = (d: string, w: number, opacity = 1): PatternLayer => ({ d, kind: 'stroke', width: w, opacity });
+  const stroke = (d: string, w: number, opacity = 1): PatternLayer => ({
+    d,
+    kind: 'stroke',
+    width: w,
+    opacity,
+  });
   let d = '';
   switch (pattern) {
     case 'stripes':
-      for (let i = -height; i < width + height; i += 12) d += `M${x + i} ${y - 4}h6v${height + 8}h-6Z`;
+      for (let i = -height; i < width + height; i += 12)
+        d += `M${x + i} ${y - 4}h6v${height + 8}h-6Z`;
       return [fill(d)];
     case 'sunburst': {
       const cx = x + 18;
@@ -55,7 +66,8 @@ export function patternLayers(pattern: LabelPattern, seed: string): PatternLayer
     }
     case 'checker':
       for (let row = 0; row * 10 < height; row++) {
-        for (let col = 0; col * 10 < width; col++) if ((row + col) % 2 === 0) d += `M${x + col * 10} ${y + row * 10}h10v10h-10Z`;
+        for (let col = 0; col * 10 < width; col++)
+          if ((row + col) % 2 === 0) d += `M${x + col * 10} ${y + row * 10}h10v10h-10Z`;
       }
       return [fill(d)];
     case 'waves':
@@ -84,7 +96,8 @@ export function patternLayers(pattern: LabelPattern, seed: string): PatternLayer
       }
       return [stroke(d, 3)];
     case 'rings':
-      for (let r = 6; r < 110; r += 9) d += `M${x + width - 22 + r} ${y + height / 2}a${r} ${r} 0 1 0 ${-2 * r} 0a${r} ${r} 0 1 0 ${2 * r} 0`;
+      for (let r = 6; r < 110; r += 9)
+        d += `M${x + width - 22 + r} ${y + height / 2}a${r} ${r} 0 1 0 ${-2 * r} 0a${r} ${r} 0 1 0 ${2 * r} 0`;
       return [stroke(d, 3)];
     case 'diamonds':
       for (let row = 0; row * 10 < height + 10; row++) {
@@ -97,7 +110,8 @@ export function patternLayers(pattern: LabelPattern, seed: string): PatternLayer
       return [fill(d)];
     case 'bricks':
       for (let row = 0; row * 10 < height; row++) {
-        for (let col = -1; col * 20 < width + 20; col++) d += `M${x + col * 20 + (row % 2) * 10 + 1} ${y + row * 10 + 1}h18v8h-18Z`;
+        for (let col = -1; col * 20 < width + 20; col++)
+          d += `M${x + col * 20 + (row % 2) * 10 + 1} ${y + row * 10 + 1}h18v8h-18Z`;
       }
       return [fill(d)];
     case 'zigzag':
@@ -136,7 +150,8 @@ export function patternLayers(pattern: LabelPattern, seed: string): PatternLayer
         [x + 30, y + 40],
         [x + 92, y + 14],
       ] as const) {
-        for (let r = 5; r < 60; r += 7) d += `M${cx + r} ${cy}a${r} ${n(r * 0.55)} 0 1 0 ${-2 * r} 0a${r} ${n(r * 0.55)} 0 1 0 ${2 * r} 0`;
+        for (let r = 5; r < 60; r += 7)
+          d += `M${cx + r} ${cy}a${r} ${n(r * 0.55)} 0 1 0 ${-2 * r} 0a${r} ${n(r * 0.55)} 0 1 0 ${2 * r} 0`;
       }
       return [stroke(d, 1.6)];
     case 'blocks':
@@ -164,7 +179,10 @@ export const LABEL_FIELD = FIELD;
 function titleMarkup(title: string, color: string): string {
   const text = title.toUpperCase();
   const estimated = text.length * TITLE_SIZE * TITLE_ADVANCE_EM;
-  const squeeze = estimated > TITLE_MAX_WIDTH ? { textLength: TITLE_MAX_WIDTH, lengthAdjust: 'spacingAndGlyphs' } : {};
+  const squeeze =
+    estimated > TITLE_MAX_WIDTH
+      ? { textLength: TITLE_MAX_WIDTH, lengthAdjust: 'spacingAndGlyphs' }
+      : {};
   return `<text ${attrs({
     x: LABEL_SIZE.width / 2,
     y: 20.5,

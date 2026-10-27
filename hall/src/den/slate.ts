@@ -32,9 +32,16 @@ function emblemPath(manifest: GameManifest): Path2D {
 }
 
 /** `channel` is the Counter place showing it: the game's slot, or 31/32 for another version. */
-function gameSlate(manifest: GameManifest, channel: number, version: CartridgeVersion | undefined): Painter {
+function gameSlate(
+  manifest: GameManifest,
+  channel: number,
+  version: CartridgeVersion | undefined,
+): Painter {
   const { label } = manifest;
-  const layers = patternLayers(label.pattern, manifest.id).map((layer) => ({ ...layer, path: new Path2D(layer.d) }));
+  const layers = patternLayers(label.pattern, manifest.id).map((layer) => ({
+    ...layer,
+    path: new Path2D(layer.d),
+  }));
   const emblem = emblemPath(manifest);
   const tile = { width: LABEL_FIELD.width, height: LABEL_FIELD.height };
   const familyPainter = familyAnimation(manifest);
@@ -56,7 +63,10 @@ function gameSlate(manifest: GameManifest, channel: number, version: CartridgeVe
       for (let ty = -1; ty * tile.height * scale < height + tile.height * scale; ty++) {
         for (let tx = -1; tx * tile.width * scale < width + tile.width * scale; tx++) {
           context.save();
-          context.translate(tx * tile.width * scale + drift, ty * tile.height * scale + drift * 0.4);
+          context.translate(
+            tx * tile.width * scale + drift,
+            ty * tile.height * scale + drift * 0.4,
+          );
           context.scale(scale, scale);
           context.translate(-LABEL_FIELD.x, -LABEL_FIELD.y);
           for (const layer of layers) {
@@ -73,7 +83,14 @@ function gameSlate(manifest: GameManifest, channel: number, version: CartridgeVe
       context.restore();
 
       // A soft vignette so the middle reads.
-      const vignette = context.createRadialGradient(width / 2, height / 2, 60, width / 2, height / 2, 320);
+      const vignette = context.createRadialGradient(
+        width / 2,
+        height / 2,
+        60,
+        width / 2,
+        height / 2,
+        320,
+      );
       vignette.addColorStop(0, 'rgba(0,0,0,0)');
       vignette.addColorStop(1, 'rgba(0,0,0,0.42)');
       context.fillStyle = vignette;
@@ -157,12 +174,24 @@ function gameSlate(manifest: GameManifest, channel: number, version: CartridgeVe
   };
 }
 
-function roundRect(context: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+function roundRect(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
   context.beginPath();
   context.roundRect(x, y, w, h, r);
 }
 
-type FamilyPainter = (context: CanvasRenderingContext2D, seconds: number, ink: string, paper: string) => void;
+type FamilyPainter = (
+  context: CanvasRenderingContext2D,
+  seconds: number,
+  ink: string,
+  paper: string,
+) => void;
 
 /** A small looping motion in the corner that hints at what kind of game it is. */
 function familyAnimation(manifest: GameManifest): FamilyPainter {
@@ -183,7 +212,13 @@ function familyAnimation(manifest: GameManifest): FamilyPainter {
           const a = seconds * 2.2 + i * Math.PI;
           context.fillStyle = i === 0 ? ink : '#ff5a3c';
           context.beginPath();
-          context.arc(corner.x + Math.cos(a) * 28, corner.y + Math.sin(a * 1.3) * 18, 6, 0, Math.PI * 2);
+          context.arc(
+            corner.x + Math.cos(a) * 28,
+            corner.y + Math.sin(a * 1.3) * 18,
+            6,
+            0,
+            Math.PI * 2,
+          );
           context.fill();
         }
       };
@@ -194,7 +229,12 @@ function familyAnimation(manifest: GameManifest): FamilyPainter {
         for (let i = 0; i < 9; i++) {
           context.fillStyle = i === lit ? '#ff5a3c' : ink;
           context.globalAlpha = i === lit ? 1 : 0.35;
-          context.fillRect(corner.x - 27 + (i % 3) * 19, corner.y - 26 + Math.floor(i / 3) * 18, 15, 14);
+          context.fillRect(
+            corner.x - 27 + (i % 3) * 19,
+            corner.y - 26 + Math.floor(i / 3) * 18,
+            15,
+            14,
+          );
         }
         context.globalAlpha = 1;
       };
@@ -287,5 +327,9 @@ export function slateDemo(
   context: DemoContext,
   channel = manifest.slot,
 ): DemoHandle {
-  return createPainterDemo(host, gameSlate(manifest, channel, findVersion(manifest, context.version)), context);
+  return createPainterDemo(
+    host,
+    gameSlate(manifest, channel, findVersion(manifest, context.version)),
+    context,
+  );
 }

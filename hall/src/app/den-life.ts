@@ -165,7 +165,8 @@ export function createDenLife(
             if (!module) return;
             // Whatever was registered first stays: a session's own module, or the dev showcase's set.
             if (!catalog.has(entry.manifest.id)) catalog.set(entry.manifest.id, module.patches);
-            if (!micro.has(entry.manifest.id)) micro.set(entry.manifest.id, module.microChallenges ?? []);
+            if (!micro.has(entry.manifest.id))
+              micro.set(entry.manifest.id, module.microChallenges ?? []);
           }),
       ).then(notify);
       return gameData;
@@ -178,8 +179,13 @@ export function createDenLife(
     },
     opponentFor,
     seatsFor(manifest) {
-      const player: SeatInfo = { seat: 1, kind: 'human', name: services.repos.profile.get().displayName };
-      if (manifest.versus === 'local') return [player, { seat: 2, kind: 'human', name: 'Player 2' }];
+      const player: SeatInfo = {
+        seat: 1,
+        kind: 'human',
+        name: services.repos.profile.get().displayName,
+      };
+      if (manifest.versus === 'local')
+        return [player, { seat: 2, kind: 'human', name: 'Player 2' }];
       const kid = opponentFor(manifest.id);
       return [player, { seat: 2, kind: 'bot', kid, name: kidById(kid).name }];
     },
@@ -207,7 +213,8 @@ export function createDenLife(
       repos.progress.update((draft) => {
         draft.den.streak = recordStreakDay(draft.den.streak, now);
         if (run.mode === 'daily') {
-          const emoji = result.emoji !== undefined && emojiSummary(result.emoji) !== null ? result.emoji : null;
+          const emoji =
+            result.emoji !== undefined && emojiSummary(result.emoji) !== null ? result.emoji : null;
           const recorded = recordDailyRun(draft.den.daily, now, manifest.id, {
             score: result.score,
             scoreLabel: result.scoreLabel,
@@ -218,12 +225,29 @@ export function createDenLife(
           draft.den.daily = recorded.daily;
           dailyCounted = recorded.counted;
         }
-        const opponent = seats.find((seat) => seat.kind === 'bot')?.kid;
+        // A game that let the player choose seat 2 says who it was; otherwise the seats we handed it.
+        const opponent =
+          result.opponentKid !== undefined
+            ? (result.opponentKid ?? undefined)
+            : seats.find((seat) => seat.kind === 'bot')?.kid;
         // Against a Kid, a game may report only whether the player won; that is the same answer.
-        const winner = result.winnerSeat !== undefined ? result.winnerSeat : result.won === undefined ? undefined : result.won ? 1 : 2;
+        const winner =
+          result.winnerSeat !== undefined
+            ? result.winnerSeat
+            : result.won === undefined
+              ? undefined
+              : result.won
+                ? 1
+                : 2;
         if (opponent !== undefined && winner !== undefined) {
           const outcome = winner === 1 ? 'win' : winner === 2 ? 'loss' : 'draw';
-          draft.den.kids = recordKidResult(draft.den.kids, opponent, outcome, switches.left === 'A', now.toISOString());
+          draft.den.kids = recordKidResult(
+            draft.den.kids,
+            opponent,
+            outcome,
+            switches.left === 'A',
+            now.toISOString(),
+          );
         }
       });
       const seen = repos.progress.get().den.growthSeen;
@@ -236,4 +260,3 @@ export function createDenLife(
     onChange: (listener) => changes.on(listener),
   };
 }
-

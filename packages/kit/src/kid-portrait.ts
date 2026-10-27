@@ -8,7 +8,9 @@
  *
  * Drawn on a 120×150 grid. No real person is depicted.
  */
-import { createRng, mix, type Kid, type KidPortrait } from '@woodgrain-88/kit';
+import { mix } from './color.ts';
+import type { Kid, KidPortrait } from './kids.ts';
+import { createRng } from './rng.ts';
 
 export type KidExpression = 'photo' | 'win' | 'lose';
 
@@ -21,7 +23,9 @@ function backdrop(id: string, portrait: KidPortrait, seed: string): string {
   const rng = createRng(`backdrop/${seed}`);
   let blotches = '';
   for (let i = 0; i < 14; i++) {
-    const tone = rng.chance(0.5) ? mix(portrait.backdrop, '#ffffff', rng.float(0.1, 0.3)) : mix(portrait.backdrop, '#000000', rng.float(0.1, 0.25));
+    const tone = rng.chance(0.5)
+      ? mix(portrait.backdrop, '#ffffff', rng.float(0.1, 0.3))
+      : mix(portrait.backdrop, '#000000', rng.float(0.1, 0.25));
     blotches += `<ellipse cx="${n(rng.float(0, W))}" cy="${n(rng.float(0, H))}" rx="${n(rng.float(14, 34))}" ry="${n(rng.float(10, 26))}" fill="${tone}" opacity="0.35"/>`;
   }
   return (
@@ -95,7 +99,15 @@ function hairBack(portrait: KidPortrait): string {
   }
 }
 
-function circlesRing(cx: number, cy: number, radius: number, count: number, size: number, colour: string, seed: string): string {
+function circlesRing(
+  cx: number,
+  cy: number,
+  radius: number,
+  count: number,
+  size: number,
+  colour: string,
+  seed: string,
+): string {
   const rng = createRng(seed);
   let d = '';
   for (let i = 0; i < count; i++) {
@@ -127,10 +139,13 @@ function hairFront(portrait: KidPortrait): string {
         [false, true]
           .map((mirror) => {
             // Lying flat against the side of the head, its outer edge on the head's own outline.
-            const fringe = 'M38.6 49.4C36 53 34.6 58.6 34.8 64.6C35 67.8 35.8 70.4 37.2 72.2C37.8 68.4 39.6 65.4 41.6 63.4C40.4 60.2 40 55.8 41.2 51.8C40.4 50.8 39.6 50 38.6 49.4Z';
+            const fringe =
+              'M38.6 49.4C36 53 34.6 58.6 34.8 64.6C35 67.8 35.8 70.4 37.2 72.2C37.8 68.4 39.6 65.4 41.6 63.4C40.4 60.2 40 55.8 41.2 51.8C40.4 50.8 39.6 50 38.6 49.4Z';
             const wisps = 'M37.2 56.4l2.2 1.2M36.8 61l2.4 0.8M37 65.6l2.2 0.2';
             // Each side sits a touch out from the middle, so the two fringes frame the head.
-            const turn = mirror ? ' transform="translate(120.8 0) scale(-1 1)"' : ' transform="translate(-0.8 0)"';
+            const turn = mirror
+              ? ' transform="translate(120.8 0) scale(-1 1)"'
+              : ' transform="translate(-0.8 0)"';
             return `<g${turn}><path d="${fringe}" fill="${colour}"/><path d="${wisps}" stroke="${mix(colour, '#000000', 0.16)}" stroke-width="0.8" stroke-linecap="round"/></g>`;
           })
           .join('') +
@@ -181,41 +196,67 @@ const MOUTHS: Record<KidPortrait['smile'], Record<KidExpression, (ink: MouthInk)
       shape('M48 83Q60 86.2 72 83L70.6 86.2Q60 88.6 49.4 86.2Z', TEETH) +
       shape('M59.2 84.6h1.6v3.6h-1.6Z', MOUTH_DARK),
     win: ({ id }) =>
-      openMouth(id, 'M44 80Q60 100 76 80Q60 84 44 80Z', 'M46.5 81.2Q60 85.4 73.5 81.2L72 85.2Q60 88.2 48 85.2Z', 'M50 92Q60 84 70 92V96H50Z') +
-      shape('M59.2 83.8h1.6v4h-1.6Z', MOUTH_DARK),
+      openMouth(
+        id,
+        'M44 80Q60 100 76 80Q60 84 44 80Z',
+        'M46.5 81.2Q60 85.4 73.5 81.2L72 85.2Q60 88.2 48 85.2Z',
+        'M50 92Q60 84 70 92V96H50Z',
+      ) + shape('M59.2 83.8h1.6v4h-1.6Z', MOUTH_DARK),
     lose: ({ lip }) =>
       shape('M50 85.5h20v4.5h-20Z', TEETH) +
       line('M54 85.5v4.5M58 85.5v4.5M62 85.5v4.5M66 85.5v4.5', '#c9bfae', 0.6) +
       line('M49 87Q49 85 51 85.2H69Q71 85 71 87Q71 90.5 69 90.4H51Q49 90.5 49 87Z', lip, 1.8),
   },
   closed: {
-    photo: ({ lip, shade }) => line('M52.5 86.2Q59 89.6 67.8 84.6', lip) + line('M69.2 83.4q1.5 1.3 .6 2.8', shade, 1.2),
-    win: ({ lip, shade }) => line('M50.5 85Q60 92.4 70 84', lip, 2.6) + line('M71.4 82.8q1.6 1.4 .6 3', shade, 1.2),
+    photo: ({ lip, shade }) =>
+      line('M52.5 86.2Q59 89.6 67.8 84.6', lip) + line('M69.2 83.4q1.5 1.3 .6 2.8', shade, 1.2),
+    win: ({ lip, shade }) =>
+      line('M50.5 85Q60 92.4 70 84', lip, 2.6) + line('M71.4 82.8q1.6 1.4 .6 3', shade, 1.2),
     lose: ({ lip }) => line('M53 88.4Q57 87.4 60 88Q63 88.6 67 87.6', lip, 2.2),
   },
   laugh: {
     photo: ({ id }) =>
-      openMouth(id, 'M47 81.5Q60 100 73 81.5Q66 84 60 84Q54 84 47 81.5Z', 'M49 82.4Q60 86 71 82.4L69.8 85.4Q60 88 50.2 85.4Z', 'M51 91Q60 85.4 69 91V96H51Z'),
+      openMouth(
+        id,
+        'M47 81.5Q60 100 73 81.5Q66 84 60 84Q54 84 47 81.5Z',
+        'M49 82.4Q60 86 71 82.4L69.8 85.4Q60 88 50.2 85.4Z',
+        'M51 91Q60 85.4 69 91V96H51Z',
+      ),
     win: ({ id }) =>
-      openMouth(id, 'M45 80Q60 104 75 80Q66 83.4 60 83.4Q54 83.4 45 80Z', 'M47.4 81Q60 85 72.6 81L71.2 84.6Q60 87.6 48.8 84.6Z', 'M50 92Q60 85.6 70 92V98H50Z'),
+      openMouth(
+        id,
+        'M45 80Q60 104 75 80Q66 83.4 60 83.4Q54 83.4 45 80Z',
+        'M47.4 81Q60 85 72.6 81L71.2 84.6Q60 87.6 48.8 84.6Z',
+        'M50 92Q60 85.6 70 92V98H50Z',
+      ),
     lose: ({ lip }) => line('M49.5 89.5q2.6-3 5.2 0t5.2 0t5.2 0t5.2 0', lip, 2.2),
   },
   moustache: {
     photo: ({ lip, hair }) =>
       line('M53.5 87.4Q60 90.6 66.5 87.4', lip, 2.2) +
-      shape('M45 83.5Q49 77.8 55 79Q58 79.4 60 80.8Q62 79.4 65 79Q71 77.8 75 83.5Q70 82.2 66 83.4Q63 84.2 60 82.8Q57 84.2 54 83.4Q50 82.2 45 83.5Z', hair) +
+      shape(
+        'M45 83.5Q49 77.8 55 79Q58 79.4 60 80.8Q62 79.4 65 79Q71 77.8 75 83.5Q70 82.2 66 83.4Q63 84.2 60 82.8Q57 84.2 54 83.4Q50 82.2 45 83.5Z',
+        hair,
+      ) +
       line('M50 81.6q4-1.6 8 .2M62 81.8q4-1.8 8-.2', mix(hair, '#000000', 0.25), 0.7),
     win: ({ hair }) =>
       shape('M52 86Q60 93 68 86Q60 87.8 52 86Z', MOUTH_DARK) +
       shape('M53.6 86.4Q60 88.2 66.4 86.4L65.6 87.8Q60 89.2 54.4 87.8Z', TEETH) +
-      shape('M44 82.8Q48.6 76.6 55 78.2Q58 78.6 60 80Q62 78.6 65 78.2Q71.4 76.6 76 82.8Q70.4 81.4 66 82.8Q63 83.6 60 82.2Q57 83.6 54 82.8Q49.6 81.4 44 82.8Z', hair),
+      shape(
+        'M44 82.8Q48.6 76.6 55 78.2Q58 78.6 60 80Q62 78.6 65 78.2Q71.4 76.6 76 82.8Q70.4 81.4 66 82.8Q63 83.6 60 82.2Q57 83.6 54 82.8Q49.6 81.4 44 82.8Z',
+        hair,
+      ),
     lose: ({ lip, hair }) =>
       line('M54 89.2Q60 87.6 66 89.2', lip, 2) +
       // The moustache droops at the ends.
-      shape('M46 87Q47.4 79.6 54.6 79.6Q58 79.6 60 81.2Q62 79.6 65.4 79.6Q72.6 79.6 74 87Q71 83.8 66.4 84Q63 84.4 60 83.2Q57 84.4 53.6 84Q49 83.8 46 87Z', hair),
+      shape(
+        'M46 87Q47.4 79.6 54.6 79.6Q58 79.6 60 81.2Q62 79.6 65.4 79.6Q72.6 79.6 74 87Q71 83.8 66.4 84Q63 84.4 60 83.2Q57 84.4 53.6 84Q49 83.8 46 87Z',
+        hair,
+      ),
   },
   braces: {
-    photo: ({ lip }) => line('M50 84Q60 92 70 84', lip) + line('M53 86Q60 89 67 86', '#ffffff', 1.2),
+    photo: ({ lip }) =>
+      line('M50 84Q60 92 70 84', lip) + line('M53 86Q60 89 67 86', '#ffffff', 1.2),
     win: () => shape('M48 84Q60 98 72 84Z', MOUTH_DARK) + line('M50 85Q60 89 70 85', '#ffffff'),
     lose: ({ lip }) => line('M51 89Q60 83 69 89', lip),
   },
@@ -228,7 +269,8 @@ const MOUTHS: Record<KidPortrait['smile'], Record<KidExpression, (ink: MouthInk)
       shape('M47.5 83Q60 98 72.5 83Q60 86.4 47.5 83Z', MOUTH_DARK) +
       shape('M56.8 84.6h3v4.6q-1.5 1-3 0ZM60.2 84.6h3v4.6q-1.5 1-3 0Z', TEETH),
     lose: ({ lip }) =>
-      shape('M57.6 86.4h2.3v2.8q-1.15 .6-2.3 0ZM60.1 86.4h2.3v2.8q-1.15 .6-2.3 0Z', TEETH) + line('M51.5 88.6Q60 84.4 68.5 88.6', lip, 2.2),
+      shape('M57.6 86.4h2.3v2.8q-1.15 .6-2.3 0ZM60.1 86.4h2.3v2.8q-1.15 .6-2.3 0Z', TEETH) +
+      line('M51.5 88.6Q60 84.4 68.5 88.6', lip, 2.2),
   },
 };
 
@@ -278,7 +320,9 @@ function extras(portrait: KidPortrait, expression: KidExpression): string {
       return dots;
     }
     case 'braces':
-      return expression === 'lose' ? '' : `<path d="M51 86h18" stroke="#c9d1d9" stroke-width="1.4" stroke-dasharray="2 1.4"/>`;
+      return expression === 'lose'
+        ? ''
+        : `<path d="M51 86h18" stroke="#c9d1d9" stroke-width="1.4" stroke-dasharray="2 1.4"/>`;
     case 'headband':
       return `<path d="M33 48Q60 36 87 48" fill="none" stroke="#f2a22c" stroke-width="5" stroke-linecap="round"/><path d="M33 48Q60 36 87 48" fill="none" stroke="#e8463a" stroke-width="1.6" stroke-linecap="round"/>`;
     case 'bow-tie':
@@ -289,7 +333,10 @@ function extras(portrait: KidPortrait, expression: KidExpression): string {
 }
 
 /** One kid's school photo as a standalone SVG. `idPrefix` keeps ids unique when several share a page. */
-export function kidPortraitSvg(kid: Kid, options: { expression?: KidExpression; idPrefix?: string; title?: boolean } = {}): string {
+export function kidPortraitSvg(
+  kid: Kid,
+  options: { expression?: KidExpression; idPrefix?: string; title?: boolean } = {},
+): string {
   const expression = options.expression ?? 'photo';
   const id = options.idPrefix ?? `kid-${kid.id}`;
   const { portrait } = kid;

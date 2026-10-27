@@ -21,7 +21,9 @@ export interface AboutPage {
 const SOURCE_URL = 'https://www.computinghistory.org.uk/det/37482/32%20In%201/';
 
 function yearText(manifest: GameManifest): string {
-  return manifest.inspiredBy.year === null ? 'late 1970s / early 1980s' : String(manifest.inspiredBy.year);
+  return manifest.inspiredBy.year === null
+    ? 'late 1970s / early 1980s'
+    : String(manifest.inspiredBy.year);
 }
 
 function slotsText(manifest: GameManifest): string {
@@ -36,11 +38,13 @@ export function createAboutPage(options: {
   const element = document.createElement('article');
   element.className = 'page page--about';
   element.setAttribute('aria-labelledby', 'about-title');
-  const rows = options.manifests.map(
-    (m) =>
-      `<tr><td>${counterDigits(m.slot)}</td><th scope="row">${escapeXml(m.title)}</th><td>${FAMILY_NAMES[m.family]}</td>` +
-      `<td>${escapeXml(m.inspiredBy.originalTitle)}</td><td>${escapeXml(m.inspiredBy.publisher)}, ${yearText(m)}</td><td>${slotsText(m)}</td></tr>`,
-  ).join('');
+  const rows = options.manifests
+    .map(
+      (m) =>
+        `<tr><td>${counterDigits(m.slot)}</td><th scope="row">${escapeXml(m.title)}</th><td>${FAMILY_NAMES[m.family]}</td>` +
+        `<td>${escapeXml(m.inspiredBy.originalTitle)}</td><td>${escapeXml(m.inspiredBy.publisher)}, ${yearText(m)}</td><td>${slotsText(m)}</td></tr>`,
+    )
+    .join('');
   element.innerHTML =
     `<div class="page-inner">` +
     `<h1 id="about-title" class="page-title">About Woodgrain '88</h1>` +
@@ -68,7 +72,9 @@ export function createAboutPage(options: {
     `<button type="button" class="button" data-do="intro">Replay the intro</button>` +
     `</section>` +
     `</div>`;
-  element.querySelector('[data-do="intro"]')?.addEventListener('click', () => options.onReplayIntro());
+  element
+    .querySelector('[data-do="intro"]')
+    ?.addEventListener('click', () => options.onReplayIntro());
   return {
     element,
     dispose() {

@@ -8,7 +8,15 @@
  *
  * Gaps are just empty squares. Nothing here counts down or tells anyone off.
  */
-import { calendarMonth, channelNumber, dailyChannel, dailyNumber, powerCycleOfTheDay, utcDateKey, type CalendarCell } from '@woodgrain-88/kit';
+import {
+  calendarMonth,
+  channelNumber,
+  dailyChannel,
+  dailyNumber,
+  powerCycleOfTheDay,
+  utcDateKey,
+  type CalendarCell,
+} from '@woodgrain-88/kit';
 import type { Services } from '../app/services.ts';
 import { openDialog, type Dialog } from '../chrome/dialog.ts';
 import { escapeXml } from './svg.ts';
@@ -29,7 +37,14 @@ function shift(page: Page, months: number): Page {
 }
 
 function cellLabel(cell: CalendarCell, monthName: string): string {
-  const what = cell.kind === 'played' ? 'played' : cell.kind === 'snow' ? 'snow day' : cell.kind === 'future' ? 'still to come' : 'not played';
+  const what =
+    cell.kind === 'played'
+      ? 'played'
+      : cell.kind === 'snow'
+        ? 'snow day'
+        : cell.kind === 'future'
+          ? 'still to come'
+          : 'not played';
   return `${monthName} ${cell.day}: ${what}${cell.today ? ', today' : ''}`;
 }
 
@@ -43,20 +58,33 @@ function cellMarkup(cell: CalendarCell, monthName: string): string {
   return `<li class="cal-day cal-day--${cell.kind}${cell.today ? ' is-today' : ''}" aria-label="${escapeXml(cellLabel(cell, monthName))}"><span class="cal-number" aria-hidden="true">${cell.day}</span>${mark}</li>`;
 }
 
-export function openCalendar(options: { services: Services; onPlayDaily(gameId: string, channel: string): void; now?: Date }): Dialog {
+export function openCalendar(options: {
+  services: Services;
+  onPlayDaily(gameId: string, channel: string): void;
+  now?: Date;
+}): Dialog {
   const { services } = options;
   const now = options.now ?? new Date();
   const thisMonth: Page = { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 };
   let page = thisMonth;
 
-  const dialog = openDialog({ title: 'Calendar', className: 'dialog--calendar', closeButton: true, hideTitle: true });
+  const dialog = openDialog({
+    title: 'Calendar',
+    className: 'dialog--calendar',
+    closeButton: true,
+    hideTitle: true,
+  });
 
   const today = () => {
     const pick = powerCycleOfTheDay(services.registry.manifests, now);
-    const manifest = pick ? services.registry.manifests.find((candidate) => candidate.id === pick.id) : undefined;
-    if (!manifest) return `<p class="cal-today">Daily #${dailyNumber(now)}: the first Power Cycle arrives with the first game.</p>`;
+    const manifest = pick
+      ? services.registry.manifests.find((candidate) => candidate.id === pick.id)
+      : undefined;
+    if (!manifest)
+      return `<p class="cal-today">Daily #${dailyNumber(now)}: the first Power Cycle arrives with the first game.</p>`;
     const channel = dailyChannel(manifest, now);
-    const played = services.repos.progress.get().den.daily[utcDateKey(now)]?.[manifest.id] !== undefined;
+    const played =
+      services.repos.progress.get().den.daily[utcDateKey(now)]?.[manifest.id] !== undefined;
     return (
       `<div class="cal-today"><p><strong>Daily #${dailyNumber(now)}</strong> · today's Power Cycle is <strong>${escapeXml(manifest.title)}</strong>, channel ${channelNumber(manifest.channels, channel.id)} (${escapeXml(channel.title)}). ${played ? 'Played today.' : 'Not played yet today.'}</p>` +
       `<button type="button" class="button${played ? '' : ' button--primary'}" data-do="daily" data-game="${manifest.id}" data-channel="${channel.id}">${played ? 'Play it again (practice)' : "Play today's daily"}</button></div>`
@@ -65,8 +93,16 @@ export function openCalendar(options: { services: Services; onPlayDaily(gameId: 
 
   const render = () => {
     const streak = services.denLife.streak(now);
-    const cells = calendarMonth(services.repos.progress.get().den.streak, page.year, page.month, now);
-    const monthName = new Date(Date.UTC(page.year, page.month - 1, 1)).toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+    const cells = calendarMonth(
+      services.repos.progress.get().den.streak,
+      page.year,
+      page.month,
+      now,
+    );
+    const monthName = new Date(Date.UTC(page.year, page.month - 1, 1)).toLocaleString('en-GB', {
+      month: 'long',
+      timeZone: 'UTC',
+    });
     const offset = (new Date(Date.UTC(page.year, page.month - 1, 1)).getUTCDay() + 6) % 7;
     const earliest = shift(thisMonth, -MONTHS_BACK);
     const atStart = page.year * 12 + page.month <= earliest.year * 12 + earliest.month;
@@ -97,7 +133,9 @@ export function openCalendar(options: { services: Services; onPlayDaily(gameId: 
     page = next;
     services.audio.play('soft-tap', { pitch: months < 0 ? 0.9 : 1.1 });
     render();
-    dialog.body.querySelector<HTMLButtonElement>(`[data-flip="${months < 0 ? -1 : 1}"]:not([disabled])`)?.focus();
+    dialog.body
+      .querySelector<HTMLButtonElement>(`[data-flip="${months < 0 ? -1 : 1}"]:not([disabled])`)
+      ?.focus();
   };
 
   dialog.body.addEventListener('click', (event) => {

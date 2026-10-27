@@ -176,6 +176,36 @@ describe('den life', () => {
       expect(secondRun.dailyCounted).toBe(false);
     });
 
+    it('records the Kid the game says it played, or none for a second person', () => {
+      const services = createTestServices();
+      const denLife = services.denLife;
+      const handedSeats: readonly SeatInfo[] = [
+        { seat: 1, kind: 'human', name: 'Player' },
+        { seat: 2, kind: 'bot', kid: 'dee', name: 'Dee' },
+      ];
+      const run: RunInfo = { mode: 'normal', seed: 1, channel: 'classic' };
+      const win = { score: 9, scoreLabel: '9–4', durationMs: 1000, winnerSeat: 1 as const };
+
+      denLife.recordFinishedRun({
+        manifest: fakeManifest,
+        run,
+        result: { ...win, opponentKid: 'rosa', presentation: 'game' },
+        seats: handedSeats,
+        litBefore: [],
+      });
+      denLife.recordFinishedRun({
+        manifest: fakeManifest,
+        run,
+        result: { ...win, opponentKid: null, presentation: 'game' },
+        seats: handedSeats,
+        litBefore: [],
+      });
+
+      const kids = services.repos.progress.get().den.kids;
+      expect(kids.rosa?.wins).toBe(1);
+      expect(kids.dee?.wins ?? 0).toBe(0);
+    });
+
     it('records a win when winnerSeat is 1 and a loss when winnerSeat is 2 for a bot seat', () => {
       const services = createTestServices();
       const denLife = services.denLife;

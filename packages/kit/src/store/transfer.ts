@@ -33,8 +33,7 @@ export interface ImportSummary {
 }
 
 export type ImportPreview =
-  | { ok: true; bundle: ExportBundle; summary: ImportSummary }
-  | { ok: false; error: string };
+  { ok: true; bundle: ExportBundle; summary: ImportSummary } | { ok: false; error: string };
 
 function resolveContext(context?: Partial<SchemaContext>): SchemaContext {
   return {

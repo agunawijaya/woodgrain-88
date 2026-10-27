@@ -45,8 +45,11 @@ describe('slot cycling and counter', () => {
     expect(counterDigits(32)).toBe('32');
   });
 
-  it('yields null for all-unreleased registry and returns the overridden fixture for any date', () => {
-    const baseManifests = createRegistry().manifests;
+  it('yields null when nothing is released and the only playable game when there is one', () => {
+    const unreleased = createRegistry().manifests.map((manifest) => ({
+      ...manifest,
+      status: 'coming-soon' as const,
+    }));
     const testDates = [
       new Date('2026-10-25T12:00:00.000Z'),
       new Date('2026-10-26T12:00:00.000Z'),
@@ -54,15 +57,23 @@ describe('slot cycling and counter', () => {
     ];
 
     for (const date of testDates) {
-      expect(powerCycleOfTheDay(baseManifests, date)).toBeNull();
+      expect(powerCycleOfTheDay(unreleased, date)).toBeNull();
     }
 
-    const overriddenManifests = createRegistry([{ manifest: fakeManifest }]).manifests;
+    const onlyFixture = [
+      ...unreleased.filter((manifest) => manifest.slot !== fakeManifest.slot),
+      fakeManifest,
+    ];
     for (const date of testDates) {
-      const pick = powerCycleOfTheDay(overriddenManifests, date);
-      expect(pick).not.toBeNull();
-      expect(pick?.id).toBe(fakeManifest.id);
+      expect(powerCycleOfTheDay(onlyFixture, date)?.id).toBe(fakeManifest.id);
     }
+  });
+
+  it('puts Tank Duel, the first released game, on every day of the base registry', () => {
+    const baseManifests = createRegistry().manifests;
+    expect(powerCycleOfTheDay(baseManifests, new Date('2026-10-26T12:00:00.000Z'))?.id).toBe(
+      'tank-duel',
+    );
   });
 
   it('orders counterPlaces 1-32 with base registry version placements and reflects fixture override', () => {

@@ -9,7 +9,11 @@ import { openDialog } from './dialog.ts';
 
 export function showHowToPlay(module: Pick<GameModule, 'manifest' | 'howToPlay'>): void {
   const { manifest, howToPlay } = module;
-  const dialog = openDialog({ title: `How to play ${manifest.title}`, className: 'dialog--how', closeButton: true });
+  const dialog = openDialog({
+    title: `How to play ${manifest.title}`,
+    className: 'dialog--how',
+    closeButton: true,
+  });
   const rows = howToPlay.controls
     .map(
       (hint) =>

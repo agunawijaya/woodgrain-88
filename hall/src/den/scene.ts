@@ -34,7 +34,12 @@ function growthSlot(kind: string): string {
 // The label names the button and carries any words printed on the drawing
 // (the TV's badge, the calendar's date), so the drawing itself is hidden from
 // screen readers rather than read twice.
-function hotspot(ref: string, label: string, content: string, extra: Record<string, string> = {}): string {
+function hotspot(
+  ref: string,
+  label: string,
+  content: string,
+  extra: Record<string, string> = {},
+): string {
   return `<g ${attrs({ class: `hotspot hotspot--${ref}`, 'data-ref': ref, tabindex: 0, role: 'button', 'aria-label': label, ...extra })}><g aria-hidden="true">${content}</g></g>`;
 }
 
@@ -69,16 +74,32 @@ function pads(): string {
     `<path d="${d}" fill="none" stroke="#7a6354" stroke-width="1" stroke-linecap="round" opacity="0.55" transform="translate(-0.9 -1)"/>`;
   const leftCable = `M${left.x - 4} ${left.y - 18}C${left.x - 30} ${left.y - 4} ${left.x - 92} ${left.y - 2} ${left.x - 84} ${left.y - 36}S${left.x - 22} ${left.y - 62} ${left.x - 40} ${left.y - 88}S${left.x - 66} ${left.y - 116} ${left.x - 50} ${left.y - 128}`;
   const rightCable = `M${right.x + 2} ${right.y - 18}C${right.x + 16} ${right.y - 40} ${right.x - 34} ${right.y - 40} ${right.x - 26} ${right.y - 68}S${right.x + 14} ${right.y - 106} ${right.x - 8} ${right.y - 140}`;
-  return cable(leftCable) + cable(rightCable) + joystick(left.x, left.y, -12) + joystick(right.x, right.y, 9);
+  return (
+    cable(leftCable) +
+    cable(rightCable) +
+    joystick(left.x, left.y, -12) +
+    joystick(right.x, right.y, 9)
+  );
 }
 
 function focusRingBox(): string {
   return `<path class="focus-indicator" data-ref="focus-indicator" d="" aria-hidden="true"/>`;
 }
 
-export function focusRingPath(box: { x: number; y: number; width: number; height: number }): string {
+export function focusRingPath(box: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}): string {
   const pad = 7;
-  return roundedRectPath(n(box.x - pad), n(box.y - pad), n(box.width + pad * 2), n(box.height + pad * 2), 10);
+  return roundedRectPath(
+    n(box.x - pad),
+    n(box.y - pad),
+    n(box.width + pad * 2),
+    n(box.height + pad * 2),
+    10,
+  );
 }
 
 export function denSceneMarkup(manifests: readonly GameManifest[]): string {

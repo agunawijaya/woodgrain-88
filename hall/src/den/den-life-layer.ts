@@ -27,13 +27,24 @@ import type { Services } from '../app/services.ts';
 import { toast } from '../chrome/dialog.ts';
 import { BLOCK_CHAMPION, DEN_OWNER } from '../jacket/den-patches.ts';
 import { patchImage } from '../jacket/patch-look.ts';
+import { calendarName } from './calendar-name.ts';
 import { cat } from './cat.ts';
 import { denChalkboard, type ChalkboardScore } from './chalkboard.ts';
 import { corkboard } from './corkboard.ts';
 import { COUNTER_SLOTS } from '../data/cycle.ts';
 import { LAYOUT } from './geometry.ts';
 import type { GrowthItem } from './growth.ts';
-import { onAirGlow, onAirSign, paperChain, plaque, posters, remote, stringLights, stringLightsGlow, trophies } from './growth-art.ts';
+import {
+  onAirGlow,
+  onAirSign,
+  paperChain,
+  plaque,
+  posters,
+  remote,
+  stringLights,
+  stringLightsGlow,
+  trophies,
+} from './growth-art.ts';
 import { beanbag, CALENDAR_PHOTO_HEIGHT, TEAL_BEANBAG } from './room.ts';
 import { n } from './svg.ts';
 
@@ -41,7 +52,13 @@ import { n } from './svg.ts';
 const CAT_ON_SECOND_BEANBAG = { x: 1468, y: 742, width: 124 };
 
 /** The door jacket is the Jacket screen's 600×700 drawing, hung up and seen from across the room. */
-const DOOR_JACKET = { centreX: LAYOUT.jacket.x + LAYOUT.jacket.width / 2, top: LAYOUT.jacket.y, scaleX: 0.29, scaleY: 0.39, patch: 22 };
+const DOOR_JACKET = {
+  centreX: LAYOUT.jacket.x + LAYOUT.jacket.width / 2,
+  top: LAYOUT.jacket.y,
+  scaleX: 0.29,
+  scaleY: 0.39,
+  patch: 22,
+};
 
 export interface DenLifeLayer {
   /** While inactive, items still render but nothing sparkles and nothing is marked seen. */
@@ -60,7 +77,11 @@ function hasKind(items: readonly GrowthItem[], kind: GrowthItem['kind']): boolea
   return items.some((item) => item.kind === kind);
 }
 
-export function createDenLifeLayer(svg: SVGSVGElement, services: Services, options: { now?: () => Date } = {}): DenLifeLayer {
+export function createDenLifeLayer(
+  svg: SVGSVGElement,
+  services: Services,
+  options: { now?: () => Date } = {},
+): DenLifeLayer {
   const { denLife, registry, repos, settings } = services;
   const now = options.now ?? (() => new Date());
   const rendered = new Map<Element, string>();
@@ -71,21 +92,54 @@ export function createDenLifeLayer(svg: SVGSVGElement, services: Services, optio
     rendered.set(target, markup);
     target.innerHTML = markup;
   };
-  const slot = (kind: string) => required(svg.querySelector<SVGGElement>(`[data-growth-slot="${kind}"]`), kind);
+  const slot = (kind: string) =>
+    required(svg.querySelector<SVGGElement>(`[data-growth-slot="${kind}"]`), kind);
   const manifestById = (id: string) => registry.manifests.find((manifest) => manifest.id === id);
 
-  const corkboardArt = required(svg.querySelector<SVGGElement>('[data-ref="corkboard-art"]'), 'corkboard-art');
-  const chalkboardArt = required(svg.querySelector<SVGGElement>('[data-ref="chalkboard-art"]'), 'chalkboard-art');
+  const corkboardArt = required(
+    svg.querySelector<SVGGElement>('[data-ref="corkboard-art"]'),
+    'corkboard-art',
+  );
+  const chalkboardArt = required(
+    svg.querySelector<SVGGElement>('[data-ref="chalkboard-art"]'),
+    'chalkboard-art',
+  );
   const catSlot = required(svg.querySelector<SVGGElement>('[data-ref="cat-slot"]'), 'cat-slot');
-  const jacketPatches = required(svg.querySelector<SVGGElement>('[data-ref="jacket-patches"]'), 'jacket-patches');
+  const jacketPatches = required(
+    svg.querySelector<SVGGElement>('[data-ref="jacket-patches"]'),
+    'jacket-patches',
+  );
   const jacketSpot = required(svg.querySelector<SVGGElement>('[data-ref="jacket"]'), 'jacket');
-  const calendarGrid = required(svg.querySelector<SVGGElement>('[data-ref="calendar-grid"]'), 'calendar-grid');
-  const calendarStreak = required(svg.querySelector<SVGGElement>('[data-ref="calendar-streak"]'), 'calendar-streak');
-  const calendarDaily = required(svg.querySelector<SVGTextElement>('[data-ref="calendar-daily"]'), 'calendar-daily');
+  const calendarGrid = required(
+    svg.querySelector<SVGGElement>('[data-ref="calendar-grid"]'),
+    'calendar-grid',
+  );
+  const calendarStreak = required(
+    svg.querySelector<SVGGElement>('[data-ref="calendar-streak"]'),
+    'calendar-streak',
+  );
+  const calendarDaily = required(
+    svg.querySelector<SVGTextElement>('[data-ref="calendar-daily"]'),
+    'calendar-daily',
+  );
+  const calendarMonthText = required(
+    svg.querySelector<SVGTextElement>('[data-ref="calendar-month"]'),
+    'calendar-month',
+  );
+  const calendarDayText = required(
+    svg.querySelector<SVGTextElement>('[data-ref="calendar-day"]'),
+    'calendar-day',
+  );
+  const calendarSpot = required(
+    svg.querySelector<SVGGElement>('[data-ref="calendar"]'),
+    'calendar',
+  );
 
   // ——— Growth ———
   const renderGrowth = (items: readonly GrowthItem[]) => {
-    const families = items.flatMap((item) => (item.kind === 'poster' && item.family ? [item.family] : []));
+    const families = items.flatMap((item) =>
+      item.kind === 'poster' && item.family ? [item.family] : [],
+    );
     const legendGames = items.flatMap((item) => {
       const manifest = item.kind === 'trophy' && item.game ? manifestById(item.game) : undefined;
       return manifest ? [manifest] : [];
@@ -112,7 +166,9 @@ export function createDenLifeLayer(svg: SVGSVGElement, services: Services, optio
       case 'trophy':
         return svg.querySelector(`.growth-trophy[data-game="${item.game ?? ''}"]`);
       case 'poster':
-        return svg.querySelector(`[data-growth-slot="posters"] [data-family="${item.family ?? ''}"]`);
+        return svg.querySelector(
+          `[data-growth-slot="posters"] [data-family="${item.family ?? ''}"]`,
+        );
       case 'ribbon':
         return svg.querySelector('[data-growth="ribbon"]');
       case 'plaque-and-remote':
@@ -139,7 +195,9 @@ export function createDenLifeLayer(svg: SVGSVGElement, services: Services, optio
   // ——— Corkboard, chalkboard, jacket ———
   const renderCorkboard = (champion: boolean) => {
     const kids = repos.progress.get().den.kids;
-    const beaten = new Set((Object.keys(kids) as KidId[]).filter((kid) => (kids[kid]?.wins ?? 0) > 0));
+    const beaten = new Set(
+      (Object.keys(kids) as KidId[]).filter((kid) => (kids[kid]?.wins ?? 0) > 0),
+    );
     fill(corkboardArt, corkboard(beaten, champion));
   };
 
@@ -149,7 +207,12 @@ export function createDenLifeLayer(svg: SVGSVGElement, services: Services, optio
     const last = repos.progress.get().den.versus.recent.at(-1);
     if (!last) return null;
     const wins = [1, 2].map((seat) => last.games.filter((game) => game.winner === seat).length);
-    return { names: last.names, wins: [wins[0] ?? 0, wins[1] ?? 0], bestOf: last.bestOf, winner: last.winner };
+    return {
+      names: last.names,
+      wins: [wins[0] ?? 0, wins[1] ?? 0],
+      bestOf: last.bestOf,
+      winner: last.winner,
+    };
   };
 
   const renderJacket = () => {
@@ -162,18 +225,33 @@ export function createDenLifeLayer(svg: SVGSVGElement, services: Services, optio
       .map((placement) => {
         const ownPatch = placement.game === DEN_OWNER.id;
         const manifest = ownPatch ? DEN_OWNER : manifestById(placement.game);
-        const tier = ownPatch ? BLOCK_CHAMPION.tier : denLife.patchesFor(placement.game).find((def) => def.id === placement.patch)?.tier;
+        const tier = ownPatch
+          ? BLOCK_CHAMPION.tier
+          : denLife.patchesFor(placement.game).find((def) => def.id === placement.patch)?.tier;
         if (!manifest || !tier) return '';
-        const gold = ownPatch ? blockLadder(repos.progress.get().den.kids).beatenOnA.length === 6 : Boolean(games[placement.game]?.patches[placement.patch]?.gold);
+        const gold = ownPatch
+          ? blockLadder(repos.progress.get().den.kids).beatenOnA.length === 6
+          : Boolean(games[placement.game]?.patches[placement.patch]?.gold);
         const x = centreX + (placement.x - 300) * scaleX;
         const y = top + 12 + (placement.y - 90) * scaleY;
-        const turn = placement.rotation === 0 ? '' : `transform="rotate(${placement.rotation} ${n(x)} ${n(y)})"`;
-        return patchImage({ manifest, patchId: placement.patch, tier, state: 'earned', gold }, n(x - patch / 2), n(y - patch / 2), patch, turn);
+        const turn =
+          placement.rotation === 0
+            ? ''
+            : `transform="rotate(${placement.rotation} ${n(x)} ${n(y)})"`;
+        return patchImage(
+          { manifest, patchId: placement.patch, tier, state: 'earned', gold },
+          n(x - patch / 2),
+          n(y - patch / 2),
+          patch,
+          turn,
+        );
       })
       .join('');
     fill(jacketPatches, markup);
     const lookedAt = jacket.lookedAt ?? '';
-    const news = Object.values(games).some((game) => Object.values(game.patches).some((p) => p.earnedAt !== null && p.earnedAt > lookedAt));
+    const news = Object.values(games).some((game) =>
+      Object.values(game.patches).some((p) => p.earnedAt !== null && p.earnedAt > lookedAt),
+    );
     jacketSpot.classList.toggle('has-news', news);
   };
 
@@ -183,7 +261,9 @@ export function createDenLifeLayer(svg: SVGSVGElement, services: Services, optio
     const game = powerCycleOfTheDay(registry.manifests, date);
     const manifest = game ? manifestById(game.id) : undefined;
     const channel = manifest ? dailyChannel(manifest, date) : undefined;
-    const played = manifest ? repos.progress.get().den.daily[utcDateKey(date)]?.[manifest.id] !== undefined : false;
+    const played = manifest
+      ? repos.progress.get().den.daily[utcDateKey(date)]?.[manifest.id] !== undefined
+      : false;
     return { date, manifest, channel, played };
   };
 
@@ -197,10 +277,15 @@ export function createDenLifeLayer(svg: SVGSVGElement, services: Services, optio
     } else if (cell.kind === 'snow') {
       const r = h * 0.48;
       mark = [0, 60, 120]
-        .map((angle) => `<path d="M${n(cx)} ${n(cy - r)}V${n(cy + r)}" transform="rotate(${angle} ${n(cx)} ${n(cy)})" stroke="#3f86c4" stroke-width="0.8" stroke-linecap="round"/>`)
+        .map(
+          (angle) =>
+            `<path d="M${n(cx)} ${n(cy - r)}V${n(cy + r)}" transform="rotate(${angle} ${n(cx)} ${n(cy)})" stroke="#3f86c4" stroke-width="0.8" stroke-linecap="round"/>`,
+        )
         .join('');
     }
-    const ring = cell.today ? `<rect x="${n(x - 1.2)}" y="${n(y - 1.2)}" width="${n(w + 2.4)}" height="${n(h + 2.4)}" rx="2" fill="none" stroke="#b8433a" stroke-width="0.9"/>` : '';
+    const ring = cell.today
+      ? `<rect x="${n(x - 1.2)}" y="${n(y - 1.2)}" width="${n(w + 2.4)}" height="${n(h + 2.4)}" rx="2" fill="none" stroke="#b8433a" stroke-width="0.9"/>`
+      : '';
     return box + mark + ring;
   };
 
@@ -221,7 +306,13 @@ export function createDenLifeLayer(svg: SVGSVGElement, services: Services, optio
       cells
         .map((cell, index) => {
           const position = offset + index;
-          return calendarCell(cell, x + 7 + (position % columns) * pitchX + 1, top + Math.floor(position / columns) * pitchY, pitchX - 2.4, 5.6);
+          return calendarCell(
+            cell,
+            x + 7 + (position % columns) * pitchX + 1,
+            top + Math.floor(position / columns) * pitchY,
+            pitchX - 2.4,
+            5.6,
+          );
         })
         .join(''),
     );
@@ -239,8 +330,25 @@ export function createDenLifeLayer(svg: SVGSVGElement, services: Services, optio
             `</g>`,
     );
 
-    const channelText = manifest && channel ? ` · ch ${channelNumber(manifest.channels, channel.id)}` : '';
-    calendarDaily.textContent = `Daily #${dailyNumber(date)}${channelText}${played ? ' ✓' : ''}`;
+    const channelText =
+      manifest && channel ? ` · ch ${channelNumber(manifest.channels, channel.id)}` : '';
+    const daily = `Daily #${dailyNumber(date)}${channelText}`;
+    const monthName = date.toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+    const day = String(date.getUTCDate());
+    calendarMonthText.textContent = monthName.toUpperCase();
+    calendarDayText.textContent = day;
+    calendarDaily.textContent = `${daily}${played ? ' ✓' : ''}`;
+    // The name changes with every mark printed, so it is kept here beside them.
+    calendarSpot.setAttribute(
+      'aria-label',
+      calendarName({
+        streak: streak.best === 0 ? null : streak,
+        month: monthName,
+        day,
+        daily,
+        played,
+      }),
+    );
   };
 
   const calendarSummary = (): string => {
@@ -248,7 +356,10 @@ export function createDenLifeLayer(svg: SVGSVGElement, services: Services, optio
     const streak = denLife.streak(date);
     const daily = `Daily #${dailyNumber(date)}`;
     if (!manifest || !channel) return `${daily}: the first Power Cycle arrives with the first game`;
-    const streakText = streak.best === 0 ? '' : ` · ${streak.current} ${streak.current === 1 ? 'day' : 'days'} in a row, best ${streak.best}`;
+    const streakText =
+      streak.best === 0
+        ? ''
+        : ` · ${streak.current} ${streak.current === 1 ? 'day' : 'days'} in a row, best ${streak.best}`;
     return `${daily}: today's Power Cycle is ${manifest.title}, channel ${channelNumber(manifest.channels, channel.id)} (${channel.title}) · ${played ? 'played' : 'not played yet'}${streakText}`;
   };
 

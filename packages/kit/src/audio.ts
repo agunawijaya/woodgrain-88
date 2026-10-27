@@ -45,6 +45,32 @@ export interface Voice {
 
 /** One voice, or several layered into one sound. */
 export type SoundDef = Voice | readonly Voice[];
+
+/** A voice that sounds until it is stopped, steered as it plays: an engine's hum, a propeller. */
+export interface HeldVoice {
+  wave: Wave;
+  /** Hz at pitch 1. For noise: the band's centre. */
+  freq: number;
+  /** 0–1. Default 0.5. */
+  gain?: number;
+  /** Low-pass cutoff in Hz at pitch 1; it follows the pitch. */
+  lowpass?: number;
+  vibrato?: { cents: number; rate: number };
+}
+
+export interface HeldOptions {
+  channel?: SoundChannel;
+  /** Starting level, multiplied into every voice's gain. Default 1. */
+  gain?: number;
+  pan?: number;
+}
+
+/** A playing held sound. Every change glides over a few tens of milliseconds, so nothing clicks. */
+export interface HeldSound {
+  set(change: { pitch?: number; gain?: number; pan?: number }): void;
+  /** Fades out and frees the sound; later calls do nothing. */
+  stop(): void;
+}
 export type SoundBank = Readonly<Record<string, SoundDef>>;
 
 export interface PlayOptions {
@@ -88,6 +114,8 @@ export interface AudioEngine {
   register(bank: SoundBank): void;
   play(name: string, options?: PlayOptions): void;
   playDef(def: SoundDef, options?: PlayOptions): void;
+  /** Starts a held sound; before `unlock` (or without WebAudio) it is silent and does nothing. */
+  hold(def: HeldVoice | readonly HeldVoice[], options?: HeldOptions): HeldSound;
   readonly music: Sequencer;
   /** Effective gains (already multiplied by master and mute) per channel. */
   setVolumes(volumes: Readonly<Record<SoundChannel, number>>): void;
@@ -243,6 +271,114 @@ function playVoice(
   return source;
 }
 
+/** How quickly a held sound follows a change, as a time constant in seconds. */
+const HELD_GLIDE = 0.03;
+const SILENT_HELD: HeldSound = { set: () => undefined, stop: () => undefined };
+
+interface HeldPart {
+  readonly source: AudioScheduledSourceNode;
+  /** The parameter the pitch moves: an oscillator's frequency or a noise band's centre. */
+  readonly tone: AudioParam;
+  readonly lowpass: BiquadFilterNode | null;
+  readonly voice: HeldVoice;
+}
+
+function heldPart(graph: Graph, voice: HeldVoice, into: AudioNode): HeldPart {
+  const { context } = graph;
+  let source: AudioScheduledSourceNode;
+  let tone: AudioParam;
+  let head: AudioNode;
+  if (voice.wave === 'noise') {
+    const noise = context.createBufferSource();
+    noise.buffer = graph.noise;
+    noise.loop = true;
+    const band = context.createBiquadFilter();
+    band.type = 'bandpass';
+    band.Q.value = 0.8;
+    band.frequency.value = voice.freq;
+    noise.connect(band);
+    source = noise;
+    tone = band.frequency;
+    head = band;
+  } else {
+    const osc = context.createOscillator();
+    osc.type = voice.wave;
+    osc.frequency.value = voice.freq;
+    if (voice.vibrato) {
+      const lfo = context.createOscillator();
+      const depth = context.createGain();
+      lfo.frequency.value = voice.vibrato.rate;
+      depth.gain.value = voice.vibrato.cents;
+      lfo.connect(depth).connect(osc.detune);
+      lfo.start();
+      osc.addEventListener('ended', () => lfo.stop());
+    }
+    source = osc;
+    tone = osc.frequency;
+    head = osc;
+  }
+  let lowpass: BiquadFilterNode | null = null;
+  if (voice.lowpass) {
+    lowpass = context.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = voice.lowpass;
+    head.connect(lowpass);
+    head = lowpass;
+  }
+  const level = context.createGain();
+  level.gain.value = voice.gain ?? 0.5;
+  head.connect(level).connect(into);
+  source.start();
+  return { source, tone, lowpass, voice };
+}
+
+function startHeld(
+  graph: Graph,
+  voices: readonly HeldVoice[],
+  options: HeldOptions,
+  track: (source: AudioScheduledSourceNode) => void,
+): HeldSound {
+  const { context } = graph;
+  const out = context.createGain();
+  out.gain.value = 0.0001;
+  out.gain.setTargetAtTime(options.gain ?? 1, context.currentTime, HELD_GLIDE);
+  const panner = context.createStereoPanner();
+  panner.pan.value = Math.max(-1, Math.min(1, options.pan ?? 0));
+  out.connect(panner).connect(graph.channels[options.channel ?? 'sfx']);
+  const parts = voices.map((voice) => heldPart(graph, voice, out));
+  for (const part of parts) track(part.source);
+  let stopped = false;
+
+  return {
+    set(change) {
+      if (stopped) return;
+      const now = context.currentTime;
+      if (change.gain !== undefined)
+        out.gain.setTargetAtTime(Math.max(0.0001, change.gain), now, HELD_GLIDE);
+      if (change.pan !== undefined)
+        panner.pan.setTargetAtTime(Math.max(-1, Math.min(1, change.pan)), now, HELD_GLIDE);
+      if (change.pitch !== undefined) {
+        for (const part of parts) {
+          part.tone.setTargetAtTime(part.voice.freq * change.pitch, now, HELD_GLIDE);
+          if (part.lowpass && part.voice.lowpass)
+            part.lowpass.frequency.setTargetAtTime(
+              part.voice.lowpass * change.pitch,
+              now,
+              HELD_GLIDE,
+            );
+        }
+      }
+    },
+    stop() {
+      if (stopped) return;
+      stopped = true;
+      const now = context.currentTime;
+      out.gain.setTargetAtTime(0.0001, now, HELD_GLIDE);
+      for (const part of parts) part.source.stop(now + HELD_GLIDE * 8);
+    },
+  };
+}
+
 export function createAudioEngine(options: AudioEngineOptions = {}): AudioEngine {
   const createContext = options.createContext ?? defaultContext;
   const bank = new Map<string, SoundDef>();
@@ -311,6 +447,13 @@ export function createAudioEngine(options: AudioEngineOptions = {}): AudioEngine
       playDef(def, playOptions);
     },
     playDef,
+    hold(def, holdOptions = {}) {
+      if (!unlocked) return SILENT_HELD;
+      const g = ensureGraph();
+      if (!g) return SILENT_HELD;
+      const voices: readonly HeldVoice[] = Array.isArray(def) ? def : [def as HeldVoice];
+      return startHeld(g, voices, holdOptions, track);
+    },
     music,
     setVolumes(next) {
       volumes = { ...next };

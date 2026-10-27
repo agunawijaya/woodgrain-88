@@ -4,7 +4,7 @@
  * and reflecting versions in the Den's counter places and lamp tooltips.
  */
 import { expect, test } from '@playwright/test';
-import { collectErrors, counterText, skipIntro } from '../helpers.ts';
+import { collectErrors, skipIntro, stepTo, tuneTo } from '../helpers.ts';
 
 test.describe('Cartridge versions on site', () => {
   test('persists version selection in details overlay and shows version on place 31 and lamp tooltip', async ({
@@ -44,12 +44,9 @@ test.describe('Cartridge versions on site', () => {
     await detailsDialog.locator('.dialog-close').click();
     await expect(page.locator('.den')).toBeVisible();
 
-    // Step to place 31
-    while ((await counterText(page)) !== '31') {
-      const prev = await counterText(page);
-      await page.keyboard.press('Shift+P');
-      await expect.poll(() => counterText(page), { timeout: 10_000 }).not.toBe(prev);
-    }
+    // Place 31 is one flip past the last label on the wall.
+    await tuneTo(page, 30);
+    await stepTo(page, 31);
 
     // Place 31's card kicker says "Rabbit version"
     await expect(page.locator('.game-card-kicker')).toContainText('Rabbit version');

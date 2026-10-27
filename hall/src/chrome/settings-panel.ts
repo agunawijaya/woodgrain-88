@@ -23,7 +23,12 @@ import {
 import type { Services } from '../app/services.ts';
 import { escapeXml } from '../den/svg.ts';
 import { confirmDialog, openDialog, toast } from './dialog.ts';
-import { bindVersionPicker, chosenVersion, isVersionInput, versionPickerMarkup } from './version-picker.ts';
+import {
+  bindVersionPicker,
+  chosenVersion,
+  isVersionInput,
+  versionPickerMarkup,
+} from './version-picker.ts';
 
 export interface SettingsPanelOptions {
   services: Services;
@@ -80,16 +85,26 @@ function bindingsTable(bindings: Bindings): string {
 }
 
 function padStatus(): string {
-  const pads = typeof navigator !== 'undefined' && 'getGamepads' in navigator ? navigator.getGamepads() : [];
+  const pads =
+    typeof navigator !== 'undefined' && 'getGamepads' in navigator ? navigator.getGamepads() : [];
   const connected = [...pads].filter((pad): pad is Gamepad => pad?.connected === true);
   if (connected.length === 0) return 'No gamepad found. Press a button on one to wake it up.';
-  return connected.map((pad, i) => `Gamepad ${i + 1} (${pad.id.split('(')[0]?.trim() ?? 'pad'}) drives seat ${i + 1}`).join(' · ');
+  return connected
+    .map(
+      (pad, i) =>
+        `Gamepad ${i + 1} (${pad.id.split('(')[0]?.trim() ?? 'pad'}) drives seat ${i + 1}`,
+    )
+    .join(' · ');
 }
 
 export function openSettingsPanel(options: SettingsPanelOptions): void {
   const { services } = options;
   const { settings } = services;
-  const dialog = openDialog({ title: 'Settings', className: 'dialog--settings', closeButton: true });
+  const dialog = openDialog({
+    title: 'Settings',
+    className: 'dialog--settings',
+    closeButton: true,
+  });
   let listening: { seat: Seat; action: string } | null = null;
 
   // Only merged games have settings of their own so far: the cartridge version.
@@ -122,7 +137,12 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
       slider('sfx', 'Effects', s.volume.sfx) +
       slider('music', 'Music', s.volume.music) +
       slider('ambience', 'Room sound', s.volume.ambience) +
-      toggle('roomAmbience', 'Room sound in the Den', s.roomAmbience, 'A quiet clock, the street by day, crickets by night') +
+      toggle(
+        'roomAmbience',
+        'Room sound in the Den',
+        s.roomAmbience,
+        'A quiet clock, the street by day, crickets by night',
+      ) +
       `</section>` +
       `<section><h3>Motion and the TV</h3><div class="choices" role="radiogroup" aria-label="Reduced motion">` +
       radio('reducedMotion', 'system', 'Motion: follow my system', s.reducedMotion === 'system') +
@@ -130,12 +150,32 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
       radio('reducedMotion', 'off', 'Full motion', s.reducedMotion === 'off') +
       `</div>` +
       toggle('screenShake', 'Screen shake', s.screenShake) +
-      toggle('crtEffects', 'CRT look (curve, scanlines, glow)', s.crtEffects, 'Always off when motion is reduced') +
-      toggle('colorBlindHints', 'Colour-blind hints', s.colorBlindHints, 'Shapes and patterns wherever colour carries meaning') +
+      toggle(
+        'crtEffects',
+        'CRT look (curve, scanlines, glow)',
+        s.crtEffects,
+        'Always off when motion is reduced',
+      ) +
+      toggle(
+        'colorBlindHints',
+        'Colour-blind hints',
+        s.colorBlindHints,
+        'Shapes and patterns wherever colour carries meaning',
+      ) +
       `</section>` +
       `<section><h3>Den Life</h3>` +
-      toggle('showGrowth', 'Show what the room has grown', s.showGrowth, 'Trophies, posters, lights and the rest. Hiding them forgets nothing') +
-      toggle('shareWithName', 'Put my name on share lines', s.shareWithName, 'Off: share lines carry no name at all') +
+      toggle(
+        'showGrowth',
+        'Show what the room has grown',
+        s.showGrowth,
+        'Trophies, posters, lights and the rest. Hiding them forgets nothing',
+      ) +
+      toggle(
+        'shareWithName',
+        'Put my name on share lines',
+        s.shareWithName,
+        'Off: share lines carry no name at all',
+      ) +
       `<p class="settings-note">Versus Night series length</p>` +
       `<div class="choices" role="radiogroup" aria-label="Versus Night series length">` +
       radio('versusBestOf', '3', 'Best of 3', s.versusBestOf === 3) +
@@ -148,10 +188,8 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
       radio('runSound', 'loud', 'Loud', s.runSound === 'loud') +
       `</div>` +
       `</section>` +
-      `<section><h3>Controls</h3><div class="choices" role="radiogroup" aria-label="Keyboard layout">` +
-      radio('layout', 'split', 'Two players share the keyboard', s.controls.layout === 'split') +
-      radio('layout', 'solo', 'One player uses both halves', s.controls.layout === 'solo') +
-      `</div>` +
+      `<section><h3>Controls</h3>` +
+      `<p class="settings-note">Playing alone, every key below steers you. Two on one keyboard: player 1 keeps the arrows, player 2 takes WASD.</p>` +
       `<p class="settings-note" aria-live="polite">${escapeXml(padStatus())}</p>` +
       `<div class="seat-grid">${bindingsTable(bindings)}</div>` +
       `<p class="settings-note" data-ref="listen" aria-live="assertive">${listening ? `Press a key for seat ${listening.seat} ${ACTION_LABELS[listening.action] ?? listening.action}. Escape cancels.` : 'Escape always pauses; it cannot be bound.'}</p>` +
@@ -180,8 +218,8 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
     }
     save((draft) => {
       if (name === 'appearance') draft.appearance = target.value as SettingsData['appearance'];
-      else if (name === 'reducedMotion') draft.reducedMotion = target.value as SettingsData['reducedMotion'];
-      else if (name === 'layout') draft.controls.layout = target.value as SettingsData['controls']['layout'];
+      else if (name === 'reducedMotion')
+        draft.reducedMotion = target.value as SettingsData['reducedMotion'];
       else if (name === 'versusBestOf') draft.versusBestOf = target.value === '5' ? 5 : 3;
       else if (name === 'runSound') draft.runSound = target.value as SettingsData['runSound'];
       else if (
@@ -228,9 +266,16 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
     const button = (event.target as Element).closest<HTMLButtonElement>('button');
     if (!button) return;
     if (button.classList.contains('binding-key')) {
-      listening = { seat: Number(button.dataset.seat) as Seat, action: button.dataset.action ?? 'fire' };
+      listening = {
+        seat: Number(button.dataset.seat) as Seat,
+        action: button.dataset.action ?? 'fire',
+      };
       render();
-      dialog.body.querySelector<HTMLButtonElement>(`.binding-key[data-seat="${listening.seat}"][data-action="${listening.action}"]`)?.focus();
+      dialog.body
+        .querySelector<HTMLButtonElement>(
+          `.binding-key[data-seat="${listening.seat}"][data-action="${listening.action}"]`,
+        )
+        ?.focus();
       return;
     }
     switch (button.dataset.do) {
@@ -255,7 +300,8 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
       case 'forget':
         void confirmDialog({
           title: 'Forget everything?',
-          message: 'Your name, records, stats, saves, patches and settings will be cleared from this browser. This cannot be undone.',
+          message:
+            'Your name, records, stats, saves, patches and settings will be cleared from this browser. This cannot be undone.',
           confirm: 'Forget everything',
           cancel: 'Keep it',
         }).then((ok) => {
@@ -278,14 +324,19 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
       if (event.code !== 'Escape') {
         const current = settings.get().controls.bindings ?? DEFAULT_BINDINGS;
         const next = rebind(current, listening.seat, listening.action, event.code);
-        const problems = validateBindings(next, settings.get().controls.layout);
+        // Keys must work for two players sharing the keyboard, so check them as split.
+        const problems = validateBindings(next, 'split');
         if (problems.length > 0) toast(problems[0] ?? 'That key cannot be used');
         else save((draft) => (draft.controls.bindings = next));
       }
       const focusAgain = listening;
       listening = null;
       render();
-      dialog.body.querySelector<HTMLButtonElement>(`.binding-key[data-seat="${focusAgain.seat}"][data-action="${focusAgain.action}"]`)?.focus();
+      dialog.body
+        .querySelector<HTMLButtonElement>(
+          `.binding-key[data-seat="${focusAgain.seat}"][data-action="${focusAgain.action}"]`,
+        )
+        ?.focus();
     },
     true,
   );

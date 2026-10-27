@@ -7,9 +7,10 @@ import type { GameManifest } from '@woodgrain-88/kit';
 export const manifest: GameManifest = {
   id: 'lane-ten',
   slot: 29,
-  title: "Lane Ten",
-  tagline: "Ten-pin with spin you steer after release.",
-  teaser: "Roll, then curve the ball down the lane with a touch of spin. The pins tumble like they mean it, and a strike sounds as good as it feels.",
+  title: 'Lane Ten',
+  tagline: 'Ten-pin with spin you steer after release.',
+  teaser:
+    'Roll, then curve the ball down the lane with a touch of spin. The pins tumble like they mean it, and a strike sounds as good as it feels.',
   family: 'sports',
   players: '1–2P',
   versus: 'local+bot',
@@ -17,7 +18,8 @@ export const manifest: GameManifest = {
   status: 'coming-soon',
   scoreOrder: 'higher',
   accent: { day: '#8a5a1c', night: '#f2c27f' },
-  emblem: "M9 3c1.5 0 2 1.5 1.5 3-.5 1.5 1.5 3 1.5 6s-1 7-3 9c-2-2-3-6-3-9s2-4.5 1.5-6C7 4.5 7.5 3 9 3ZM18 17a3 3 0 1 0 0-.01",
+  emblem:
+    'M9 3c1.5 0 2 1.5 1.5 3-.5 1.5 1.5 3 1.5 6s-1 7-3 9c-2-2-3-6-3-9s2-4.5 1.5-6C7 4.5 7.5 3 9 3ZM18 17a3 3 0 1 0 0-.01',
   label: {
     pattern: 'stripes',
     angle: 90,
@@ -27,18 +29,23 @@ export const manifest: GameManifest = {
     bandText: '#fefae0',
   },
   inspiredBy: {
-    originalTitle: "Bowling",
-    uiTitle: "the bowling cartridge",
-    publisher: "Atari",
+    originalTitle: 'Bowling',
+    uiTitle: 'the bowling cartridge',
+    publisher: 'Atari',
     year: null,
     cartridgeSlots: [31],
   },
   controls: [
-    { keys: ["Arrows or WASD"], does: "move and aim" },
-    { keys: ["Space"], does: "act" },
+    { keys: ['Arrows or WASD'], does: 'move and aim' },
+    { keys: ['Space'], does: 'act' },
   ],
   channels: [
-    { id: 'classic', kind: 'original', title: 'Classic', description: 'The original rules, rebuilt and polished.' },
+    {
+      id: 'classic',
+      kind: 'original',
+      title: 'Classic',
+      description: 'The original rules, rebuilt and polished.',
+    },
   ],
   supports: { daily: false, challengeLinks: false, microChallenges: false },
   events: [],

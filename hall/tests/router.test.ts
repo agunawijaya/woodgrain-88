@@ -13,6 +13,7 @@ describe('hash router', () => {
     expect(parseRoute('#/records')).toEqual({ name: 'records' });
     expect(parseRoute('#/about')).toEqual({ name: 'about' });
     expect(parseRoute('#/game/tank-duel')).toEqual({ name: 'game', id: 'tank-duel' });
+    expect(parseRoute('#/details/tank-duel')).toEqual({ name: 'details', id: 'tank-duel' });
 
     const playRoute = parseRoute('#/play/tank-duel?mode=daily&ch=classic');
     expect(playRoute.name).toBe('play');
@@ -39,6 +40,9 @@ describe('hash router', () => {
     expect(routeHash(parseRoute('#/records'))).toBe('#/records');
     expect(routeHash(parseRoute('#/about'))).toBe('#/about');
     expect(routeHash(parseRoute('#/game/tank-duel'))).toBe('#/game/tank-duel');
+    expect(routeHash(parseRoute('#/details/lane-hopper?version=rabbit'))).toBe(
+      '#/details/lane-hopper?version=rabbit',
+    );
     expect(routeHash(parseRoute('#/play/tank-duel?mode=daily&ch=classic'))).toBe(
       '#/play/tank-duel?mode=daily&ch=classic',
     );

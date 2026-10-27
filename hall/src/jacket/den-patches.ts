@@ -15,7 +15,13 @@ export const DEN_OWNER: PatchOwner & { family: string; slot: number } = {
   id: 'den',
   title: 'The Den',
   emblem: 'M4 20V10.5L12 4l8 6.5V20M9.5 20v-5.5h5V20',
-  label: { pattern: 'stripes', paper: '#f3e6cc', ink: '#5a3420', band: '#d9a21b', bandText: '#2a1b12' },
+  label: {
+    pattern: 'stripes',
+    paper: '#f3e6cc',
+    ink: '#5a3420',
+    band: '#d9a21b',
+    bandText: '#2a1b12',
+  },
   family: 'den',
   slot: 0,
 };
@@ -29,18 +35,37 @@ export const BLOCK_CHAMPION: PatchDef = {
 };
 
 /** Whether Block champion is earned, and in gold. */
-export function blockChampionStatus(progress: ProgressData): { earned: boolean; gold: boolean; earnedAt: string | null } {
+export function blockChampionStatus(progress: ProgressData): {
+  earned: boolean;
+  gold: boolean;
+  earnedAt: string | null;
+} {
   const ladder = blockLadder(progress.den.kids);
   if (!ladder.champion) return { earned: false, gold: false, earnedAt: null };
   // The day the last of the six was first beaten.
   const earnedAt = KID_IDS.flatMap((kid) => progress.den.kids[kid]?.firstBeatenAt ?? [])
     .sort()
     .at(-1);
-  return { earned: true, gold: ladder.beatenOnA.length === KID_IDS.length, earnedAt: earnedAt ?? null };
+  return {
+    earned: true,
+    gold: ladder.beatenOnA.length === KID_IDS.length,
+    earnedAt: earnedAt ?? null,
+  };
 }
 
 /** The Den's patches as drawer entries: Block champion, once earned. */
 export function denDrawer(progress: ProgressData): DrawerPatch[] {
   const status = blockChampionStatus(progress);
-  return status.earned ? [{ game: DEN_OWNER.id, patch: BLOCK_CHAMPION.id, tier: BLOCK_CHAMPION.tier, family: DEN_OWNER.family, gold: status.gold, slot: DEN_OWNER.slot }] : [];
+  return status.earned
+    ? [
+        {
+          game: DEN_OWNER.id,
+          patch: BLOCK_CHAMPION.id,
+          tier: BLOCK_CHAMPION.tier,
+          family: DEN_OWNER.family,
+          gold: status.gold,
+          slot: DEN_OWNER.slot,
+        },
+      ]
+    : [];
 }

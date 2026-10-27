@@ -79,7 +79,13 @@ function crown(cx: number, y: number, size: number): string {
   );
 }
 
-function chalkText(text: string, x: number, y: number, size: number, anchor: 'start' | 'middle' | 'end' = 'middle'): string {
+function chalkText(
+  text: string,
+  x: number,
+  y: number,
+  size: number,
+  anchor: 'start' | 'middle' | 'end' = 'middle',
+): string {
   const safe = escapeXml(text);
   return (
     `<text x="${n(x)}" y="${n(y)}" text-anchor="${anchor}" font-family="var(--font-hand)" font-size="${n(size)}" fill="${CHALK}" opacity="0.88">${safe}</text>` +
@@ -94,21 +100,42 @@ function ghosts(width: number, height: number): string {
   for (let i = 0; i < 7; i++) {
     smudges += `<ellipse cx="${n(rng.float(0, width))}" cy="${n(rng.float(0, height))}" rx="${n(rng.float(width * 0.08, width * 0.22))}" ry="${n(rng.float(height * 0.05, height * 0.12))}" fill="${CHALK}" opacity="${n(rng.float(0.04, 0.09))}"/>`;
   }
-  return `<g filter="url(#chalk-dust)">${smudges}</g>` + chalkPath(`M${n(width * 0.62)} ${n(height * 0.78)}q${n(width * 0.08)} -${n(height * 0.06)} ${n(width * 0.16)} 0`, 1, 'ghost-line').replace(/opacity="0.86"/, 'opacity="0.12"');
+  return (
+    `<g filter="url(#chalk-dust)">${smudges}</g>` +
+    chalkPath(
+      `M${n(width * 0.62)} ${n(height * 0.78)}q${n(width * 0.08)} -${n(height * 0.06)} ${n(width * 0.16)} 0`,
+      1,
+      'ghost-line',
+    ).replace(/opacity="0.86"/, 'opacity="0.12"')
+  );
 }
 
 /**
  * The slate's content on a `width`×`height` area at the origin (the frame is
  * the caller's). Without a score it shows the night's title and an invitation.
  */
-export function chalkboardFace(width: number, height: number, score: ChalkboardScore | null): string {
+export function chalkboardFace(
+  width: number,
+  height: number,
+  score: ChalkboardScore | null,
+): string {
   // A big board shows the chalk's grain and a note in the corner; on the little
   // board in the Den both would only blur the score.
   const roomy = width > 300;
-  const grainy = (markup: string) => (roomy ? `<g filter="url(#chalk-grain)">${markup}</g>` : markup);
+  const grainy = (markup: string) =>
+    roomy ? `<g filter="url(#chalk-grain)">${markup}</g>` : markup;
   const title = chalkText('VERSUS NIGHT', width / 2, height * 0.16, height * 0.12);
   if (score === null) {
-    return grainy(ghosts(width, height) + title + chalkText('who is next?', width / 2, height * 0.56, height * 0.14) + chalkPath(`M${n(width * 0.3)} ${n(height * 0.68)}h${n(width * 0.4)}`, n(height * 0.012), 'underline'));
+    return grainy(
+      ghosts(width, height) +
+        title +
+        chalkText('who is next?', width / 2, height * 0.56, height * 0.14) +
+        chalkPath(
+          `M${n(width * 0.3)} ${n(height * 0.68)}h${n(width * 0.4)}`,
+          n(height * 0.012),
+          'underline',
+        ),
+    );
   }
   const rowHeight = height * 0.26;
   const rows = [0, 1].map((seat) => {
@@ -116,20 +143,54 @@ export function chalkboardFace(width: number, height: number, score: ChalkboardS
     const name = score.names[seat] ?? '';
     const isWinner = score.winner === seat + 1;
     return (
-      chalkText(name.length > 12 ? `${name.slice(0, 11)}…` : name, width * 0.12, y + rowHeight * 0.55, rowHeight * 0.46, 'start') +
-      tallies(score.wins[seat] ?? 0, width * 0.6, y + rowHeight * 0.08, rowHeight * 0.74, `tally-${seat}`) +
-      (isWinner ? crown(width * 0.12 + name.length * rowHeight * 0.13, y - rowHeight * 0.05, rowHeight * 0.22) : '')
+      chalkText(
+        name.length > 12 ? `${name.slice(0, 11)}…` : name,
+        width * 0.12,
+        y + rowHeight * 0.55,
+        rowHeight * 0.46,
+        'start',
+      ) +
+      tallies(
+        score.wins[seat] ?? 0,
+        width * 0.6,
+        y + rowHeight * 0.08,
+        rowHeight * 0.74,
+        `tally-${seat}`,
+      ) +
+      (isWinner
+        ? crown(
+            width * 0.12 + name.length * rowHeight * 0.13,
+            y - rowHeight * 0.05,
+            rowHeight * 0.22,
+          )
+        : '')
     );
   });
-  const divider = chalkPath(`M${n(width * 0.52)} ${n(height * 0.3)}V${n(height * 0.82)}`, n(height * 0.01), 'divider');
-  const footer = score.nowPlaying ? chalkText(`now: ${score.nowPlaying}`, width / 2, height * 0.94, height * 0.09) : '';
+  const divider = chalkPath(
+    `M${n(width * 0.52)} ${n(height * 0.3)}V${n(height * 0.82)}`,
+    n(height * 0.01),
+    'divider',
+  );
+  const footer = score.nowPlaying
+    ? chalkText(`now: ${score.nowPlaying}`, width / 2, height * 0.94, height * 0.09)
+    : '';
   // How long the night is, written small in the corner the way a scorer would.
-  const length = !roomy ? '' : chalkText(`best of ${score.bestOf}`, width * 0.94, height * 0.12, height * 0.06, 'end') + chalkPath(`M${n(width * 0.78)} ${n(height * 0.145)}h${n(width * 0.16)}`, n(height * 0.006), 'length-line');
+  const length = !roomy
+    ? ''
+    : chalkText(`best of ${score.bestOf}`, width * 0.94, height * 0.12, height * 0.06, 'end') +
+      chalkPath(
+        `M${n(width * 0.78)} ${n(height * 0.145)}h${n(width * 0.16)}`,
+        n(height * 0.006),
+        'length-line',
+      );
   return grainy(ghosts(width, height) + title + length + divider + rows.join('') + footer);
 }
 
 /** The little board in the Den, leaning back against the stand. */
-export function denChalkboard(rect: { x: number; y: number; width: number; height: number }, score: ChalkboardScore | null): string {
+export function denChalkboard(
+  rect: { x: number; y: number; width: number; height: number },
+  score: ChalkboardScore | null,
+): string {
   const { x, y, width, height } = rect;
   const frame = 7;
   // Leaning back: the top edge sits a little narrower than the bottom.

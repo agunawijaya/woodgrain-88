@@ -4,7 +4,7 @@
  * an export file, so changing one means bumping its schema version and adding
  * a migration (schema.ts).
  */
-import type { Bindings, Layout, Seat } from '../input.ts';
+import type { Bindings, Seat } from '../input.ts';
 import type { KidId } from '../kids.ts';
 import type { AppearancePreference, DifficultySwitches, IsoTime, RunMode } from '../types.ts';
 
@@ -33,7 +33,6 @@ export interface VolumeSettings {
 }
 
 export interface ControlSettings {
-  layout: Layout;
   /** null means the kit's defaults. */
   bindings: Bindings | null;
   /** Which seat the first and second gamepads drive. */

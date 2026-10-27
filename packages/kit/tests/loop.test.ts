@@ -316,4 +316,16 @@ describe('loop', () => {
       { dt: 1 / 30, tick: 2 },
     ]);
   });
+
+  it('tells its owner when it is stopped, so a list of loops can let it go', () => {
+    const fake = createFakeEnvironment();
+    let stops = 0;
+    const loop = createLoop({ update: () => undefined, onStop: () => stops++ }, fake.env);
+    loop.start();
+    loop.pause();
+    expect(stops).toBe(0);
+    loop.stop();
+    expect(stops).toBe(1);
+    expect(loop.running).toBe(false);
+  });
 });

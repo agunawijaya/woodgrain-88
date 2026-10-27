@@ -28,6 +28,8 @@ export interface LoopOptions {
   onAutoPause?(): void;
   /** Pause automatically when the tab is hidden or the window blurs. Default true. */
   autoPause?: boolean;
+  /** Called when the loop is stopped, so whoever keeps a list of loops can let this one go. */
+  onStop?(): void;
 }
 
 export interface GameLoop {
@@ -169,6 +171,7 @@ export function createLoop(
       running = false;
       cancel();
       unlisten();
+      options.onStop?.();
     },
     pause() {
       if (!running || paused) return;

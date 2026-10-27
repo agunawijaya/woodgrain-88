@@ -43,7 +43,9 @@ export function showcaseFromUrl(search: string, overrides: readonly GameEntry[])
 }
 
 function midSeries(services: Services): VersusSeries | null {
-  const pool = services.registry.manifests.filter((manifest) => manifest.versus !== 'none').map((manifest) => manifest.id);
+  const pool = services.registry.manifests
+    .filter((manifest) => manifest.versus !== 'none')
+    .map((manifest) => manifest.id);
   if (pool.length === 0) return null;
   let series = startSeries({
     seats: [
@@ -68,7 +70,15 @@ const MICRO_GOALS: Record<Family, readonly string[]> = {
 function showcaseMicro(manifest: GameManifest): MicroChallengeDef[] {
   const goals = MICRO_GOALS[manifest.family];
   const goal = goals[manifest.slot % goals.length] ?? 'Score once';
-  return [{ id: 'showcase', channel: manifest.channels[0]?.id ?? 'classic', title: goal, goal, pass: { metric: { kind: 'count', event: 'score' }, target: 3 } }];
+  return [
+    {
+      id: 'showcase',
+      channel: manifest.channels[0]?.id ?? 'classic',
+      title: goal,
+      goal,
+      pass: { metric: { kind: 'count', event: 'score' }, target: 3 },
+    },
+  ];
 }
 
 /** Two rounds played (one done, one missed), waiting on the flip into the third. */
@@ -79,7 +89,13 @@ function runInProgress(services: Services): RunState | null {
   for (const passed of [true, false]) {
     const round = state.plan.rounds[state.roundIndex];
     if (!round) return null;
-    state = finishRound(beginRound(state), { game: round.game, challenge: round.challenge.id, passed, score: passed ? 3 : 1, seconds: passed ? 31 : 45 });
+    state = finishRound(beginRound(state), {
+      game: round.game,
+      challenge: round.challenge.id,
+      passed,
+      score: passed ? 3 : 1,
+      seconds: passed ? 31 : 45,
+    });
   }
   return state;
 }
@@ -91,10 +107,16 @@ export function showcaseServices(level: ShowcaseLevel, overrides: readonly GameE
   });
   const { repos, denLife } = services;
   const profile = showcaseProfile(level, services.registry.manifests, new Date());
-  for (const [game, patches] of Object.entries(profile.patches)) denLife.registerPatches(game, patches);
-  for (const manifest of services.registry.manifests) denLife.registerMicro(manifest.id, showcaseMicro(manifest));
+  for (const [game, patches] of Object.entries(profile.patches))
+    denLife.registerPatches(game, patches);
+  for (const manifest of services.registry.manifests)
+    denLife.registerMicro(manifest.id, showcaseMicro(manifest));
   repos.progress.set(profile.progress);
-  const drawer = earnedDrawer(services.registry.manifests, (id) => denLife.patchesFor(id), profile.progress);
+  const drawer = earnedDrawer(
+    services.registry.manifests,
+    (id) => denLife.patchesFor(id),
+    profile.progress,
+  );
   repos.progress.update((draft) => {
     draft.den.jacket.placements = autoArrange(drawer);
   });

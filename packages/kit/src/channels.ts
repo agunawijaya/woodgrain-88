@@ -190,28 +190,50 @@ export function validateChannels(channels: readonly ChannelDef[]): string[] {
 
 function kindProblems(channel: ChannelDef): string[] {
   const problems: string[] = [];
-  if (channel.group !== undefined && (channel.group.trim().length < 1 || channel.group.length > MAX_GROUP_LENGTH)) {
+  if (
+    channel.group !== undefined &&
+    (channel.group.trim().length < 1 || channel.group.length > MAX_GROUP_LENGTH)
+  ) {
     problems.push(`Channel "${channel.id}" group must be 1–${MAX_GROUP_LENGTH} characters.`);
   }
   if (channel.kind === 'original') {
-    if (channel.unlockedBy !== undefined) problems.push(`Original channel "${channel.id}" cannot need unlocking.`);
-    if (channel.originalGame?.some((game) => !Number.isInteger(game) || game < 1 || game > MAX_CHANNELS)) {
-      problems.push(`Channel "${channel.id}" originalGame numbers must be whole numbers 1–${MAX_CHANNELS}.`);
+    if (channel.unlockedBy !== undefined)
+      problems.push(`Original channel "${channel.id}" cannot need unlocking.`);
+    if (
+      channel.originalGame?.some(
+        (game) => !Number.isInteger(game) || game < 1 || game > MAX_CHANNELS,
+      )
+    ) {
+      problems.push(
+        `Channel "${channel.id}" originalGame numbers must be whole numbers 1–${MAX_CHANNELS}.`,
+      );
     }
   } else {
     if (channel.unlockedBy === undefined || !KEBAB_ID_RE.test(channel.unlockedBy)) {
       problems.push(`Remix channel "${channel.id}" must name the patch that opens it.`);
     }
-    if (channel.originalGame !== undefined) problems.push(`Remix channel "${channel.id}" has no original game number.`);
+    if (channel.originalGame !== undefined)
+      problems.push(`Remix channel "${channel.id}" has no original game number.`);
   }
   return problems;
 }
 
 /** A game's remix channels must each be opened by one of its own patches. */
-export function validateRemixUnlocks(channels: readonly ChannelDef[], patchIds: readonly string[]): string[] {
+export function validateRemixUnlocks(
+  channels: readonly ChannelDef[],
+  patchIds: readonly string[],
+): string[] {
   return channels
-    .filter((channel) => channel.kind === 'remix' && channel.unlockedBy !== undefined && !patchIds.includes(channel.unlockedBy))
-    .map((channel) => `Remix channel "${channel.id}" names unknown patch "${channel.unlockedBy ?? ''}".`);
+    .filter(
+      (channel) =>
+        channel.kind === 'remix' &&
+        channel.unlockedBy !== undefined &&
+        !patchIds.includes(channel.unlockedBy),
+    )
+    .map(
+      (channel) =>
+        `Remix channel "${channel.id}" names unknown patch "${channel.unlockedBy ?? ''}".`,
+    );
 }
 
 /** A channel's number on the dial: 1 for the first in the manifest's order, 0 if the id is unknown. */

@@ -13,6 +13,7 @@ export * from './emitter.ts';
 export * from './events.ts';
 export * from './input.ts';
 export * from './kids.ts';
+export * from './kid-portrait.ts';
 export * from './loop.ts';
 export * from './micro.ts';
 export * from './patches.ts';

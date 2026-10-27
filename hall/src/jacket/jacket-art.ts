@@ -89,7 +89,8 @@ export function jacketDefs(): string {
 
 // ——— Shapes (left half; the right is the mirror) ———
 
-const SLEEVE = 'M102 104C72 110 48 136 40 178C30 300 22 440 16 566L14 606Q56 616 100 610L104 566L108 214C106 168 104 130 102 104Z';
+const SLEEVE =
+  'M102 104C72 110 48 136 40 178C30 300 22 440 16 566L14 606Q56 616 100 610L104 566L108 214C106 168 104 130 102 104Z';
 const CUFF = 'M16 566L104 566L100 610Q56 616 14 606Z';
 const BODY =
   'M244 76L104 106C100 150 104 190 108 214L110 640Q300 654 490 640L492 214C496 190 500 150 496 106L356 76Q300 92 244 76Z';
@@ -286,5 +287,7 @@ function hookAndNeck(toY: number): string {
 
 function armRoots(reach: number): string {
   const { x, y } = HANGER_JOIN;
-  return wire(`M${x - reach} ${y + reach * ARM_SLOPE}L${x} ${y}L${x + reach} ${y + reach * ARM_SLOPE}`);
+  return wire(
+    `M${x - reach} ${y + reach * ARM_SLOPE}L${x} ${y}L${x + reach} ${y + reach * ARM_SLOPE}`,
+  );
 }

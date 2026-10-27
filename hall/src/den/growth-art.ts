@@ -13,7 +13,9 @@ import { chalkDefs } from './chalkboard.ts';
 import { escapeXml, n } from './svg.ts';
 
 export function growthDefs(): string {
-  return chalkDefs() + `
+  return (
+    chalkDefs() +
+    `
     <linearGradient id="den-trophy-gold" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#fff1b0"/><stop offset="0.35" stop-color="#e2b84a"/>
       <stop offset="0.7" stop-color="#a8761c"/><stop offset="1" stop-color="#f0cf6a"/>
@@ -49,7 +51,8 @@ export function growthDefs(): string {
     <linearGradient id="den-polaroid-sheen" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#fff" stop-opacity="0.5"/><stop offset="0.5" stop-color="#fff" stop-opacity="0"/>
       <stop offset="1" stop-color="#b8a98a" stop-opacity="0.3"/>
-    </linearGradient>`;
+    </linearGradient>`
+  );
 }
 
 // ——— Posters ———
@@ -75,7 +78,8 @@ function posterFrame(family: Family, rect: Rect, tilt: number, art: string, pape
 function duelsPoster(): string {
   // High noon in neon: a striped sun sinking behind two crossed bolts.
   let stripes = '';
-  for (let i = 0; i < 5; i++) stripes += `<rect x="12" y="${n(40 + i * 4.4)}" width="48" height="${n(1 + i * 0.5)}" fill="url(#den-duels-sky)"/>`;
+  for (let i = 0; i < 5; i++)
+    stripes += `<rect x="12" y="${n(40 + i * 4.4)}" width="48" height="${n(1 + i * 0.5)}" fill="url(#den-duels-sky)"/>`;
   return (
     `<rect width="72" height="88" fill="url(#den-duels-sky)"/>` +
     `<circle cx="36" cy="44" r="20" fill="url(#den-duels-sun)"/>${stripes}` +
@@ -142,7 +146,8 @@ function arcadePoster(): string {
   // Neon on midnight: a ringed planet, a rocket and a grid running to the horizon.
   const rng = createRng('arcade-stars');
   let stars = '';
-  for (let i = 0; i < 22; i++) stars += `<circle cx="${n(rng.float(2, 70))}" cy="${n(rng.float(20, 56))}" r="${n(rng.float(0.3, 0.9))}" fill="#ffffff" opacity="${n(rng.float(0.5, 1))}"/>`;
+  for (let i = 0; i < 22; i++)
+    stars += `<circle cx="${n(rng.float(2, 70))}" cy="${n(rng.float(20, 56))}" r="${n(rng.float(0.3, 0.9))}" fill="#ffffff" opacity="${n(rng.float(0.5, 1))}"/>`;
   let grid = '';
   for (let i = 0; i <= 8; i++) grid += `M36 60L${n(-20 + i * 14)} 88`;
   for (const y of [63, 67, 73, 81]) grid += `M0 ${y}H72`;
@@ -172,7 +177,13 @@ export function posters(families: readonly Family[]): string {
   return FAMILIES.map((family, index) => {
     if (!families.includes(family)) return '';
     const style = POSTER_ART[family];
-    return posterFrame(family, { x: x + index * (posterWidth + gap), y, width: posterWidth, height }, style.tilt, style.art(), style.paper);
+    return posterFrame(
+      family,
+      { x: x + index * (posterWidth + gap), y, width: posterWidth, height },
+      style.tilt,
+      style.art(),
+      style.paper,
+    );
   }).join('');
 }
 
@@ -204,12 +215,17 @@ function trophySpots(): { cx: number; baseY: number; riser: boolean }[] {
     const floor = slot.y + slot.height;
     for (const riser of [true, false]) {
       for (let i = 0; i < 4; i++) {
-        spots.push({ cx: slot.x + 8 + i * 17 + (riser ? 4 : 0), baseY: riser ? floor - 14 : floor, riser });
+        spots.push({
+          cx: slot.x + 8 + i * 17 + (riser ? 4 : 0),
+          baseY: riser ? floor - 14 : floor,
+          riser,
+        });
       }
     }
   }
   const top = LAYOUT.shelf.y;
-  for (let i = 0; i < 14; i++) spots.push({ cx: WALL.innerX + 230 + i * 19, baseY: top, riser: false });
+  for (let i = 0; i < 14; i++)
+    spots.push({ cx: WALL.innerX + 230 + i * 19, baseY: top, riser: false });
   return spots;
 }
 
@@ -217,16 +233,27 @@ export function trophies(games: readonly GameManifest[]): string {
   const spots = trophySpots();
   const used = spots.slice(0, games.length);
   const risers = [0, 1]
-    .filter((row) => used.some((spot) => spot.riser && Math.abs(spot.baseY - (wallSlot(row, 7).y + wallSlot(row, 7).height - 14)) < 0.5))
+    .filter((row) =>
+      used.some(
+        (spot) =>
+          spot.riser &&
+          Math.abs(spot.baseY - (wallSlot(row, 7).y + wallSlot(row, 7).height - 14)) < 0.5,
+      ),
+    )
     .map((row) => {
       const slot = wallSlot(row, 7);
       return `<rect x="${slot.x + 2}" y="${slot.y + slot.height - 14}" width="${slot.width + 4}" height="14" fill="#6b4424"/><rect x="${slot.x + 2}" y="${slot.y + slot.height - 14}" width="${slot.width + 4}" height="2" fill="#fff" opacity="0.15"/>`;
     })
     .join('');
-  return risers + games.map((manifest, index) => {
-    const spot = used[index];
-    return spot ? trophy(spot.cx, spot.baseY, manifest) : '';
-  }).join('');
+  return (
+    risers +
+    games
+      .map((manifest, index) => {
+        const spot = used[index];
+        return spot ? trophy(spot.cx, spot.baseY, manifest) : '';
+      })
+      .join('')
+  );
 }
 
 // ——— Paper chain and string lights ———
@@ -278,14 +305,20 @@ export function stringLights(): string {
     wires += `<path d="${d}" fill="none" stroke="#2a2a22" stroke-width="0.9"/>`;
   }
   const bulbs = bulbPositions()
-    .map((bulb) => `<rect x="${n(bulb.x - 1.2)}" y="${n(bulb.y - 1)}" width="2.4" height="2" fill="#3a3a30"/><ellipse cx="${n(bulb.x)}" cy="${n(bulb.y + 3)}" rx="2.1" ry="3" fill="${bulb.colour}"/>`)
+    .map(
+      (bulb) =>
+        `<rect x="${n(bulb.x - 1.2)}" y="${n(bulb.y - 1)}" width="2.4" height="2" fill="#3a3a30"/><ellipse cx="${n(bulb.x)}" cy="${n(bulb.y + 3)}" rx="2.1" ry="3" fill="${bulb.colour}"/>`,
+    )
     .join('');
   return `<g class="growth-item growth-lights">${wires}${bulbs}</g>`;
 }
 
 export function stringLightsGlow(): string {
   return bulbPositions()
-    .map((bulb) => `<circle cx="${n(bulb.x)}" cy="${n(bulb.y + 3)}" r="11" fill="url(#den-bulb-glow)" opacity="0.7"/>`)
+    .map(
+      (bulb) =>
+        `<circle cx="${n(bulb.x)}" cy="${n(bulb.y + 3)}" r="11" fill="url(#den-bulb-glow)" opacity="0.7"/>`,
+    )
     .join('');
 }
 
@@ -312,7 +345,8 @@ export function onAirGlow(): string {
 export function remote(): string {
   const { x, y, width, height } = LAYOUT.remote;
   let buttons = '';
-  for (let i = 0; i < 6; i++) buttons += `<rect x="${n(x + 22 + i * 6.6)}" y="${n(y + 4)}" width="4.4" height="3" rx="1" fill="${i === 0 ? '#c8352e' : '#d9cfbf'}"/>`;
+  for (let i = 0; i < 6; i++)
+    buttons += `<rect x="${n(x + 22 + i * 6.6)}" y="${n(y + 4)}" width="4.4" height="3" rx="1" fill="${i === 0 ? '#c8352e' : '#d9cfbf'}"/>`;
   return (
     `<g class="growth-item growth-remote" transform="rotate(-4 ${x + width / 2} ${y + height / 2})">` +
     `<rect x="${x + 1}" y="${y + 3}" width="${width}" height="${height}" rx="3" fill="#000" opacity="0.35"/>` +

@@ -19,7 +19,10 @@ export function alternateVersions(manifest: GameManifest): readonly CartridgeVer
   return manifest.versions?.slice(1) ?? [];
 }
 
-export function findVersion(manifest: GameManifest, id: string | null | undefined): CartridgeVersion | undefined {
+export function findVersion(
+  manifest: GameManifest,
+  id: string | null | undefined,
+): CartridgeVersion | undefined {
   return id ? manifest.versions?.find((version) => version.id === id) : undefined;
 }
 

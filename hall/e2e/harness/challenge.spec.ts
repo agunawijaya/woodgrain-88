@@ -2,7 +2,7 @@
  * End-to-end tests for challenge links and signature tampering verification.
  */
 import { expect, test } from '@playwright/test';
-import { collectErrors, skipIntro } from '../helpers.ts';
+import { collectErrors, skipIntro, tuneTo } from '../helpers.ts';
 
 test.describe('Challenge links', () => {
   test('generates valid challenge link and verifies score to beat and tamper protection', async ({
@@ -13,6 +13,8 @@ test.describe('Challenge links', () => {
     const errors = collectErrors(page);
     await skipIntro(page);
     await page.goto('/harness.html#/');
+    // The Den opens on the day's Power Cycle game; this test plays the paddles fixture.
+    await tuneTo(page, 11);
 
     // Start a play session
     await page.locator('.game-card button[data-action="play"]').click();

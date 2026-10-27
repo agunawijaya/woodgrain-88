@@ -43,7 +43,12 @@ export function runFromParams(
   if (requested === 'challenge') {
     const challenge = decodeChallenge(hash);
     if (challenge?.game === manifest.id) {
-      const run: RunInfo = { mode: 'challenge', seed: challenge.seed, channel: knownChannel(challenge.channel), challenge };
+      const run: RunInfo = {
+        mode: 'challenge',
+        seed: challenge.seed,
+        channel: knownChannel(challenge.channel),
+        challenge,
+      };
       return withVersion(run, challenge.version);
     }
   }
@@ -56,6 +61,12 @@ export function runFromParams(
     };
     return withVersion(run, params.get('version'));
   }
-  const mode: RunMode = isRunMode(requested) && requested !== 'challenge' && requested !== 'daily' ? requested : 'normal';
-  return withVersion({ mode, seed: randomSeed(), channel: knownChannel(params.get('ch')) }, params.get('version'));
+  const mode: RunMode =
+    isRunMode(requested) && requested !== 'challenge' && requested !== 'daily'
+      ? requested
+      : 'normal';
+  return withVersion(
+    { mode, seed: randomSeed(), channel: knownChannel(params.get('ch')) },
+    params.get('version'),
+  );
 }

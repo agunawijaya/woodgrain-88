@@ -2,7 +2,7 @@
  * End-to-end tests for unsaved play protection on browser Back navigation.
  */
 import { expect, test } from '@playwright/test';
-import { collectErrors, skipIntro } from '../helpers.ts';
+import { collectErrors, skipIntro, tuneTo } from '../helpers.ts';
 
 test.describe('Leave game confirmation', () => {
   test('confirms before leaving when points have been scored, and preserves play view on Keep playing', async ({
@@ -11,6 +11,8 @@ test.describe('Leave game confirmation', () => {
     const errors = collectErrors(page);
     await skipIntro(page);
     await page.goto('/harness.html#/');
+    // The Den opens on the day's Power Cycle game; this test plays the paddles fixture.
+    await tuneTo(page, 11);
 
     // Enter play session
     await page.locator('.game-card button[data-action="play"]').click();

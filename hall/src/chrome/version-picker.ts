@@ -12,16 +12,24 @@ const INPUT_NAME = 'cartridgeVersion';
 
 /** The version the player last picked for this game, or its default. */
 export function chosenVersion(services: Services, manifest: GameManifest): string | undefined {
-  return resolveVersion(manifest, services.settings.game(manifest.id).get<string | undefined>(VERSION_SETTING, undefined));
+  return resolveVersion(
+    manifest,
+    services.settings.game(manifest.id).get<string | undefined>(VERSION_SETTING, undefined),
+  );
 }
 
 function noteFor(manifest: GameManifest, versionId: string): string {
   const version = findVersion(manifest, versionId);
-  return version ? `${version.description} Program ${version.cartridgeSlot} on the 1988 cartridge.` : '';
+  return version
+    ? `${version.description} Program ${version.cartridgeSlot} on the 1988 cartridge.`
+    : '';
 }
 
 /** Empty for a game without versions. */
-export function versionPickerMarkup(manifest: GameManifest, selectedId: string | undefined): string {
+export function versionPickerMarkup(
+  manifest: GameManifest,
+  selectedId: string | undefined,
+): string {
   if (!manifest.versions || selectedId === undefined) return '';
   const options = manifest.versions
     .map(

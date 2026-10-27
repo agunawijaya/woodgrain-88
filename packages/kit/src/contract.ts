@@ -228,6 +228,11 @@ export interface GameResult {
   emoji?: string;
   /** 'hall' asks the chrome to show the standard results screen; 'game' means the game shows its own. */
   presentation: 'hall' | 'game';
+  /**
+   * Who actually sat in seat 2, for a game whose own menu lets the player pick a rival or a second
+   * person: the Kid, or null for a person. Left out, the Den goes by the seats it handed the game.
+   */
+  opponentKid?: KidId | null;
 }
 
 /** What the kit worked out from a reported result, for a game that presents its own results. */
@@ -452,7 +457,10 @@ function difficultyProblems(manifest: GameManifest): string[] {
   const { difficulty } = manifest;
   if (difficulty === undefined) return [];
   const problems: string[] = [];
-  const sides = [['left', difficulty.left], ['right', difficulty.right]] as const;
+  const sides = [
+    ['left', difficulty.left],
+    ['right', difficulty.right],
+  ] as const;
   for (const [side, meaning] of sides) {
     if (meaning === undefined) continue;
     for (const position of ['a', 'b'] as const) {
@@ -480,9 +488,13 @@ function versionProblems(manifest: GameManifest): string[] {
     if (version.description.length === 0 || version.description.length > 140)
       problems.push(`version ${version.id}: description must be 1–140 characters`);
     if (!manifest.inspiredBy.cartridgeSlots.includes(version.cartridgeSlot))
-      problems.push(`version ${version.id}: cartridgeSlot must be one of inspiredBy.cartridgeSlots`);
+      problems.push(
+        `version ${version.id}: cartridgeSlot must be one of inspiredBy.cartridgeSlots`,
+      );
     if (slots.has(version.cartridgeSlot))
-      problems.push(`version ${version.id}: cartridge slot ${version.cartridgeSlot} is already a version`);
+      problems.push(
+        `version ${version.id}: cartridge slot ${version.cartridgeSlot} is already a version`,
+      );
     slots.add(version.cartridgeSlot);
   }
   return problems;

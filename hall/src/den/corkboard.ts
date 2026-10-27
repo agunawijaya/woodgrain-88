@@ -7,9 +7,8 @@
  * The photos are each kid's school portrait drawn once into an image, so the
  * board costs nothing to repaint while the room animates around it.
  */
-import { BLOCK_LADDER, createRng, kidById, type KidId } from '@woodgrain-88/kit';
+import { BLOCK_LADDER, createRng, kidById, kidPortraitSvg, type KidId } from '@woodgrain-88/kit';
 import { LAYOUT } from './geometry.ts';
-import { kidPortraitSvg } from './kid-portrait.ts';
 import { n } from './svg.ts';
 
 const TACK_COLOURS = ['#d8432f', '#2f6fb8', '#e6b32a', '#3c9a5f', '#d8432f', '#8a4fb0'];
@@ -25,12 +24,26 @@ function corkTexture(x: number, y: number, width: number, height: number): strin
 }
 
 /** A portrait as an image, so the scene repaints a picture instead of re-running its filters. */
-export function portraitImage(kid: KidId, x: number, y: number, width: number, height: number, expression: 'photo' | 'win' | 'lose' = 'photo'): string {
+export function portraitImage(
+  kid: KidId,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  expression: 'photo' | 'win' | 'lose' = 'photo',
+): string {
   const svg = kidPortraitSvg(kidById(kid), { expression, idPrefix: `pin-${kid}-${expression}` });
   return `<image href="data:image/svg+xml,${encodeURIComponent(svg)}" x="${n(x)}" y="${n(y)}" width="${n(width)}" height="${n(height)}" preserveAspectRatio="xMidYMid slice"/>`;
 }
 
-function polaroid(kid: KidId, cx: number, cy: number, tilt: number, tack: string, beaten: boolean): string {
+function polaroid(
+  kid: KidId,
+  cx: number,
+  cy: number,
+  tilt: number,
+  tack: string,
+  beaten: boolean,
+): string {
   const w = 34;
   const h = 41;
   const photo = 28;
@@ -88,7 +101,14 @@ export function corkboard(beaten: ReadonlySet<KidId>, champion: boolean): string
     const row = Math.floor(index / cols);
     const cx = x + inset + cellW * (col + 0.5) + rng.float(-2, 2);
     const cy = y + inset + cellH * (row + 0.5) + 2 + rng.float(-1.5, 1.5);
-    return polaroid(kid, cx, cy, rng.float(-7, 7), TACK_COLOURS[index] ?? '#d8432f', beaten.has(kid));
+    return polaroid(
+      kid,
+      cx,
+      cy,
+      rng.float(-7, 7),
+      TACK_COLOURS[index] ?? '#d8432f',
+      beaten.has(kid),
+    );
   }).join('');
   return (
     `<g class="corkboard">` +

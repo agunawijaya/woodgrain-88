@@ -68,7 +68,10 @@ function cartridge(manifest: GameManifest, slot: Rect): string {
   const { label } = WALL;
   const scale = label.width / LABEL_SIZE.width;
   const soon = manifest.status === 'coming-soon';
-  const ribs = Array.from({ length: 5 }, (_, i) => `M${slot.x + 8} ${slot.y + slot.height - 22 + i * 4}h${slot.width - 16}`).join('');
+  const ribs = Array.from(
+    { length: 5 },
+    (_, i) => `M${slot.x + 8} ${slot.y + slot.height - 22 + i * 4}h${slot.width - 16}`,
+  ).join('');
   return (
     `<g ${attrs({
       class: 'cartridge',

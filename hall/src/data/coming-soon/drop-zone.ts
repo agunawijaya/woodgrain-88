@@ -7,9 +7,10 @@ import type { GameManifest } from '@woodgrain-88/kit';
 export const manifest: GameManifest = {
   id: 'drop-zone',
   slot: 25,
-  title: "Drop Zone",
-  tagline: "Read the wind and land on the moving target.",
-  teaser: "Jump, fall, open the chute at the last good moment, and steer onto the target. Land it for the crowd; miss and it is a crash landing.",
+  title: 'Drop Zone',
+  tagline: 'Read the wind and land on the moving target.',
+  teaser:
+    'Jump, fall, open the chute at the last good moment, and steer onto the target. Land it for the crowd; miss and it is a crash landing.',
   family: 'arcade',
   players: '1–2P',
   versus: 'local+bot',
@@ -17,7 +18,7 @@ export const manifest: GameManifest = {
   status: 'coming-soon',
   scoreOrder: 'lower',
   accent: { day: '#1d6d96', night: '#8fd2ff' },
-  emblem: "M3 11a9 7 0 0 1 18 0ZM3 11l9 8 9-8M12 11v8",
+  emblem: 'M3 11a9 7 0 0 1 18 0ZM3 11l9 8 9-8M12 11v8',
   label: {
     pattern: 'sunburst',
     paper: '#a6d8ee',
@@ -26,18 +27,23 @@ export const manifest: GameManifest = {
     bandText: '#ffffff',
   },
   inspiredBy: {
-    originalTitle: "Sky Diver",
-    uiTitle: "the skydiving game",
-    publisher: "Atari",
+    originalTitle: 'Sky Diver',
+    uiTitle: 'the skydiving game',
+    publisher: 'Atari',
     year: null,
     cartridgeSlots: [27],
   },
   controls: [
-    { keys: ["Arrows or WASD"], does: "move" },
-    { keys: ["Space"], does: "act" },
+    { keys: ['Arrows or WASD'], does: 'move' },
+    { keys: ['Space'], does: 'act' },
   ],
   channels: [
-    { id: 'classic', kind: 'original', title: 'Classic', description: 'The original rules, rebuilt and polished.' },
+    {
+      id: 'classic',
+      kind: 'original',
+      title: 'Classic',
+      description: 'The original rules, rebuilt and polished.',
+    },
   ],
   supports: { daily: false, challengeLinks: false, microChallenges: false },
   events: [],

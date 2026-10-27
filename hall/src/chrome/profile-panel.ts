@@ -8,7 +8,11 @@ import { escapeXml } from '../den/svg.ts';
 import { openDialog, toast } from './dialog.ts';
 
 export function openProfilePanel(services: Services): void {
-  const dialog = openDialog({ title: 'Your jacket', className: 'dialog--profile', closeButton: true });
+  const dialog = openDialog({
+    title: 'Your jacket',
+    className: 'dialog--profile',
+    closeButton: true,
+  });
   const profile = services.profile.get();
   dialog.body.innerHTML =
     `<form class="profile-form" novalidate>` +
@@ -29,14 +33,21 @@ export function openProfilePanel(services: Services): void {
       if (help) help.textContent = check.reason;
       return;
     }
-    services.profile.setAvatar({ ...services.profile.get().avatar, hue: Number(data.get('hue') ?? 28) });
+    services.profile.setAvatar({
+      ...services.profile.get().avatar,
+      hue: Number(data.get('hue') ?? 28),
+    });
     toast(`Hello, ${check.value}`);
     dialog.close();
   });
 }
 
 export function openShortcuts(): void {
-  const dialog = openDialog({ title: 'Keyboard shortcuts', className: 'dialog--shortcuts', closeButton: true });
+  const dialog = openDialog({
+    title: 'Keyboard shortcuts',
+    className: 'dialog--shortcuts',
+    closeButton: true,
+  });
   const rows: [string, string][] = [
     ['P', 'Flip the power switch: next game'],
     ['Shift + P', 'Flip it backwards'],

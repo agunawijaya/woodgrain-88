@@ -10,7 +10,6 @@
 import {
   canPlanRun,
   createCrt,
-  dailyNumber,
   powerCycleOfTheDay,
   toHex,
   type Appearance,
@@ -44,6 +43,7 @@ export interface DenViewOptions {
   services: Services;
   /** `version` is set when the channel plays a particular cartridge version. */
   onOpenGame(id: string, version?: string): void;
+  onOpenDetails(id: string, version?: string): void;
   onOpenList(): void;
   onShowShortcuts(): void;
   onOpenJacket(): void;
@@ -52,6 +52,11 @@ export interface DenViewOptions {
   onOpenCalendar(): void;
   /** Holding POWER (or P) for a second, once five games can make a run. */
   onStartRun(): void;
+  /**
+   * The channel the TV was on when the player last left the room. Coming back from a game lands on
+   * the channel it was played from, not on the day's Power Cycle.
+   */
+  startSlot?: number;
 }
 
 export interface DenView {
@@ -106,7 +111,11 @@ function roomTint(sample: Rgb): string {
   const b = Math.min(255, sample.b * lift);
   const grey = (r + g + b) / 3;
   const calm = 0.7;
-  return toHex({ r: grey + (r - grey) * calm, g: grey + (g - grey) * calm, b: grey + (b - grey) * calm });
+  return toHex({
+    r: grey + (r - grey) * calm,
+    g: grey + (g - grey) * calm,
+    b: grey + (b - grey) * calm,
+  });
 }
 
 function mixRgb(a: Rgb, b: Rgb, t: number): Rgb {
@@ -154,7 +163,7 @@ export function createDenView(options: DenViewOptions): DenView {
 
   const today = new Date();
   const powerCycleGame = powerCycleOfTheDay(services.registry.manifests, today);
-  let slot = powerCycleGame?.slot ?? 1;
+  let slot = options.startSlot ?? powerCycleGame?.slot ?? 1;
   let demo: DemoHandle | null = null;
   let busy = false;
   let queued: Direction | null = null;
@@ -168,7 +177,7 @@ export function createDenView(options: DenViewOptions): DenView {
   const card: GameCard = createGameCard({
     services,
     onPlay: (id, version) => options.onOpenGame(id, version),
-    onDetails: (id, version) => options.onOpenGame(id, version),
+    onDetails: (id, version) => options.onOpenDetails(id, version),
   });
   stage.append(card.element);
   // The game card's corner of the room; the Run's cards take the same place.
@@ -280,7 +289,9 @@ export function createDenView(options: DenViewOptions): DenView {
       }
       face.textContent = value;
     });
-    lamps.forEach((lamp) => lamp.classList.toggle('is-current', Number(lamp.dataset.slot) === target));
+    lamps.forEach((lamp) =>
+      lamp.classList.toggle('is-current', Number(lamp.dataset.slot) === target),
+    );
     lightPlayedLamps();
   };
 
@@ -289,14 +300,19 @@ export function createDenView(options: DenViewOptions): DenView {
   const lightPlayedLamps = () => {
     const progress = services.repos.progress.get();
     for (const lamp of lamps) {
-      lamp.classList.toggle('is-played', placeFinished(placeAt(Number(lamp.dataset.slot)), progress));
+      lamp.classList.toggle(
+        'is-played',
+        placeFinished(placeAt(Number(lamp.dataset.slot)), progress),
+      );
     }
   };
 
   const showCartridge = (target: number) => {
     const { manifest } = placeAt(target);
     consoleLabel.innerHTML = labelSvg(manifest, { idPrefix: 'console-slot' });
-    cartridges.forEach((cartridge) => cartridge.classList.toggle('is-tuned', cartridge.dataset.game === manifest.id));
+    cartridges.forEach((cartridge) =>
+      cartridge.classList.toggle('is-tuned', cartridge.dataset.game === manifest.id),
+    );
   };
 
   const glowOnWall = (target: number) => {
@@ -370,7 +386,11 @@ export function createDenView(options: DenViewOptions): DenView {
 
   // ——— Power Cycle Run: the switch flips by itself ———
   const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-  const runFlip = async (target: number, timing: TransitionTiming, onSnow?: () => void): Promise<void> => {
+  const runFlip = async (
+    target: number,
+    timing: TransitionTiming,
+    onSnow?: () => void,
+  ): Promise<void> => {
     busy = true;
     void audio.unlock();
     if (settings.reducedMotion()) {
@@ -416,7 +436,8 @@ export function createDenView(options: DenViewOptions): DenView {
   };
 
   const slotOf = (gameId: string): number =>
-    places.find((place) => place.manifest.id === gameId && !isVersionPlace(place.slot))?.slot ?? slot;
+    places.find((place) => place.manifest.id === gameId && !isVersionPlace(place.slot))?.slot ??
+    slot;
 
   // Holding the switch starts a Power Cycle Run once five games can make one;
   // until then holding it is the old joke: flip after flip, the snow growing comic.
@@ -584,18 +605,25 @@ export function createDenView(options: DenViewOptions): DenView {
   }
 
   // ——— The difficulty switches ———
-  const switchSpots: Record<SwitchSide, SVGGElement> = { left: hotspot('switch-left'), right: hotspot('switch-right') };
+  const switchSpots: Record<SwitchSide, SVGGElement> = {
+    left: hotspot('switch-left'),
+    right: hotspot('switch-right'),
+  };
   const switchWords = (position: SwitchPosition) => (position === 'A' ? 'A, hard' : 'B, easy');
   const switchTip = (side: SwitchSide) => {
     const position = services.denLife.switches()[side];
-    const gold = position === 'A' && side === 'left' ? '. Patches earned now are sewn in gold thread' : '';
+    const gold =
+      position === 'A' && side === 'left' ? '. Patches earned now are sewn in gold thread' : '';
     return `Seat ${SWITCH_SEAT[side]} difficulty switch: ${switchWords(position)}${gold}`;
   };
   const showSwitches = () => {
     for (const side of ['left', 'right'] as const) {
       const position = services.denLife.switches()[side];
       switchSpots[side].classList.toggle('is-a', position === 'A');
-      switchSpots[side].setAttribute('aria-label', `Seat ${SWITCH_SEAT[side]} difficulty switch: ${switchWords(position)}`);
+      switchSpots[side].setAttribute(
+        'aria-label',
+        `Seat ${SWITCH_SEAT[side]} difficulty switch: ${switchWords(position)}`,
+      );
     }
   };
   const setSwitch = (side: SwitchSide, position: SwitchPosition) => {
@@ -606,7 +634,8 @@ export function createDenView(options: DenViewOptions): DenView {
     if (!tooltip.hidden) showTooltip(switchTip(side), switchSpots[side]);
     announcer.textContent = switchTip(side);
   };
-  const flipSwitch = (side: SwitchSide) => setSwitch(side, services.denLife.switches()[side] === 'A' ? 'B' : 'A');
+  const flipSwitch = (side: SwitchSide) =>
+    setSwitch(side, services.denLife.switches()[side] === 'A' ? 'B' : 'A');
   for (const side of ['left', 'right'] as const) {
     const spot = switchSpots[side];
     let pressX: number | null = null;
@@ -659,7 +688,9 @@ export function createDenView(options: DenViewOptions): DenView {
   });
 
   const calendarSpot = hotspot('calendar');
-  calendarSpot.addEventListener('pointerenter', () => showTooltip(life.calendarSummary(), calendarSpot));
+  calendarSpot.addEventListener('pointerenter', () =>
+    showTooltip(life.calendarSummary(), calendarSpot),
+  );
   calendarSpot.addEventListener('pointerleave', hideTooltip);
   calendarSpot.addEventListener('focus', () => showTooltip(life.calendarSummary(), calendarSpot));
   calendarSpot.addEventListener('blur', hideTooltip);
@@ -667,11 +698,17 @@ export function createDenView(options: DenViewOptions): DenView {
   // Hovering a Counter lamp names what it stands for and whether it is lit.
   const lampTip = (lampSlot: number) => {
     const place = placeAt(lampSlot);
-    const what = place.version ? `${place.manifest.title}, ${place.version.label} version` : place.manifest.title;
+    const what = place.version
+      ? `${place.manifest.title}, ${place.version.label} version`
+      : place.manifest.title;
     const lit = placeFinished(place, services.repos.progress.get());
     const state = lit
-      ? isVersionPlace(place.slot) ? 'finished' : 'first patch earned'
-      : isVersionPlace(place.slot) ? 'lights up when you finish a run with it' : 'lights up with your first patch';
+      ? isVersionPlace(place.slot)
+        ? 'finished'
+        : 'first patch earned'
+      : isVersionPlace(place.slot)
+        ? 'lights up when you finish a run with it'
+        : 'lights up with your first patch';
     return `Lamp ${lampSlot} · ${what} · ${state}`;
   };
   const counterLamps = query(svg, '[data-ref="counter-lamps"]', SVGGElement);
@@ -695,7 +732,9 @@ export function createDenView(options: DenViewOptions): DenView {
     const column = row.indexOf(here);
     if (key === 'ArrowRight') return row[column + 1]?.element ?? null;
     if (key === 'ArrowLeft') return row[column - 1]?.element ?? null;
-    const targetRow = cartridgeGrid.filter((c) => c.row === here.row + (key === 'ArrowDown' ? 1 : -1));
+    const targetRow = cartridgeGrid.filter(
+      (c) => c.row === here.row + (key === 'ArrowDown' ? 1 : -1),
+    );
     if (targetRow.length === 0) return null;
     return (targetRow[Math.min(column, targetRow.length - 1)] ?? targetRow[0])?.element ?? null;
   };
@@ -787,25 +826,22 @@ export function createDenView(options: DenViewOptions): DenView {
   element.style.setProperty('--tv-tint', roomTint(tint));
   const tintTimer = setInterval(sampleTint, TINT_SAMPLE_MS);
 
-  // ——— Calendar text ———
-  const month = today.toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
-  const day = String(today.getUTCDate());
-  const daily = `Daily #${dailyNumber(today)}`;
-  query(svg, '[data-ref="calendar-month"]', SVGTextElement).textContent = month.toUpperCase();
-  query(svg, '[data-ref="calendar-day"]', SVGTextElement).textContent = day;
-  // Speech input users say what they see, so the name carries the printed date.
-  calendarSpot.setAttribute('aria-label', `Calendar, ${month} ${day}, ${daily}: today's Power Cycle`);
-
   // ——— The wall clock keeps the room's real time ———
   const hourHand = query(svg, '[data-ref="clock-hour"]', SVGLineElement);
   const minuteHand = query(svg, '[data-ref="clock-minute"]', SVGLineElement);
-  const clockCentre = { x: LAYOUT.clock.x + LAYOUT.clock.width / 2, y: LAYOUT.clock.y + LAYOUT.clock.height / 2 };
+  const clockCentre = {
+    x: LAYOUT.clock.x + LAYOUT.clock.width / 2,
+    y: LAYOUT.clock.y + LAYOUT.clock.height / 2,
+  };
   const setClock = () => {
     const now = new Date();
     const minutes = now.getMinutes() + now.getSeconds() / 60;
     const hours = (now.getHours() % 12) + minutes / 60;
     hourHand.setAttribute('transform', `rotate(${hours * 30} ${clockCentre.x} ${clockCentre.y})`);
-    minuteHand.setAttribute('transform', `rotate(${minutes * 6} ${clockCentre.x} ${clockCentre.y})`);
+    minuteHand.setAttribute(
+      'transform',
+      `rotate(${minutes * 6} ${clockCentre.x} ${clockCentre.y})`,
+    );
   };
   setClock();
   const clockTimer = setInterval(setClock, 20_000);

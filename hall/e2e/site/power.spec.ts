@@ -2,15 +2,14 @@
  * End-to-end tests for the Den's POWER lever and keyboard shortcuts.
  */
 import { expect, test } from '@playwright/test';
-import { collectErrors, counterText, skipIntro } from '../helpers.ts';
+import { collectErrors, counterText, skipIntro, tuneTo } from '../helpers.ts';
 
 test.describe('POWER switch and Counter', () => {
   test('advances on click, advances on P, and steps back on Shift+P', async ({ page }) => {
     const errors = collectErrors(page);
     await skipIntro(page);
     await page.goto('/');
-
-    await expect.poll(() => counterText(page), { timeout: 10_000 }).toBe('01');
+    await tuneTo(page, 1);
 
     await page.locator('[data-ref="power"]').click();
     await expect.poll(() => counterText(page), { timeout: 10_000 }).toBe('02');
@@ -28,8 +27,7 @@ test.describe('POWER switch and Counter', () => {
     const errors = collectErrors(page);
     await skipIntro(page);
     await page.goto('/');
-
-    await expect.poll(() => counterText(page), { timeout: 10_000 }).toBe('01');
+    await tuneTo(page, 1);
 
     await page.keyboard.press('Shift+P');
     await expect.poll(() => counterText(page), { timeout: 10_000 }).toBe('32');
@@ -41,8 +39,7 @@ test.describe('POWER switch and Counter', () => {
     const errors = collectErrors(page);
     await skipIntro(page);
     await page.goto('/');
-
-    await expect.poll(() => counterText(page), { timeout: 10_000 }).toBe('01');
+    await tuneTo(page, 1);
 
     const lever = page.locator('[data-ref="power"]');
     const box = await lever.boundingBox();

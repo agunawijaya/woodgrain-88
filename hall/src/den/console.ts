@@ -42,7 +42,8 @@ function body(): string {
   const faceHeight = c.height - deckDepth;
   let ribs = '';
   const ribCount = Math.floor((c.width - 40) / 19);
-  for (let i = 0; i <= ribCount; i++) ribs += `M${c.x + 24 + i * 19} ${c.y + 4}l-6 ${deckDepth - 6}`;
+  for (let i = 0; i <= ribCount; i++)
+    ribs += `M${c.x + 24 + i * 19} ${c.y + 4}l-6 ${deckDepth - 6}`;
   return (
     `<g class="console">` +
     `<ellipse cx="${c.x + c.width / 2}" cy="${c.y + c.height + 1}" rx="${c.width / 2 + 6}" ry="6" fill="#000" opacity="0.5"/>` +
@@ -202,7 +203,13 @@ export function consoleAndCounter(): string {
       11,
       'POWER lever: switch to the next game (P), or back (Shift+P); hold it for a Power Cycle Run',
     ) +
-    lever('reset', LAYOUT.resetLever, 'url(#den-reset-knob)', 8, 'RESET lever: restart what is on the TV') +
+    lever(
+      'reset',
+      LAYOUT.resetLever,
+      'url(#den-reset-knob)',
+      8,
+      'RESET lever: restart what is on the TV',
+    ) +
     switches() +
     `<g aria-hidden="true">${counter()}</g>`
   );

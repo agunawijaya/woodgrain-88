@@ -14,7 +14,9 @@ export function roomDefs(): string {
   const plank = 44;
   const planks = [0, 1, 2]
     .map((i) => {
-      const tone = ['var(--den-wall)', 'var(--den-wall-light)', 'var(--den-wall-dark)'][i] ?? 'var(--den-wall)';
+      const tone =
+        ['var(--den-wall)', 'var(--den-wall-light)', 'var(--den-wall-dark)'][i] ??
+        'var(--den-wall)';
       const opacity = [1, 0.55, 0.45][i] ?? 1;
       return (
         `<rect x="${i * plank}" y="0" width="${plank}" height="900" fill="var(--den-wall)"/>` +
@@ -89,7 +91,17 @@ function rug(): string {
   const { x, y, width, height } = LAYOUT.rug;
   const cx = x + width / 2;
   const cy = y + height / 2;
-  const colours = ['var(--den-rug-3)', 'var(--den-rug-1)', 'var(--den-rug-2)', 'var(--den-rug-4)', 'var(--den-rug-1)', 'var(--den-rug-3)', 'var(--den-rug-2)', 'var(--den-rug-1)', 'var(--den-rug-4)'];
+  const colours = [
+    'var(--den-rug-3)',
+    'var(--den-rug-1)',
+    'var(--den-rug-2)',
+    'var(--den-rug-4)',
+    'var(--den-rug-1)',
+    'var(--den-rug-3)',
+    'var(--den-rug-2)',
+    'var(--den-rug-1)',
+    'var(--den-rug-4)',
+  ];
   let rings = `<ellipse cx="${cx}" cy="${cy + 6}" rx="${width / 2 + 6}" ry="${height / 2 + 4}" fill="#000" opacity="0.22"/>`;
   colours.forEach((colour, i) => {
     const inset = i * 13;
@@ -185,7 +197,8 @@ export function jacket(): string {
   const lining = `M${cx - 14} ${top + 2}L${cx + 14} ${top + 2}L${cx + 6} ${top + 64}L${cx} ${top + 40}L${cx - 6} ${top + 64}Z`;
   const collarLeft = `M${cx - 14} ${top + 1}C${cx - 24} ${top + 6} ${cx - 30} ${top + 12} ${cx - 32} ${top + 20}L${cx - 6} ${top + 66}L${cx - 4} ${top + 30}Z`;
   const collarRight = `M${cx + 14} ${top + 1}C${cx + 24} ${top + 6} ${cx + 30} ${top + 12} ${cx + 32} ${top + 20}L${cx + 6} ${top + 66}L${cx + 4} ${top + 30}Z`;
-  const stitch = 'stroke="var(--den-stitch)" stroke-width="1.4" stroke-dasharray="3 2.4" fill="none"';
+  const stitch =
+    'stroke="var(--den-stitch)" stroke-width="1.4" stroke-dasharray="3 2.4" fill="none"';
   return (
     `<g class="jacket">` +
     `<path d="${hanger}" fill="none" stroke="var(--den-chrome-dark)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>` +
@@ -203,7 +216,11 @@ export function jacket(): string {
     `<path d="M${cx - 64} ${top + 196}Q${cx} ${top + 206} ${cx + 64} ${top + 196}" ${stitch}/>` +
     `<path d="M${cx - 50} ${top + 84}h34v28h-34ZM${cx + 16} ${top + 84}h34v28h-34Z" fill="var(--den-denim-dark)" opacity="0.55"/>` +
     `<path d="M${cx - 50} ${top + 84}h34l-4 12h-26ZM${cx + 16} ${top + 84}h34l-4 12h-26Z" fill="var(--den-denim)" stroke="var(--den-stitch)" stroke-width="1.2" stroke-dasharray="2.5 2"/>` +
-    [0, 1, 2, 3, 4].map((i) => `<circle cx="${cx + 7}" cy="${top + 90 + i * 30}" r="3" fill="var(--den-chrome)"/>`).join('') +
+    [0, 1, 2, 3, 4]
+      .map(
+        (i) => `<circle cx="${cx + 7}" cy="${top + 90 + i * 30}" r="3" fill="var(--den-chrome)"/>`,
+      )
+      .join('') +
     `<path d="${collarLeft}" fill="var(--den-denim-dark)"/>` +
     `<path d="${collarRight}" fill="var(--den-denim-dark)"/>` +
     // The patches sewn on the front of the jacket, small, filled in by the Den view.
@@ -259,7 +276,10 @@ export function calendar(): string {
  * Drawn in its own 290×182 box; the first one sits at LAYOUT.beanbag, and a
  * second, teal one arrives with ten Versus Night series.
  */
-export function beanbag(rect: Rect = LAYOUT.beanbag, tone: { fill: string; dark: string } = MUSTARD): string {
+export function beanbag(
+  rect: Rect = LAYOUT.beanbag,
+  tone: { fill: string; dark: string } = MUSTARD,
+): string {
   const { x, y, width } = rect;
   const scale = width / 290;
   const shape =
@@ -278,7 +298,8 @@ export function beanbag(rect: Rect = LAYOUT.beanbag, tone: { fill: string; dark:
     'M214 108C220 132 222 156 218 182',
   ];
   // Where somebody sat: a dent pushed into the front of the bag.
-  const dent = 'M78 90C92 66 136 52 182 54C218 56 244 70 252 92C238 110 196 118 150 116C114 114 88 106 78 90Z';
+  const dent =
+    'M78 90C92 66 136 52 182 54C218 56 244 70 252 92C238 110 196 118 150 116C114 114 88 106 78 90Z';
   const lip = 'M92 100C124 114 204 114 238 100';
   // Creases running out of the dent, each a shadow with a lit ridge beside it.
   const creases = [
@@ -288,7 +309,8 @@ export function beanbag(rect: Rect = LAYOUT.beanbag, tone: { fill: string; dark:
     ['M236 96C248 106 258 118 262 132', 'M239 100C250 110 259 122 263 136'],
   ];
   // Fabric bunching on the carpet.
-  const floorFolds = 'M28 166Q38 158 52 164M70 176Q84 166 98 174M176 178Q192 168 208 176M240 170Q254 162 268 166';
+  const floorFolds =
+    'M28 166Q38 158 52 164M70 176Q84 166 98 174M176 178Q192 168 208 176M240 170Q254 162 268 166';
   const seamMarkup = seams
     .map(
       (d) =>

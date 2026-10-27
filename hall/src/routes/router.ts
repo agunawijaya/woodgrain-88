@@ -2,12 +2,15 @@
  * Hash routing, so the site works from any static host (GitHub Pages) and the
  * browser's Back button moves between the Den, the list, a game and its play
  * screen. Query parameters on play routes carry the channel, run mode,
- * cartridge version and challenge links; a game route may carry the version.
+ * cartridge version and challenge links; a game or details route may carry the
+ * version. A coming-soon game's route shows its details, since there is no game
+ * menu to open yet.
  */
 export type Route =
   | { name: 'den' }
   | { name: 'list' }
   | { name: 'game'; id: string; version?: string }
+  | { name: 'details'; id: string; version?: string }
   | { name: 'play'; id: string; params: URLSearchParams }
   | { name: 'records' }
   | { name: 'about' }
@@ -18,7 +21,8 @@ export type Route =
 export const DEN_LIFE_SCREENS = ['jacket', 'kids', 'versus', 'run'] as const;
 export type DenLifeScreen = (typeof DEN_LIFE_SCREENS)[number];
 
-const isDenLifeScreen = (word: string | undefined): word is DenLifeScreen => DEN_LIFE_SCREENS.some((screen) => screen === word);
+const isDenLifeScreen = (word: string | undefined): word is DenLifeScreen =>
+  DEN_LIFE_SCREENS.some((screen) => screen === word);
 
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -33,9 +37,11 @@ export function parseRoute(hash: string): Route {
   if (parts.length === 1 && head === 'about') return { name: 'about' };
   if (parts.length === 1 && isDenLifeScreen(head)) return { name: head };
   if (parts.length === 2 && id !== undefined && ID.test(id)) {
-    if (head === 'game') {
+    if (head === 'game' || head === 'details') {
       const version = new URLSearchParams(query).get('version');
-      return version !== null && ID.test(version) ? { name: 'game', id, version } : { name: 'game', id };
+      return version !== null && ID.test(version)
+        ? { name: head, id, version }
+        : { name: head, id };
     }
     if (head === 'play') return { name: 'play', id, params: new URLSearchParams(query) };
   }
@@ -58,7 +64,8 @@ export function routeHash(route: Route): string {
     case 'run':
       return `#/${route.name}`;
     case 'game':
-      return `#/game/${route.id}${route.version ? `?version=${route.version}` : ''}`;
+    case 'details':
+      return `#/${route.name}/${route.id}${route.version ? `?version=${route.version}` : ''}`;
     case 'play': {
       const query = route.params.toString();
       return `#/play/${route.id}${query ? `?${query}` : ''}`;

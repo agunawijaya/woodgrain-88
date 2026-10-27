@@ -13,7 +13,13 @@
  * the screen counts as looking at the jacket, which stops the door jacket's
  * glint.
  */
-import { copyText, downloadText, type PatchDef, type PatchPlacement, type PatchTier } from '@woodgrain-88/kit';
+import {
+  copyText,
+  downloadText,
+  type PatchDef,
+  type PatchPlacement,
+  type PatchTier,
+} from '@woodgrain-88/kit';
 import type { Services } from '../app/services.ts';
 import { toast } from '../chrome/dialog.ts';
 import { FAMILY_NAMES } from '../data/registry.ts';
@@ -45,7 +51,12 @@ export interface JacketView {
 }
 
 const VIEW_BOX = { x: -20, y: -40, width: 640, height: 760 };
-const TIER_NAMES: Record<PatchTier, string> = { club: 'Club', pro: 'Pro', legend: 'Legend', secret: 'Secret' };
+const TIER_NAMES: Record<PatchTier, string> = {
+  club: 'Club',
+  pro: 'Pro',
+  legend: 'Legend',
+  secret: 'Secret',
+};
 /** Drawn sizes vary by tier, as real patches do; every one still takes the same room in the layout. */
 const TIER_SIZE: Record<PatchTier, number> = { club: 84, pro: 90, legend: 102, secret: 78 };
 /** A sleeve is narrower than a patch; patches sewn there are the small kind. */
@@ -132,14 +143,38 @@ export function createJacketView(options: { services: Services; onBack(): void }
     `<p class="sr-only" aria-live="polite" data-ref="announcer"></p>`;
 
   const svg = required(element.querySelector<SVGSVGElement>('.jacket-svg'), '.jacket-svg');
-  const cloth = required(svg.querySelector<SVGGElement>('[data-ref="cloth"]'), '[data-ref="cloth"]');
-  const sewnLayer = required(svg.querySelector<SVGGElement>('[data-ref="sewn"]'), '[data-ref="sewn"]');
-  const heldRing = required(svg.querySelector<SVGCircleElement>('[data-ref="held-ring"]'), '[data-ref="held-ring"]');
-  const caption = required(element.querySelector<HTMLElement>('[data-ref="caption"]'), '[data-ref="caption"]');
-  const grid = required(element.querySelector<HTMLUListElement>('[data-ref="grid"]'), '[data-ref="grid"]');
-  const filters = required(element.querySelector<HTMLDivElement>('[data-ref="filters"]'), '[data-ref="filters"]');
-  const announcer = required(element.querySelector<HTMLParagraphElement>('[data-ref="announcer"]'), '[data-ref="announcer"]');
-  const drawerElement = required(element.querySelector<HTMLElement>('.patch-drawer'), '.patch-drawer');
+  const cloth = required(
+    svg.querySelector<SVGGElement>('[data-ref="cloth"]'),
+    '[data-ref="cloth"]',
+  );
+  const sewnLayer = required(
+    svg.querySelector<SVGGElement>('[data-ref="sewn"]'),
+    '[data-ref="sewn"]',
+  );
+  const heldRing = required(
+    svg.querySelector<SVGCircleElement>('[data-ref="held-ring"]'),
+    '[data-ref="held-ring"]',
+  );
+  const caption = required(
+    element.querySelector<HTMLElement>('[data-ref="caption"]'),
+    '[data-ref="caption"]',
+  );
+  const grid = required(
+    element.querySelector<HTMLUListElement>('[data-ref="grid"]'),
+    '[data-ref="grid"]',
+  );
+  const filters = required(
+    element.querySelector<HTMLDivElement>('[data-ref="filters"]'),
+    '[data-ref="filters"]',
+  );
+  const announcer = required(
+    element.querySelector<HTMLParagraphElement>('[data-ref="announcer"]'),
+    '[data-ref="announcer"]',
+  );
+  const drawerElement = required(
+    element.querySelector<HTMLElement>('.patch-drawer'),
+    '.patch-drawer',
+  );
 
   const announce = (text: string) => {
     announcer.textContent = text;
@@ -149,7 +184,12 @@ export function createJacketView(options: { services: Services; onBack(): void }
   const entries = (): DrawerEntry[] => {
     const progress = repos.progress.get();
     const champion = blockChampionStatus(progress);
-    const den: DrawerEntry = { manifest: DEN_OWNER, def: BLOCK_CHAMPION, earned: champion.earned, gold: champion.gold };
+    const den: DrawerEntry = {
+      manifest: DEN_OWNER,
+      def: BLOCK_CHAMPION,
+      earned: champion.earned,
+      gold: champion.gold,
+    };
     return [
       den,
       ...manifests.flatMap((manifest) =>
@@ -160,11 +200,15 @@ export function createJacketView(options: { services: Services; onBack(): void }
       ),
     ];
   };
-  const drawer = (): DrawerPatch[] => earnedDrawer(manifests, (id) => denLife.patchesFor(id), repos.progress.get());
-  const entryFor = (key: string) => entries().find((entry) => patchKey({ game: entry.manifest.id, patch: entry.def.id }) === key);
+  const drawer = (): DrawerPatch[] =>
+    earnedDrawer(manifests, (id) => denLife.patchesFor(id), repos.progress.get());
+  const entryFor = (key: string) =>
+    entries().find((entry) => patchKey({ game: entry.manifest.id, patch: entry.def.id }) === key);
   const patchName = (key: string) => {
     const entry = entryFor(key);
-    return entry ? `${entry.def.title} (${entry.manifest.title}, ${TIER_NAMES[entry.def.tier]})` : key;
+    return entry
+      ? `${entry.def.title} (${entry.manifest.title}, ${TIER_NAMES[entry.def.tier]})`
+      : key;
   };
 
   const save = (placements: PatchPlacement[]) => {
@@ -178,7 +222,10 @@ export function createJacketView(options: { services: Services; onBack(): void }
   const restore = (placements: PatchPlacement[]) => {
     // Keep focus on the patch it was on, if that patch is still on show.
     const focused = document.activeElement;
-    const focusedKey = focused instanceof HTMLElement || focused instanceof SVGElement ? focused.dataset.key : undefined;
+    const focusedKey =
+      focused instanceof HTMLElement || focused instanceof SVGElement
+        ? focused.dataset.key
+        : undefined;
     repos.progress.update((draft) => {
       draft.den.jacket.placements = placements;
     });
@@ -196,7 +243,18 @@ export function createJacketView(options: { services: Services; onBack(): void }
         const entry = entryFor(key);
         if (!entry) return '';
         const size = drawnSize(entry.def.tier, placement);
-        const art = patchImage({ manifest: entry.manifest, patchId: entry.def.id, tier: entry.def.tier, state: 'earned', gold: entry.gold }, 0, 0, size);
+        const art = patchImage(
+          {
+            manifest: entry.manifest,
+            patchId: entry.def.id,
+            tier: entry.def.tier,
+            state: 'earned',
+            gold: entry.gold,
+          },
+          0,
+          0,
+          size,
+        );
         return (
           `<g class="sewn-patch${held === key ? ' is-held' : ''}" data-key="${escapeXml(key)}" transform="translate(${placement.x} ${placement.y}) rotate(${placement.rotation})" tabindex="0" role="button" aria-label="${escapeXml(patchName(key))}, sewn">` +
           `<g transform="translate(${-size / 2} ${-size / 2})">${art}</g>` +
@@ -213,7 +271,10 @@ export function createJacketView(options: { services: Services; onBack(): void }
     };
     const gameOptions = manifests
       .filter((manifest) => denLife.patchesFor(manifest.id).length > 0)
-      .map((manifest) => `<option value="${manifest.id}"${filter.game === manifest.id ? ' selected' : ''}>${escapeXml(manifest.title)}</option>`)
+      .map(
+        (manifest) =>
+          `<option value="${manifest.id}"${filter.game === manifest.id ? ' selected' : ''}>${escapeXml(manifest.title)}</option>`,
+      )
       .join('');
     return (
       `<label class="field field--inline"><span>Game</span><select data-ref="game-filter"><option value="">Every game</option>${gameOptions}</select></label>` +
@@ -240,9 +301,26 @@ export function createJacketView(options: { services: Services; onBack(): void }
         const key = patchKey({ game: entry.manifest.id, patch: entry.def.id });
         const secret = entry.def.tier === 'secret' && !entry.earned;
         const state = entry.earned ? 'earned' : secret ? 'secret' : 'locked';
-        const art = patchImg({ manifest: entry.manifest, patchId: entry.def.id, tier: entry.def.tier, state, gold: entry.gold }, 64);
+        const art = patchImg(
+          {
+            manifest: entry.manifest,
+            patchId: entry.def.id,
+            tier: entry.def.tier,
+            state,
+            gold: entry.gold,
+          },
+          64,
+        );
         const title = secret ? '?' : entry.def.title;
-        const note = entry.earned ? (placedKeys.has(key) ? 'On the jacket' : entry.gold ? 'Gold thread' : TIER_NAMES[entry.def.tier]) : secret ? (entry.def.hint ?? 'A secret') : entry.def.description;
+        const note = entry.earned
+          ? placedKeys.has(key)
+            ? 'On the jacket'
+            : entry.gold
+              ? 'Gold thread'
+              : TIER_NAMES[entry.def.tier]
+          : secret
+            ? (entry.def.hint ?? 'A secret')
+            : entry.def.description;
         const sewn = placedKeys.has(key);
         // The tile is named by what it shows, with the game and tier for screen readers.
         const owner = `<span class="sr-only"> (${escapeXml(entry.manifest.title)}, ${TIER_NAMES[entry.def.tier]})</span>`;
@@ -263,10 +341,19 @@ export function createJacketView(options: { services: Services; onBack(): void }
     caption.textContent = `${placements.length} ${placements.length === 1 ? 'patch' : 'patches'} sewn${goldCount ? `, ${goldCount} in gold thread` : ''}${waiting ? ` · ${waiting} in the drawer` : ''}. Showing the ${side}.`;
     filters.innerHTML = filterMarkup();
     grid.innerHTML = gridMarkup();
-    for (const button of element.querySelectorAll<HTMLButtonElement>('.segment')) button.setAttribute('aria-pressed', String(button.dataset.side === side));
-    required(element.querySelector<HTMLButtonElement>('[data-do="undo"]'), '[data-do="undo"]').setAttribute('aria-disabled', String(!history.canUndo));
-    required(element.querySelector<HTMLButtonElement>('[data-do="redo"]'), '[data-do="redo"]').setAttribute('aria-disabled', String(!history.canRedo));
-    const heldPlacement = held ? placements.find((placement) => patchKey(placement) === held && placement.side === side) : undefined;
+    for (const button of element.querySelectorAll<HTMLButtonElement>('.segment'))
+      button.setAttribute('aria-pressed', String(button.dataset.side === side));
+    required(
+      element.querySelector<HTMLButtonElement>('[data-do="undo"]'),
+      '[data-do="undo"]',
+    ).setAttribute('aria-disabled', String(!history.canUndo));
+    required(
+      element.querySelector<HTMLButtonElement>('[data-do="redo"]'),
+      '[data-do="redo"]',
+    ).setAttribute('aria-disabled', String(!history.canRedo));
+    const heldPlacement = held
+      ? placements.find((placement) => patchKey(placement) === held && placement.side === side)
+      : undefined;
     heldRing.toggleAttribute('hidden', !heldPlacement);
     heldRing.setAttribute('cx', String(heldPlacement?.x ?? 0));
     heldRing.setAttribute('cy', String(heldPlacement?.y ?? 0));
@@ -282,21 +369,41 @@ export function createJacketView(options: { services: Services; onBack(): void }
   };
   const overJacket = (clientX: number, clientY: number) => {
     const box = svg.getBoundingClientRect();
-    return clientX >= box.left && clientX <= box.right && clientY >= box.top && clientY <= box.bottom;
+    return (
+      clientX >= box.left && clientX <= box.right && clientY >= box.top && clientY <= box.bottom
+    );
   };
   const overDrawer = (clientX: number, clientY: number) => {
     const box = drawerElement.getBoundingClientRect();
-    return clientX >= box.left && clientX <= box.right && clientY >= box.top && clientY <= box.bottom;
+    return (
+      clientX >= box.left && clientX <= box.right && clientY >= box.top && clientY <= box.bottom
+    );
   };
 
-  let drag: { key: string; ghost: HTMLElement; startX: number; startY: number; moved: boolean } | null = null;
+  let drag: {
+    key: string;
+    ghost: HTMLElement;
+    startX: number;
+    startY: number;
+    moved: boolean;
+  } | null = null;
 
   const beginDrag = (key: string, event: PointerEvent) => {
     const entry = entryFor(key);
     if (!entry) return;
     const ghost = document.createElement('div');
     ghost.className = 'patch-ghost';
-    ghost.innerHTML = patchArt({ manifest: entry.manifest, patchId: entry.def.id, tier: entry.def.tier, state: 'earned', gold: entry.gold }, 96, 'ghost');
+    ghost.innerHTML = patchArt(
+      {
+        manifest: entry.manifest,
+        patchId: entry.def.id,
+        tier: entry.def.tier,
+        state: 'earned',
+        gold: entry.gold,
+      },
+      96,
+      'ghost',
+    );
     ghost.hidden = true;
     document.body.append(ghost);
     drag = { key, ghost, startX: event.clientX, startY: event.clientY, moved: false };
@@ -304,7 +411,8 @@ export function createJacketView(options: { services: Services; onBack(): void }
 
   const onPointerMove = (event: PointerEvent) => {
     if (!drag) return;
-    if (!drag.moved && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 5) return;
+    if (!drag.moved && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 5)
+      return;
     drag.moved = true;
     drag.ghost.hidden = false;
     // The ghost is drawn at the jacket's scale so the drop looks the way it will land.
@@ -330,7 +438,10 @@ export function createJacketView(options: { services: Services; onBack(): void }
       if (result.reason) return refuse(result.reason);
       save(result.placements);
       announce(`${patchName(key)} sewn on the ${side}`);
-    } else if (overDrawer(event.clientX, event.clientY) && history.current.some((placement) => patchKey(placement) === key)) {
+    } else if (
+      overDrawer(event.clientX, event.clientY) &&
+      history.current.some((placement) => patchKey(placement) === key)
+    ) {
       save(removePatch(history.current, key));
       announce(`${patchName(key)} back in the drawer`);
     }
@@ -371,7 +482,9 @@ export function createJacketView(options: { services: Services; onBack(): void }
     }
     render();
     focusSewn(key);
-    announce(`${patchName(key)} picked up. Arrows move it, R turns it, Enter sews it, Delete takes it off.`);
+    announce(
+      `${patchName(key)} picked up. Arrows move it, R turns it, Enter sews it, Delete takes it off.`,
+    );
   };
   const keyParts = (key: string) => {
     const [game = '', patch = ''] = key.split('/');
@@ -383,7 +496,12 @@ export function createJacketView(options: { services: Services; onBack(): void }
 
   // Undo and redo work wherever focus is on the screen, even after a redraw has taken it away.
   const onUndoKeys = (event: KeyboardEvent) => {
-    if (event.defaultPrevented || !(event.ctrlKey || event.metaKey) || document.querySelector('.dialog-backdrop')) return;
+    if (
+      event.defaultPrevented ||
+      !(event.ctrlKey || event.metaKey) ||
+      document.querySelector('.dialog-backdrop')
+    )
+      return;
     const key = event.key.toLowerCase();
     if (key !== 'z' && key !== 'y') return;
     event.preventDefault();
@@ -416,7 +534,12 @@ export function createJacketView(options: { services: Services; onBack(): void }
       return;
     }
     if (held !== key) return;
-    const arrows: Record<string, 'up' | 'down' | 'left' | 'right'> = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+    const arrows: Record<string, 'up' | 'down' | 'left' | 'right'> = {
+      ArrowUp: 'up',
+      ArrowDown: 'down',
+      ArrowLeft: 'left',
+      ArrowRight: 'right',
+    };
     const direction = arrows[event.key];
     if (direction) {
       event.preventDefault();
@@ -459,8 +582,15 @@ export function createJacketView(options: { services: Services; onBack(): void }
             },
           ]
         : [{ label: `Sew it on the ${side}`, primary: true, run: () => pickUp(key) }];
-    const status = entry.manifest.id === DEN_OWNER.id ? blockChampionStatus(repos.progress.get()) : undefined;
-    openPatchPopover({ services, manifest: entry.manifest, def: entry.def, actions, ...(status ? { status } : {}) });
+    const status =
+      entry.manifest.id === DEN_OWNER.id ? blockChampionStatus(repos.progress.get()) : undefined;
+    openPatchPopover({
+      services,
+      manifest: entry.manifest,
+      def: entry.def,
+      actions,
+      ...(status ? { status } : {}),
+    });
   };
 
   // ——— Toolbar and filters ———
@@ -480,7 +610,9 @@ export function createJacketView(options: { services: Services; onBack(): void }
     const withName = services.settings.get().shareWithName && name.trim() !== '';
     const svgText = jacketCard(history.current, withName ? name : null);
     downloadText('woodgrain-88-jacket.svg', svgText, 'image/svg+xml');
-    void copyText(svgText).then((copied) => toast(copied ? 'Jacket card saved and copied' : 'Jacket card saved'));
+    void copyText(svgText).then((copied) =>
+      toast(copied ? 'Jacket card saved and copied' : 'Jacket card saved'),
+    );
   };
 
   /** A standalone picture of both sides, for sharing; no ids clash with the page because it is its own file. */
@@ -496,7 +628,17 @@ export function createJacketView(options: { services: Services; onBack(): void }
           const entry = entryFor(patchKey(placement));
           if (!entry) return '';
           const size = drawnSize(entry.def.tier, placement);
-          const art = patchArt({ manifest: entry.manifest, patchId: entry.def.id, tier: entry.def.tier, state: 'earned', gold: entry.gold }, size, 'card');
+          const art = patchArt(
+            {
+              manifest: entry.manifest,
+              patchId: entry.def.id,
+              tier: entry.def.tier,
+              state: 'earned',
+              gold: entry.gold,
+            },
+            size,
+            'card',
+          );
           return `<g transform="translate(${placement.x} ${placement.y}) rotate(${placement.rotation}) translate(${-size / 2} ${-size / 2})">${art}</g>`;
         })
         .join('') +
@@ -541,7 +683,9 @@ export function createJacketView(options: { services: Services; onBack(): void }
       const raw = chip.dataset.value ?? 'undefined';
       filter = toggledFilter(filter, key, raw);
       render();
-      element.querySelector<HTMLElement>(`[data-filter="${key ?? ''}"][data-value="${CSS.escape(raw)}"]`)?.focus();
+      element
+        .querySelector<HTMLElement>(`[data-filter="${key ?? ''}"][data-value="${CSS.escape(raw)}"]`)
+        ?.focus();
     }
   });
   element.addEventListener('change', (event) => {
@@ -552,7 +696,10 @@ export function createJacketView(options: { services: Services; onBack(): void }
     if (select.value !== '') next.game = select.value;
     filter = next;
     render();
-    required(element.querySelector<HTMLSelectElement>('[data-ref="game-filter"]'), '[data-ref="game-filter"]').focus();
+    required(
+      element.querySelector<HTMLSelectElement>('[data-ref="game-filter"]'),
+      '[data-ref="game-filter"]',
+    ).focus();
   });
 
   render();

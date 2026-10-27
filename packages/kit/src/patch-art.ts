@@ -99,7 +99,9 @@ function idPrefix(seed: string): string {
 function goldGradient(id: string): string {
   return (
     `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">` +
-    GOLD_STOPS.map(([offset, colour]) => `<stop offset="${offset}" stop-color="${colour}"/>`).join('') +
+    GOLD_STOPS.map(([offset, colour]) => `<stop offset="${offset}" stop-color="${colour}"/>`).join(
+      '',
+    ) +
     `</linearGradient>`
   );
 }
@@ -129,7 +131,8 @@ function earnedPatch(input: PatchArtInput, shape: PatchShape, outline: string): 
   const twillAngle = rng.float(-38, -26);
   const satinAngle = rng.float(34, 52);
   // A secret patch is sewn tone-on-tone: the emblem only shows by its stitches.
-  const plainThread = input.tier === 'secret' ? mix(input.colours.ground, '#000000', 0.32) : input.colours.thread;
+  const plainThread =
+    input.tier === 'secret' ? mix(input.colours.ground, '#000000', 0.32) : input.colours.thread;
   const threadPaint = input.gold ? `url(#${id}-gold)` : plainThread;
   const borderPaint = input.gold ? `url(#${id}-gold)` : input.colours.border;
   const emblem = escapeText(input.emblem);
@@ -184,7 +187,13 @@ function earnedPatch(input: PatchArtInput, shape: PatchShape, outline: string): 
 export function patchSvg(input: PatchArtInput, size = 96): string {
   const shape = PATCH_SHAPES[input.tier];
   const outline = shapePath(shape);
-  const label = input.title === undefined ? 'aria-hidden="true"' : `role="img" aria-label="${escapeText(input.title)}"`;
-  const body = input.state === 'earned' ? earnedPatch(input, shape, outline) : lockedPatch(input, shape, outline);
+  const label =
+    input.title === undefined
+      ? 'aria-hidden="true"'
+      : `role="img" aria-label="${escapeText(input.title)}"`;
+  const body =
+    input.state === 'earned'
+      ? earnedPatch(input, shape, outline)
+      : lockedPatch(input, shape, outline);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SIZE} ${SIZE}" width="${size}" height="${size}" class="patch-art patch-art--${input.tier}${input.gold ? ' is-gold' : ''}" ${label}>${body}</svg>`;
 }

@@ -2,7 +2,7 @@
  * End-to-end tests verifying no external network requests are made.
  */
 import { expect, test } from '@playwright/test';
-import { collectErrors, counterText, skipIntro } from '../helpers.ts';
+import { collectErrors, counterText, skipIntro, tuneTo } from '../helpers.ts';
 
 test.describe('Network isolation', () => {
   test('restricts all network traffic strictly to the page origin', async ({ page }) => {
@@ -16,6 +16,7 @@ test.describe('Network isolation', () => {
     await skipIntro(page);
     await page.goto('/');
     await expect(page.locator('.den')).toBeVisible();
+    await tuneTo(page, 1);
 
     // Cycle the power switch three times
     await page.locator('[data-ref="power"]').click();

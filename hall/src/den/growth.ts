@@ -8,7 +8,13 @@
  * anchor was chosen with the whole set in view, so a fully grown Den still
  * leaves the TV, the Counter and the labels clear.
  */
-import { blockLadder, FAMILIES, type Family, type GameManifest, type ProgressData } from '@woodgrain-88/kit';
+import {
+  blockLadder,
+  FAMILIES,
+  type Family,
+  type GameManifest,
+  type ProgressData,
+} from '@woodgrain-88/kit';
 
 export type GrowthKind =
   | 'trophy'
@@ -53,7 +59,11 @@ const FAMILY_POSTER_TOAST: Record<Family, string> = {
   arcade: 'The Arcade poster goes up on the wall',
 };
 
-function hasTierPatch(progress: ProgressData, gameId: string, patchIds: readonly string[]): boolean {
+function hasTierPatch(
+  progress: ProgressData,
+  gameId: string,
+  patchIds: readonly string[],
+): boolean {
   const patches = progress.games[gameId]?.patches ?? {};
   return patchIds.some((id) => Boolean(patches[id]?.earnedAt));
 }
@@ -72,10 +82,15 @@ export function growthFacts(input: {
 }): GrowthFacts {
   const { manifests, patchTiers, progress } = input;
   const playable = input.playable ?? ((manifest: GameManifest) => manifest.status === 'playable');
-  const legendGames = manifests.filter((m) => hasTierPatch(progress, m.id, patchTiers.get(m.id)?.legend ?? []));
+  const legendGames = manifests.filter((m) =>
+    hasTierPatch(progress, m.id, patchTiers.get(m.id)?.legend ?? []),
+  );
   const clubFamilies = FAMILIES.filter((family) => {
     const onShelf = manifests.filter((m) => m.family === family && playable(m));
-    return onShelf.length > 0 && onShelf.every((m) => hasTierPatch(progress, m.id, patchTiers.get(m.id)?.club ?? []));
+    return (
+      onShelf.length > 0 &&
+      onShelf.every((m) => hasTierPatch(progress, m.id, patchTiers.get(m.id)?.club ?? []))
+    );
   });
   return {
     legendGames,
@@ -91,33 +106,66 @@ export function growthFacts(input: {
 export function earnedGrowth(facts: GrowthFacts): GrowthItem[] {
   const items: GrowthItem[] = [];
   for (const family of facts.clubFamilies) {
-    items.push({ id: `poster:${family}`, kind: 'poster', toast: FAMILY_POSTER_TOAST[family], family });
+    items.push({
+      id: `poster:${family}`,
+      kind: 'poster',
+      toast: FAMILY_POSTER_TOAST[family],
+      family,
+    });
   }
   if (facts.bestStreak >= STREAK_MILESTONES.paperChain) {
-    items.push({ id: 'paper-chain', kind: 'paper-chain', toast: 'A paper chain across the window: seven days in a row' });
+    items.push({
+      id: 'paper-chain',
+      kind: 'paper-chain',
+      toast: 'A paper chain across the window: seven days in a row',
+    });
   }
   if (facts.bestStreak >= STREAK_MILESTONES.stringLights) {
-    items.push({ id: 'string-lights', kind: 'string-lights', toast: 'String lights along the shelves: thirty days in a row' });
+    items.push({
+      id: 'string-lights',
+      kind: 'string-lights',
+      toast: 'String lights along the shelves: thirty days in a row',
+    });
   }
   if (facts.bestStreak >= STREAK_MILESTONES.onAir) {
-    items.push({ id: 'on-air', kind: 'on-air', toast: 'An ON AIR sign for the TV: a hundred days in a row' });
+    items.push({
+      id: 'on-air',
+      kind: 'on-air',
+      toast: 'An ON AIR sign for the TV: a hundred days in a row',
+    });
   }
   if (facts.blockChampion) {
     items.push({ id: 'ribbon', kind: 'ribbon', toast: 'A Block champion ribbon on the corkboard' });
   }
   if (facts.versusSeries >= VERSUS_SERIES_FOR_BEANBAG) {
-    items.push({ id: 'second-beanbag', kind: 'second-beanbag', toast: 'A second beanbag for Versus Night. The cat has taken it' });
+    items.push({
+      id: 'second-beanbag',
+      kind: 'second-beanbag',
+      toast: 'A second beanbag for Versus Night. The cat has taken it',
+    });
   }
   if (facts.allLampsLit) {
-    items.push({ id: 'plaque-and-remote', kind: 'plaque-and-remote', toast: 'All 32 lamps: a 32 in 1 plaque, and a remote for the TV' });
+    items.push({
+      id: 'plaque-and-remote',
+      kind: 'plaque-and-remote',
+      toast: 'All 32 lamps: a 32 in 1 plaque, and a remote for the TV',
+    });
   }
   for (const manifest of facts.legendGames) {
-    items.push({ id: `trophy:${manifest.id}`, kind: 'trophy', toast: `A trophy for ${manifest.title}`, game: manifest.id });
+    items.push({
+      id: `trophy:${manifest.id}`,
+      kind: 'trophy',
+      toast: `A trophy for ${manifest.title}`,
+      game: manifest.id,
+    });
   }
   return items;
 }
 
 /** Items earned but not yet revealed: each sparkles in once, with its toast. */
-export function newGrowth(items: readonly GrowthItem[], seen: Readonly<Record<string, string>>): GrowthItem[] {
+export function newGrowth(
+  items: readonly GrowthItem[],
+  seen: Readonly<Record<string, string>>,
+): GrowthItem[] {
   return items.filter((item) => seen[item.id] === undefined);
 }

@@ -61,7 +61,12 @@ function settleRound(services: Services, result: MicroResult): void {
   const now = new Date();
   const kind = services.powerRun.kind();
   services.repos.progress.update((draft) => {
-    draft.den.runs = recordRun(draft.den.runs, runResult(next, now.toISOString()), kind, kind === 'daily' ? utcDateKey(now) : undefined);
+    draft.den.runs = recordRun(
+      draft.den.runs,
+      runResult(next, now.toISOString()),
+      kind,
+      kind === 'daily' ? utcDateKey(now) : undefined,
+    );
   });
 }
 
@@ -94,12 +99,19 @@ export function createRunRound(options: {
   // The clock leaves out time spent paused.
   let pausedTotal = 0;
   let pausedAt: number | null = null;
-  const clock = () => performance.now() - pausedTotal - (pausedAt === null ? 0 : performance.now() - pausedAt);
+  const clock = () =>
+    performance.now() - pausedTotal - (pausedAt === null ? 0 : performance.now() - pausedAt);
 
   let micro: MicroRun | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
   let over = false;
-  const missed = (): MicroResult => ({ game: module.manifest.id, challenge: def.id, passed: false, score: 0, seconds: 0 });
+  const missed = (): MicroResult => ({
+    game: module.manifest.id,
+    challenge: def.id,
+    passed: false,
+    score: 0,
+    seconds: 0,
+  });
   const stopEvents = services.bus.on((event: StampedEvent) => micro?.handle(event));
 
   const hud = document.createElement('div');
@@ -177,9 +189,14 @@ export interface VersusGame {
 }
 
 /** A Versus Night game, or null when this session is not one. */
-export function createVersusGame(services: Services, gameId: string, run: RunInfo): VersusGame | null {
+export function createVersusGame(
+  services: Services,
+  gameId: string,
+  run: RunInfo,
+): VersusGame | null {
   const series = services.versusNight.series();
-  if (run.mode !== 'versus-night' || series?.phase !== 'playing' || series.current !== gameId) return null;
+  if (run.mode !== 'versus-night' || series?.phase !== 'playing' || series.current !== gameId)
+    return null;
   const [first, second] = series.setup.seats;
   const seats = [seatInfo(first, 1), seatInfo(second, 2)];
   return {
@@ -188,7 +205,14 @@ export function createVersusGame(services: Services, gameId: string, run: RunInf
       const current = services.versusNight.series();
       if (current?.phase !== 'playing') return '';
       // A game against a Kid may only say whether seat 1 won; that decides it too.
-      const winner = result.winnerSeat !== undefined ? result.winnerSeat : result.won === undefined ? null : result.won ? 1 : 2;
+      const winner =
+        result.winnerSeat !== undefined
+          ? result.winnerSeat
+          : result.won === undefined
+            ? null
+            : result.won
+              ? 1
+              : 2;
       const next = recordGame(current, winner);
       services.versusNight.set(next);
       if (next.phase === 'finished') {
@@ -198,7 +222,9 @@ export function createVersusGame(services: Services, gameId: string, run: RunInf
       }
       const name = (seat: 1 | 2) => seats[seat - 1]?.name ?? `Seat ${seat}`;
       if (winner === null) return 'A draw: this game is played again';
-      return next.phase === 'finished' ? `${name(winner)} takes the night!` : `${name(winner)} wins game ${next.games.length}`;
+      return next.phase === 'finished'
+        ? `${name(winner)} takes the night!`
+        : `${name(winner)} wins game ${next.games.length}`;
     },
   };
 }

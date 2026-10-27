@@ -22,7 +22,11 @@ export interface ListViewOptions {
 }
 
 function playersLabel(manifest: GameManifest): string {
-  return manifest.players === '1P' ? '1 player' : manifest.players === '2P' ? '2 players' : '1–2 players';
+  return manifest.players === '1P'
+    ? '1 player'
+    : manifest.players === '2P'
+      ? '2 players'
+      : '1–2 players';
 }
 
 function matches(manifest: GameManifest, family: Family | 'all', players: PlayersFilter): boolean {
@@ -84,9 +88,14 @@ export function createListView(options: ListViewOptions): ListView {
     const chip = (event.target as Element).closest<HTMLButtonElement>('.filter-chip');
     if (chip) {
       if (chip.dataset.group === 'family') family = (chip.dataset.value ?? 'all') as Family | 'all';
-      if (chip.dataset.group === 'players') players = (chip.dataset.value ?? 'all') as PlayersFilter;
+      if (chip.dataset.group === 'players')
+        players = (chip.dataset.value ?? 'all') as PlayersFilter;
       render();
-      element.querySelector<HTMLButtonElement>(`.filter-chip[data-group="${chip.dataset.group}"][data-value="${chip.dataset.value}"]`)?.focus();
+      element
+        .querySelector<HTMLButtonElement>(
+          `.filter-chip[data-group="${chip.dataset.group}"][data-value="${chip.dataset.value}"]`,
+        )
+        ?.focus();
       return;
     }
     const card = (event.target as Element).closest<HTMLAnchorElement>('.list-card');

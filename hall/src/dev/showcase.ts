@@ -537,9 +537,7 @@ function buildFullProfile(manifests: readonly GameManifest[], now: Date): Showca
   if (firstManifest) frontBadges.push({ game: firstManifest.id, patch: 'pro-1' });
   if (secondManifest) frontBadges.push({ game: secondManifest.id, patch: 'pro-1' });
 
-  const backBadges = manifests
-    .slice(2, 10)
-    .map((m) => ({ game: m.id, patch: 'pro-1' }));
+  const backBadges = manifests.slice(2, 10).map((m) => ({ game: m.id, patch: 'pro-1' }));
 
   const frontPlacements = buildGridPlacements(frontBadges, 'front', 6, 75, 80, 90, 90);
   const backPlacements = buildGridPlacements(backBadges, 'back', 4, 120, 150, 110, 120);
@@ -830,9 +828,7 @@ function buildMidProfile(manifests: readonly GameManifest[], now: Date): Showcas
   };
 
   // Jacket: exactly 20 placements on the front.
-  const frontBadges = playedManifests
-    .slice(0, 20)
-    .map((m) => ({ game: m.id, patch: 'club-1' }));
+  const frontBadges = playedManifests.slice(0, 20).map((m) => ({ game: m.id, patch: 'club-1' }));
   const frontPlacements = buildGridPlacements(frontBadges, 'front', 5, 80, 100, 100, 100);
 
   const den: DenLifeData = {

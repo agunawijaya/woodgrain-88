@@ -32,9 +32,21 @@ export function openPatchPopover(options: {
   actions?: readonly PatchPopoverAction[];
 }): Dialog {
   const { services, manifest, def } = options;
-  const tracker = createPatchTracker({ games: [{ id: manifest.id, patches: services.denLife.patchesFor(manifest.id) }], progress: services.repos.progress });
+  const tracker = createPatchTracker({
+    games: [{ id: manifest.id, patches: services.denLife.patchesFor(manifest.id) }],
+    progress: services.repos.progress,
+  });
   const tracked = tracker.status(manifest.id).find((candidate) => candidate.def.id === def.id);
-  const status = tracked ?? (options.status ? { ...options.status, value: options.status.earned ? 1 : 0, target: 1, progress: options.status.earned ? 1 : 0 } : undefined);
+  const status =
+    tracked ??
+    (options.status
+      ? {
+          ...options.status,
+          value: options.status.earned ? 1 : 0,
+          target: 1,
+          progress: options.status.earned ? 1 : 0,
+        }
+      : undefined);
   const earned = status?.earned ?? false;
   const gold = status?.gold ?? false;
   const hidden = def.tier === 'secret' && !earned;
@@ -46,7 +58,10 @@ export function openPatchPopover(options: {
   const progress = earned
     ? `<p class="patch-pop-earned">Earned ${status?.earnedAt ? new Date(status.earnedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}${gold ? ' · sewn in gold thread' : ''}</p>`
     : `<div class="patch-pop-progress"><div class="patch-pop-bar" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="${status?.target ?? def.goal.target}" aria-valuenow="${status?.value ?? 0}"><span style="width: ${percent}%"></span></div><span>${(status?.value ?? 0).toLocaleString('en-GB')} / ${(status?.target ?? def.goal.target).toLocaleString('en-GB')}</span></div>`;
-  const goldNote = earned && !gold ? `<p class="patch-pop-note">Meet the goal again with the left difficulty switch on A to sew it in gold thread.</p>` : '';
+  const goldNote =
+    earned && !gold
+      ? `<p class="patch-pop-note">Meet the goal again with the left difficulty switch on A to sew it in gold thread.</p>`
+      : '';
   dialog.body.innerHTML =
     `<div class="patch-pop">` +
     `<div class="patch-pop-art">${patchArt({ manifest, patchId: def.id, tier: def.tier, state, gold }, 180, 'popover')}</div>` +
@@ -61,7 +76,8 @@ export function openPatchPopover(options: {
     `</div>` +
     `</div>`;
   dialog.body.addEventListener('click', (event) => {
-    const index = (event.target as Element).closest<HTMLButtonElement>('[data-action]')?.dataset.action;
+    const index = (event.target as Element).closest<HTMLButtonElement>('[data-action]')?.dataset
+      .action;
     const action = index === undefined ? undefined : options.actions?.[Number(index)];
     if (!action) return;
     dialog.close();

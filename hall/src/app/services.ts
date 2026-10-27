@@ -57,7 +57,10 @@ export interface ServiceOptions {
   playable?: (manifest: GameManifest) => boolean;
 }
 
-export function createServices(overrides: readonly GameEntry[] = [], options: ServiceOptions = {}): Services {
+export function createServices(
+  overrides: readonly GameEntry[] = [],
+  options: ServiceOptions = {},
+): Services {
   const registry = createRegistry(overrides);
   const { backend, persistent } = options.backend ?? browserBackend();
   const repos = createRepositories(createLocalStore(backend, { persistent }));
@@ -94,7 +97,10 @@ export function createServices(overrides: readonly GameEntry[] = [], options: Se
     channels,
     patches,
     profile: createProfile(repos.profile),
-    denLife: createDenLife({ registry, repos, settings, stats }, options.playable ? { playable: options.playable } : {}),
+    denLife: createDenLife(
+      { registry, repos, settings, stats },
+      options.playable ? { playable: options.playable } : {},
+    ),
     versusNight: createVersusNight(registry),
     powerRun: createPowerRun(),
   };

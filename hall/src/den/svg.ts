@@ -46,7 +46,8 @@ export function woodgrainPath(
   const across = vertical ? width : height;
   const parts: string[] = [];
   for (let i = 0; i < options.lines; i++) {
-    const base = ((i + 0.5) / options.lines) * across + rng.float(-0.25, 0.25) * (across / options.lines);
+    const base =
+      ((i + 0.5) / options.lines) * across + rng.float(-0.25, 0.25) * (across / options.lines);
     const segments = 4 + rng.int(0, 3);
     const step = along / segments;
     const amplitude = rng.float(0.6, 2.4);
@@ -60,7 +61,10 @@ export function woodgrainPath(
     for (let s = 1; s < points.length; s++) {
       const prev = points[s - 1] ?? [0, 0];
       const point = points[s] ?? [0, 0];
-      const control = toXY([(prev[0] + point[0]) / 2, prev[1] + rng.float(-amplitude, amplitude) * 1.4]);
+      const control = toXY([
+        (prev[0] + point[0]) / 2,
+        prev[1] + rng.float(-amplitude, amplitude) * 1.4,
+      ]);
       const end = toXY(point);
       d += `Q${n(control[0] ?? 0)} ${n(control[1] ?? 0)} ${n(end[0] ?? 0)} ${n(end[1] ?? 0)}`;
     }
@@ -70,7 +74,14 @@ export function woodgrainPath(
 }
 
 /** Short tufts scattered over an area: the shag carpet's pile. */
-export function shagPath(x: number, y: number, width: number, height: number, count: number, seed: string): string {
+export function shagPath(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  count: number,
+  seed: string,
+): string {
   const rng: Rng = createRng(seed);
   let d = '';
   for (let i = 0; i < count; i++) {
@@ -84,7 +95,13 @@ export function shagPath(x: number, y: number, width: number, height: number, co
 }
 
 /** A rectangle with rounded corners as path data, for shapes that need to be one path. */
-export function roundedRectPath(x: number, y: number, width: number, height: number, r: number): string {
+export function roundedRectPath(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  r: number,
+): string {
   const radius = Math.min(r, width / 2, height / 2);
   return (
     `M${n(x + radius)} ${n(y)}h${n(width - 2 * radius)}a${n(radius)} ${n(radius)} 0 0 1 ${n(radius)} ${n(radius)}` +

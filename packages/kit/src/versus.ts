@@ -117,9 +117,7 @@ function computeDraws(seed: number, pool: readonly string[], count: number): str
   for (let i = 0; i < count; i++) {
     const lastPlayed = drawn.length > 0 ? (drawn[drawn.length - 1] ?? null) : null;
     const candidates =
-      pool.length > 1 && lastPlayed !== null
-        ? pool.filter((id) => id !== lastPlayed)
-        : pool;
+      pool.length > 1 && lastPlayed !== null ? pool.filter((id) => id !== lastPlayed) : pool;
     drawn.push(rng.pick(candidates));
   }
   return drawn;
@@ -216,11 +214,7 @@ export function rivalryKey(names: readonly [string, string]): string {
 }
 
 /** Folds a finished series into the stored Versus data; throws if the series is not finished. */
-export function recordSeries(
-  data: VersusData,
-  series: VersusSeries,
-  at: IsoTime,
-): VersusData {
+export function recordSeries(data: VersusData, series: VersusSeries, at: IsoTime): VersusData {
   if (series.phase !== 'finished' || series.winner === null) {
     throw new Error('Cannot record series: series is not finished.');
   }
@@ -272,11 +266,7 @@ export function recordSeries(
   ];
 
   const rivalryNames: [string, string] =
-    existing !== undefined
-      ? existing.names
-      : seat1Index === 0
-        ? [name1, name2]
-        : [name2, name1];
+    existing !== undefined ? existing.names : seat1Index === 0 ? [name1, name2] : [name2, name1];
 
   const updatedRivalry: RivalryData = {
     names: rivalryNames,

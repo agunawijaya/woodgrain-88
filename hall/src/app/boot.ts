@@ -32,7 +32,11 @@ interface Page {
   dispose(): void;
 }
 
-export function boot(root: HTMLElement, overrides: readonly GameEntry[] = [], services = createServices(overrides)): void {
+export function boot(
+  root: HTMLElement,
+  overrides: readonly GameEntry[] = [],
+  services = createServices(overrides),
+): void {
   const { settings } = services;
   // Patches and micro-challenges of every playable game, for growth, the jacket and the run.
   void services.denLife.loadGameData();
@@ -86,12 +90,22 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = [], se
 
   const goToGame = (id: string, version?: string) =>
     router.go(version ? { name: 'game', id, version } : { name: 'game', id });
+  const goToDetails = (id: string, version?: string) =>
+    router.go(version ? { name: 'details', id, version } : { name: 'details', id });
   // Straight into play on a channel the dial picked.
   const playChannel = (id: string, version: string | undefined, channel: string) =>
-    router.go({ name: 'play', id, params: new URLSearchParams({ ch: channel, ...(version ? { version } : {}) }) });
+    router.go({
+      name: 'play',
+      id,
+      params: new URLSearchParams({ ch: channel, ...(version ? { version } : {}) }),
+    });
+
+  // The channel the TV was on when the player left the room, to come back to.
+  let lastSlot: number | undefined;
 
   const clearViews = (keep: 'den' | 'list' | 'none') => {
     if (keep !== 'den') {
+      lastSlot = den?.slot ?? lastSlot;
       den?.dispose();
       den = null;
     }
@@ -108,7 +122,9 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = [], se
     if (!den) {
       den = createDenView({
         services,
+        ...(lastSlot === undefined ? {} : { startSlot: lastSlot }),
         onOpenGame: goToGame,
+        onOpenDetails: goToDetails,
         onOpenList: () => router.go({ name: 'list' }),
         onShowShortcuts: openShortcuts,
         onOpenJacket: () => router.go({ name: 'jacket' }),
@@ -118,7 +134,12 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = [], se
         onOpenCalendar: () =>
           openCalendar({
             services,
-            onPlayDaily: (id, channel) => router.go({ name: 'play', id, params: new URLSearchParams({ mode: 'daily', ch: channel }) }),
+            onPlayDaily: (id, channel) =>
+              router.go({
+                name: 'play',
+                id,
+                params: new URLSearchParams({ mode: 'daily', ch: channel }),
+              }),
           }),
       });
       viewHost.append(den.element);
@@ -156,6 +177,31 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = [], se
     shell.classList.remove('is-playing');
   };
 
+  /** The details overlay over the Den (or the list, if that is where it was opened from). */
+  const showDetails = (entry: GameEntry, version: string | undefined) => {
+    const { id } = entry.manifest;
+    if (!den && !list) showDen();
+    details?.close();
+    details = openDetails({
+      services,
+      entry,
+      ...(version ? { version } : {}),
+      onPlay: (id, version, channel) =>
+        channel ? playChannel(id, version, channel) : goToGame(id, version),
+      onClose: () => {
+        details = null;
+        const stillHere = ['game', 'details', 'play'].some((head) =>
+          location.hash.startsWith(`#/${head}/${id}`),
+        );
+        if (stillHere) {
+          router.go(backgroundHash === '#/list' ? { name: 'list' } : { name: 'den' }, {
+            replace: true,
+          });
+        }
+      },
+    });
+  };
+
   const startGame = async (id: string, route: Route) => {
     const entry = services.registry.entryById(id);
     if (!entry) {
@@ -163,20 +209,7 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = [], se
       return;
     }
     if (!entry.load) {
-      if (!den && !list) showDen();
-      details?.close();
-      details = openDetails({
-        services,
-        entry,
-        ...(route.name === 'game' && route.version ? { version: route.version } : {}),
-        onPlay: (id, version, channel) => (channel ? playChannel(id, version, channel) : goToGame(id, version)),
-        onClose: () => {
-          details = null;
-          if (location.hash.startsWith(`#/game/${id}`) || location.hash.startsWith(`#/play/${id}`)) {
-            router.go(backgroundHash === '#/list' ? { name: 'list' } : { name: 'den' }, { replace: true });
-          }
-        },
-      });
+      showDetails(entry, route.name === 'game' ? route.version : undefined);
       return;
     }
     clearViews('none');
@@ -185,20 +218,29 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = [], se
     const params =
       route.name === 'play'
         ? route.params
-        : new URLSearchParams(route.name === 'game' && route.version ? { version: route.version } : {});
-    const savedVersion = services.settings.game(id).get<string | undefined>(VERSION_SETTING, undefined);
+        : new URLSearchParams(
+            route.name === 'game' && route.version ? { version: route.version } : {},
+          );
+    const savedVersion = services.settings
+      .game(id)
+      .get<string | undefined>(VERSION_SETTING, undefined);
     session = await startPlaySession({
       services,
       entry,
+      parent: viewHost,
       run: runFromParams(entry.manifest, params, location.hash, new Date(), savedVersion),
       micro: params.get('micro'),
       onBackToHall: () => router.go({ name: 'den' }),
       onRoundOver: () => router.go({ name: 'run' }),
       onBackToVersus: () => router.go({ name: 'versus' }),
-      onSwitchChannel: (channel) => playChannel(id, route.name === 'play' ? (route.params.get('version') ?? undefined) : undefined, channel),
+      onSwitchChannel: (channel) =>
+        playChannel(
+          id,
+          route.name === 'play' ? (route.params.get('version') ?? undefined) : undefined,
+          channel,
+        ),
       onOpenSettings: () => openSettings(entry.manifest),
     });
-    viewHost.append(session.element);
   };
 
   async function handle(route: Route) {
@@ -217,7 +259,8 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = [], se
       endSession();
     }
     currentHash = location.hash || '#/';
-    // Details live at #/game/<id>; any other route (Back included) closes them.
+    // Details live at #/details/<id> (and #/game/<id> for a coming-soon game); any other route,
+    // Back included, closes them.
     details?.close();
     if (route.name !== 'run') {
       run?.dispose();
@@ -241,7 +284,11 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = [], se
               router.go({
                 name: 'play',
                 id: round.game,
-                params: new URLSearchParams({ mode: 'power-cycle-run', micro: round.challenge.id, ch: round.challenge.channel }),
+                params: new URLSearchParams({
+                  mode: 'power-cycle-run',
+                  micro: round.challenge.id,
+                  ch: round.challenge.channel,
+                }),
               }),
             onExit: () => router.go({ name: 'den' }),
           });
@@ -258,7 +305,12 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = [], se
           createVersusView({
             services,
             onBack: () => router.go({ name: 'den' }),
-            onPlay: (id) => router.go({ name: 'play', id, params: new URLSearchParams({ mode: 'versus-night' }) }),
+            onPlay: (id) =>
+              router.go({
+                name: 'play',
+                id,
+                params: new URLSearchParams({ mode: 'versus-night' }),
+              }),
           }),
         );
         break;
@@ -280,6 +332,12 @@ export function boot(root: HTMLElement, overrides: readonly GameEntry[] = [], se
       case 'play':
         await startGame(route.id, route);
         break;
+      case 'details': {
+        const entry = services.registry.entryById(route.id);
+        if (entry) showDetails(entry, route.version);
+        else router.go({ name: 'den' }, { replace: true });
+        break;
+      }
       case 'not-found':
         router.go({ name: 'den' }, { replace: true });
         break;

@@ -18,7 +18,12 @@ export interface Rect {
   height: number;
 }
 
-export const rect = (x: number, y: number, width: number, height: number): Rect => ({ x, y, width, height });
+export const rect = (x: number, y: number, width: number, height: number): Rect => ({
+  x,
+  y,
+  width,
+  height,
+});
 
 export const LAYOUT = {
   door: rect(40, 160, 172, 540),

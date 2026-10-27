@@ -102,3 +102,16 @@ right?: { a, b }, liveChange }` with one line (1–60 characters) per position; 
   `MAX_CHANNELS` rises to 64. `supports` loses `proSwitch` and gains `microChallenges`.
 - **Seats.** `SeatInfo.kid` names the Neighbourhood Kid in a bot seat; games turn it into AI settings
   with the kit's `aiSettings`.
+
+## Amendment, 2026-10-27 (prompt 02): the opponent in a result, loops that let go
+
+- **Opponent.** `GameResult.opponentKid` names the Kid a solo game was played against, so the Den
+  can keep each Kid's record.
+- **Held sounds.** `AudioEngine.hold()` starts a sound that runs until it is stopped, with gain,
+  pitch and pan that can follow the game (an engine's hum), beside the one-shot `play()`.
+- **Loops that let go.** `LoopOptions.onStop` is called when a loop is stopped. The chrome keeps the
+  loops a game creates so it can pause them together; it now drops each one as it stops. Before,
+  every finished loop stayed in that list with the match it drove, and a game that starts a new
+  loop for every match grew by about 20 MB a match.
+- **Keys aimed at controls.** The kit's input ignores keys pressed on a button or a form field, so
+  Enter and Space work those controls instead of steering the game.

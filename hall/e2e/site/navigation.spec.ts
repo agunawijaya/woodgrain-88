@@ -11,7 +11,7 @@ test.describe('Navigation and routing', () => {
     await page.goto('/');
 
     await page.locator('.game-card button[data-action="details"]').click();
-    await expect(page).toHaveURL(/#\/game\/[a-z0-9-]+/);
+    await expect(page).toHaveURL(/#\/details\/[a-z0-9-]+/);
     await expect(page.locator('.dialog')).toBeVisible();
 
     await page.goBack();

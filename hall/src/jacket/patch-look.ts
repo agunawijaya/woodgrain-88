@@ -63,13 +63,29 @@ const PICTURE_SHEEN =
 /** A patch as a data URL: one picture to paint, however many filters its embroidery uses. */
 function patchPicture(look: PatchLook): string {
   // Untitled: the surrounding drawing or tile carries the name.
-  const svg = patchArt({ manifest: look.manifest, patchId: look.patchId, tier: look.tier, state: look.state, gold: look.gold }, 96, 'image');
+  const svg = patchArt(
+    {
+      manifest: look.manifest,
+      patchId: look.patchId,
+      tier: look.tier,
+      state: look.state,
+      gold: look.gold,
+    },
+    96,
+    'image',
+  );
   const withSheen = look.gold ? svg.replace(/^(<svg[^>]*>)/, `$1${PICTURE_SHEEN}`) : svg;
   return `data:image/svg+xml,${encodeURIComponent(withSheen)}`;
 }
 
 /** The patch as an `<image>` inside a larger SVG (the jacket, the door jacket). */
-export function patchImage(look: PatchLook, x: number, y: number, size: number, extra = ''): string {
+export function patchImage(
+  look: PatchLook,
+  x: number,
+  y: number,
+  size: number,
+  extra = '',
+): string {
   return `<image href="${patchPicture(look)}" x="${x}" y="${y}" width="${size}" height="${size}" ${extra}/>`;
 }
 

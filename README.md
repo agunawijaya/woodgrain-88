@@ -51,7 +51,7 @@ and the TV changes channel.
 | 17   | Glove Box       | Duels  | 1–2 (couch versus) | coming soon | Top-down boxing scored on clean punches, knockouts included.    |
 | 18   | Shore Battery   | Arcade | 1–2 (couch versus) | coming soon | Planes overhead, ships below, two gunners racing for the score. |
 | 19   | Baseline        | Sports | 1–2 (couch versus) | coming soon | Two-button tennis where the angle comes from your timing.       |
-| 20   | Tank Duel       | Duels  | 2 (couch versus)   | coming soon | Tanks, jets and biplanes. Ricochets, cover and big explosions.  |
+| 20   | Tank Duel       | Duels  | 1–2 (couch versus) | playable    | Tanks, jets and biplanes. Ricochets, cover and big explosions.  |
 | 21   | Lucky Reels     | Brain  | 1                  | coming soon | Pick your paylines, place your bet, pull the lever.             |
 | 22   | Slalom Line     | Sports | 1                  | coming soon | Carve the gates on a fresh mountain every run.                  |
 | 23   | Lasso Run       | Arcade | 1                  | coming soon | Round up the herd to the rhythm of hooves.                      |

@@ -61,7 +61,8 @@ export function encodeChallenge(challenge: Challenge): string {
   const seed = encodeURIComponent(String(challenge.seed));
   const beat = encodeURIComponent(String(challenge.score));
   const encodedSig = encodeURIComponent(sig);
-  const ver = challenge.version === undefined ? '' : `&ver=${encodeURIComponent(challenge.version)}`;
+  const ver =
+    challenge.version === undefined ? '' : `&ver=${encodeURIComponent(challenge.version)}`;
   return `#/play/${game}?mode=challenge&ch=${ch}&seed=${seed}&beat=${beat}${ver}&sig=${encodedSig}`;
 }
 
@@ -112,7 +113,13 @@ export function decodeChallenge(hash: string): Challenge | null {
   const version = params.get('ver');
   if (version !== null && !KEBAB_ID_RE.test(version)) return null;
 
-  const challenge: Challenge = { game, channel, seed, score, ...(version === null ? {} : { version }) };
+  const challenge: Challenge = {
+    game,
+    channel,
+    seed,
+    score,
+    ...(version === null ? {} : { version }),
+  };
   if (sig !== challengeChecksum(challenge)) return null;
   return challenge;
 }
@@ -254,10 +261,15 @@ const COLOURED_SQUARE_OR_CIRCLE = /^[\u{1F7E0}-\u{1F7EB}\u2B1B\u2B1C\u26AA\u26AB
  * MAX_SUMMARY_EMOJI of them. Share lines must never carry text a player typed.
  */
 export function emojiSummary(text: string): string[] | null {
-  const segments = [...new Intl.Segmenter('en', { granularity: 'grapheme' }).segment(text)].map((part) => part.segment);
+  const segments = [...new Intl.Segmenter('en', { granularity: 'grapheme' }).segment(text)].map(
+    (part) => part.segment,
+  );
   if (segments.length === 0 || segments.length > MAX_SUMMARY_EMOJI) return null;
   const allEmoji = segments.every(
-    (segment) => PICTOGRAPH.test(segment) || KEYCAP_OR_FLAG.test(segment) || COLOURED_SQUARE_OR_CIRCLE.test(segment),
+    (segment) =>
+      PICTOGRAPH.test(segment) ||
+      KEYCAP_OR_FLAG.test(segment) ||
+      COLOURED_SQUARE_OR_CIRCLE.test(segment),
   );
   return allEmoji ? segments : null;
 }

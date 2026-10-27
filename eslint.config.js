@@ -67,6 +67,12 @@ export default defineConfig(
     languageOptions: { globals: { ...globals.node } },
   },
   {
+    // A game's command-line scripts (simulations, reports) print their progress.
+    files: ['games/*/scripts/**'],
+    languageOptions: { globals: { ...globals.node } },
+    rules: { 'no-console': 'off' },
+  },
+  {
     // The crew bridge is plain dependency-free ESM so it runs before `pnpm install`.
     files: ['**/*.js', '**/*.mjs'],
     extends: [tseslint.configs.disableTypeChecked],

@@ -38,7 +38,28 @@ function dispatchKey(
 }
 
 describe('input', () => {
-  it('routes KeyW/Space to seat 1 and ArrowUp/Enter to seat 2 in split layout', () => {
+  it('leaves keys pressed on a focused menu button to the button', () => {
+    const page = document.createElement('div');
+    const button = document.createElement('button');
+    page.append(button);
+    const input = createInput({ keyTarget: page, layout: 'split' });
+    const onButton = new KeyboardEvent('keydown', {
+      code: 'Enter',
+      bubbles: true,
+      cancelable: true,
+    });
+    button.dispatchEvent(onButton);
+    dispatchKey(page, 'keydown', 'Enter');
+
+    const frame = input.poll();
+
+    expect(onButton.defaultPrevented).toBe(false);
+    expect(frame.seats[2].pressed.has('fire')).toBe(false);
+    expect(frame.seats[1].pressed.has('fire')).toBe(true);
+    input.dispose();
+  });
+
+  it('routes ArrowUp/Enter to seat 1 and KeyW/Space to seat 2 in split layout', () => {
     const keyTarget = new EventTarget();
     const input = createInput({ keyTarget, layout: 'split' });
 
@@ -65,7 +86,7 @@ describe('input', () => {
     dispatchKey(keyTarget, 'keyup', 'Enter');
     input.poll();
 
-    dispatchKey(keyTarget, 'keydown', 'ArrowUp');
+    dispatchKey(keyTarget, 'keydown', 'KeyW');
     const separatePoll = input.poll();
     expect(separatePoll.seats[1].held.has('up')).toBe(false);
     expect(separatePoll.seats[2].held.has('up')).toBe(true);
@@ -101,8 +122,8 @@ describe('input', () => {
     const keyTarget = new EventTarget();
     const input = createInput({ keyTarget });
 
-    dispatchKey(keyTarget, 'keydown', 'Space');
-    dispatchKey(keyTarget, 'keyup', 'Space');
+    dispatchKey(keyTarget, 'keydown', 'Enter');
+    dispatchKey(keyTarget, 'keyup', 'Enter');
 
     const firstPoll = input.poll();
     expect(firstPoll.seats[1].pressed.has('fire')).toBe(true);
@@ -121,12 +142,12 @@ describe('input', () => {
     const keyTarget = new EventTarget();
     const input = createInput({ keyTarget });
 
-    dispatchKey(keyTarget, 'keydown', 'KeyW', false);
+    dispatchKey(keyTarget, 'keydown', 'ArrowUp', false);
     const initialFrame = input.poll();
     expect(initialFrame.seats[1].pressed.has('up')).toBe(true);
     expect(initialFrame.seats[1].held.has('up')).toBe(true);
 
-    dispatchKey(keyTarget, 'keydown', 'KeyW', true);
+    dispatchKey(keyTarget, 'keydown', 'ArrowUp', true);
     const repeatFrame = input.poll();
     expect(repeatFrame.seats[1].pressed.has('up')).toBe(false);
     expect(repeatFrame.seats[1].held.has('up')).toBe(true);
@@ -166,11 +187,11 @@ describe('input', () => {
       gamepads: () => pads,
     });
 
-    dispatchKey(keyTarget, 'keydown', 'KeyA');
+    dispatchKey(keyTarget, 'keydown', 'ArrowLeft');
     const leftFrame = input.poll();
     expect(leftFrame.seats[1].axis).toEqual({ x: -1, y: 0 });
 
-    dispatchKey(keyTarget, 'keyup', 'KeyA');
+    dispatchKey(keyTarget, 'keyup', 'ArrowLeft');
     input.poll();
 
     // Stick inside 0.4 deadzone falls back to digital keys (neutral)
@@ -292,10 +313,10 @@ describe('input', () => {
     const soloErrors = validateBindings(crossSeatCollisions, 'solo');
     expect(soloErrors).toEqual([]);
 
-    const rebound = rebind(DEFAULT_BINDINGS, 2, 'fire', 'Space');
-    expect(rebound[2].keys.fire).toEqual(['Space']);
-    expect(rebound[1].keys.fire?.includes('Space')).toBe(false);
-    expect(DEFAULT_BINDINGS[1].keys.fire?.includes('Space')).toBe(true);
+    const rebound = rebind(DEFAULT_BINDINGS, 2, 'fire', 'Enter');
+    expect(rebound[2].keys.fire).toEqual(['Enter']);
+    expect(rebound[1].keys.fire?.includes('Enter')).toBe(false);
+    expect(DEFAULT_BINDINGS[1].keys.fire?.includes('Enter')).toBe(true);
 
     expect(() => rebind(DEFAULT_BINDINGS, 1, 'fire', 'Escape')).toThrow('reserved for pause');
   });
@@ -304,8 +325,8 @@ describe('input', () => {
     const keyTarget = new EventTarget();
     const input = createInput({ keyTarget });
 
-    dispatchKey(keyTarget, 'keydown', 'KeyW');
-    dispatchKey(keyTarget, 'keydown', 'Space');
+    dispatchKey(keyTarget, 'keydown', 'ArrowUp');
+    dispatchKey(keyTarget, 'keydown', 'Enter');
     const firstPoll = input.poll();
     expect(firstPoll.seats[1].held.has('up')).toBe(true);
     expect(firstPoll.seats[1].held.has('fire')).toBe(true);
@@ -325,7 +346,7 @@ describe('input', () => {
     const keyTarget = new EventTarget();
     const input = createInput({ keyTarget });
 
-    dispatchKey(keyTarget, 'keydown', 'KeyW');
+    dispatchKey(keyTarget, 'keydown', 'ArrowUp');
     input.poll();
 
     input.reset();
@@ -335,7 +356,7 @@ describe('input', () => {
 
     input.dispose();
 
-    dispatchKey(keyTarget, 'keydown', 'KeyW');
+    dispatchKey(keyTarget, 'keydown', 'ArrowUp');
     const pollAfterDispose = input.poll();
     expect(pollAfterDispose.seats[1].held.size).toBe(0);
     expect(pollAfterDispose.seats[1].pressed.size).toBe(0);

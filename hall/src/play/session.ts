@@ -52,6 +52,11 @@ import { createRunRound, createVersusGame } from './den-modes.ts';
 export interface PlaySessionOptions {
   services: Services;
   entry: GameEntry;
+  /**
+   * Where the play view goes. It is put in place before the game mounts, so the game is in the
+   * page when it takes focus and the first key pressed reaches it.
+   */
+  parent: HTMLElement;
   run: RunInfo;
   /** A Power Cycle Run round: the micro-challenge it plays. */
   micro?: string | null;
@@ -66,7 +71,6 @@ export interface PlaySessionOptions {
 }
 
 export interface PlaySession {
-  readonly element: HTMLElement;
   /** Resolves true when it is fine to leave (asking the player first if needed). */
   confirmLeave(): Promise<boolean>;
   dispose(): void;
@@ -123,7 +127,8 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
   const backButton = element.querySelector<HTMLButtonElement>('.play-back');
   const pauseButton = element.querySelector<HTMLButtonElement>('.play-pause');
   const hint = element.querySelector<HTMLParagraphElement>('.play-hint');
-  if (!host || !backButton || !pauseButton || !hint) throw new Error('Play view markup is missing parts');
+  if (!host || !backButton || !pauseButton || !hint)
+    throw new Error('Play view markup is missing parts');
   if (round) element.querySelector('.play-chrome')?.append(round.hud);
   const channelButton = element.querySelector<HTMLButtonElement>('.play-channel');
 
@@ -146,9 +151,16 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
   const stopTracker = tracker.connect(services.bus);
   const stopEarned = tracker.onEarned((earned) => {
     earnedThisRun.push(earned);
-    toast(`Patch earned: ${earned.patch.title}${earned.gold ? ' (gold thread)' : ''}`, { tone: 'celebrate' });
+    toast(`Patch earned: ${earned.patch.title}${earned.gold ? ' (gold thread)' : ''}`, {
+      tone: 'celebrate',
+    });
   });
-  services.bus.beginSession({ game: manifest.id, mode: run.mode, channel: run.channel, difficulty: denLife.switches() });
+  services.bus.beginSession({
+    game: manifest.id,
+    mode: run.mode,
+    channel: run.channel,
+    difficulty: denLife.switches(),
+  });
   // A switch flipped mid-run (from the pause menu or the Den) reaches the game, which applies it
   // from its next round or game; events carry the new positions from now on.
   const switchListeners = new Set<(switches: DifficultySwitches) => void>();
@@ -165,10 +177,13 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
   const litAtStart = denLife.litLamps();
 
   // ——— Input ———
+  // One person alone has the whole keyboard; two share it. A game whose own menu switches between
+  // the two sets the layout again for each match.
   const controls = services.settings.get().controls;
+  const people = seats.filter((seat) => seat.kind === 'human').length;
   const input = createInput({
     pointerTarget: host,
-    layout: controls.layout,
+    layout: people >= 2 ? 'split' : 'solo',
     bindings: controls.bindings ?? DEFAULT_BINDINGS,
     padSeats: controls.padSeats,
   });
@@ -251,7 +266,9 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
       const switches = denLife.switches();
       const button = (side: 'left' | 'right', label: string) =>
         `<button type="button" class="pause-switch" data-switch="${side}" aria-label="${label} difficulty switch: ${switches[side] === 'A' ? 'A, hard' : 'B, easy'}. Press to flip"><span>${label}</span><span class="pause-switch-slot"><span class="pause-switch-thumb${switches[side] === 'A' ? ' is-a' : ''}"></span></span><strong>${switches[side]}</strong></button>`;
-      const note = manifest.difficulty?.liveChange ? '' : '<small>A flip applies from the next round.</small>';
+      const note = manifest.difficulty?.liveChange
+        ? ''
+        : '<small>A flip applies from the next round.</small>';
       return `<div class="pause-switches" data-ref="switches">${button('left', 'Left')}${button('right', 'Right')}${note}</div>`;
     };
     overlay.body.innerHTML =
@@ -259,12 +276,16 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
       switchesRow() +
       `<div class="menu-list">` +
       items
-        .map(([id, label], i) => `<button type="button" class="button${i === 0 ? ' button--primary' : ''}" data-item="${escapeXml(id)}">${escapeXml(label)}</button>`)
+        .map(
+          ([id, label], i) =>
+            `<button type="button" class="button${i === 0 ? ' button--primary' : ''}" data-item="${escapeXml(id)}">${escapeXml(label)}</button>`,
+        )
         .join('') +
       `</div>`;
     const pauseDialog = overlay;
     pauseDialog.body.addEventListener('click', (event) => {
-      const side = (event.target as Element).closest<HTMLButtonElement>('[data-switch]')?.dataset.switch;
+      const side = (event.target as Element).closest<HTMLButtonElement>('[data-switch]')?.dataset
+        .switch;
       if (side === 'left' || side === 'right') {
         denLife.setSwitch(side, denLife.switches()[side] === 'A' ? 'B' : 'A');
         services.audio.play('switch-snick');
@@ -302,15 +323,23 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
     else if (view === 'play') openPauseMenu();
   });
   const onVisibility = () => {
-    if (document.visibilityState === 'hidden' && view === 'play' && !overlay) openPauseMenu('hidden');
+    if (document.visibilityState === 'hidden' && view === 'play' && !overlay)
+      openPauseMenu('hidden');
   };
   document.addEventListener('visibilitychange', onVisibility);
   element.addEventListener('click', (event) => {
-    const action = (event.target as Element).closest<HTMLButtonElement>('[data-action]')?.dataset.action;
+    const action = (event.target as Element).closest<HTMLButtonElement>('[data-action]')?.dataset
+      .action;
     if (action === 'hall') backToHall();
     if (action === 'pause') openPauseMenu();
     if (action === 'dial')
-      openChannelPicker({ services, manifest, current: run.channel, verb: 'Switch to', onPlay: (channel) => options.onSwitchChannel?.(channel) });
+      openChannelPicker({
+        services,
+        manifest,
+        current: run.channel,
+        verb: 'Switch to',
+        onPlay: (channel) => options.onSwitchChannel?.(channel),
+      });
   });
 
   // ——— Results the Hall presents ———
@@ -343,10 +372,16 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
       ? `<p class="results-lamps"><span class="results-lamp" aria-hidden="true"></span>Lamp ${aftermath.newLamps.join(' and ')} lit on the Counter</p>`
       : '';
 
-  const showResults = (result: GameResult, receipt: ResultReceipt, versusLine: string | null, aftermath: RunAftermath | null) => {
+  const showResults = (
+    result: GameResult,
+    receipt: ResultReceipt,
+    versusLine: string | null,
+    aftermath: RunAftermath | null,
+  ) => {
     if (overlay) overlay.close();
     const versus = result.winnerSeat !== undefined;
-    const seatName = (seat: 1 | 2) => seats.find((info) => info.seat === seat)?.name ?? `Seat ${seat}`;
+    const seatName = (seat: 1 | 2) =>
+      seats.find((info) => info.seat === seat)?.name ?? `Seat ${seat}`;
     const headline =
       versusLine ??
       (versus
@@ -356,7 +391,11 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
         : result.won === false
           ? 'Nice try'
           : 'Well played');
-    overlay = openDialog({ title: headline, className: 'dialog--results', onClose: () => (overlay = null) });
+    overlay = openDialog({
+      title: headline,
+      className: 'dialog--results',
+      onClose: () => (overlay = null),
+    });
     const dialog = overlay;
     const challenge = context.share.challengeLink(result.score);
     dialog.body.innerHTML =
@@ -371,10 +410,12 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
       stitchedPatches(receipt) +
       lampsLit(aftermath) +
       (run.mode === 'daily'
-        ? `<p class="results-daily">${aftermath?.dailyCounted === false ? 'Practice: today\'s daily already counts your first run. ' : ''}<span class="results-daily-line">${escapeXml(shareLineFor(result))}</span><button type="button" class="button button--quiet" data-result="daily">Copy</button></p>`
+        ? `<p class="results-daily">${aftermath?.dailyCounted === false ? "Practice: today's daily already counts your first run. " : ''}<span class="results-daily-line">${escapeXml(shareLineFor(result))}</span><button type="button" class="button button--quiet" data-result="daily">Copy</button></p>`
         : '') +
       `<div class="results-share">` +
-      (manifest.supports.challengeLinks ? `<button type="button" class="button button--quiet" data-result="challenge">Challenge a friend</button>` : '') +
+      (manifest.supports.challengeLinks
+        ? `<button type="button" class="button button--quiet" data-result="challenge">Challenge a friend</button>`
+        : '') +
       `<button type="button" class="button button--quiet" data-result="card">Share card</button>` +
       `</div>` +
       `<div class="menu-list menu-list--row">` +
@@ -411,7 +452,8 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
       }
     };
     dialog.body.addEventListener('click', (event) => {
-      const what = (event.target as Element).closest<HTMLButtonElement>('[data-result]')?.dataset.result;
+      const what = (event.target as Element).closest<HTMLButtonElement>('[data-result]')?.dataset
+        .result;
       if (what) act(what);
     });
     dialog.element.addEventListener('keydown', (event) => {
@@ -480,7 +522,15 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
     },
     createLoop(loopOptions) {
       // The chrome pauses these with the game; the game never needs its own visibility handling.
-      const loop = createLoop({ ...loopOptions, autoPause: false });
+      // A stopped loop is let go: kept, it would hold its game's finished match in memory.
+      const loop = createLoop({
+        ...loopOptions,
+        autoPause: false,
+        onStop: () => {
+          loops.delete(loop);
+          loopOptions.onStop?.();
+        },
+      });
       loops.add(loop);
       return loop;
     },
@@ -490,7 +540,14 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
       const submitted = Number.isFinite(result.score)
         ? services.records.submit(
             manifest.id,
-            { score: result.score, at: new Date().toISOString(), seed: run.seed, durationMs, channel: run.channel, mode: run.mode },
+            {
+              score: result.score,
+              at: new Date().toISOString(),
+              seed: run.seed,
+              durationMs,
+              channel: run.channel,
+              mode: run.mode,
+            },
             manifest.scoreOrder,
           )
         : { rank: null, newBest: false };
@@ -501,13 +558,23 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
         ...(result.winnerSeat ? { versusWinner: result.winnerSeat } : {}),
       });
       markVersionFinished();
-      const aftermath = denLife.recordFinishedRun({ manifest, run, result, seats, litBefore: litAtStart });
+      const aftermath = denLife.recordFinishedRun({
+        manifest,
+        run,
+        result,
+        seats,
+        litBefore: litAtStart,
+      });
       const versusLine = versusGame ? versusGame.recordResult(result) : null;
       // A run round ends with the game; the round's own banner replaces the results screen.
       round?.gameEnded();
       // The Den sparkles them in and marks them seen when the player walks back.
-      for (const item of denLife.announceGrowth(aftermath.newGrowth)) toast(item.toast, { tone: 'celebrate' });
-      services.bus.emit({ type: 'result', data: { score: result.score, won: result.won ?? false, newBest: submitted.newBest } });
+      for (const item of denLife.announceGrowth(aftermath.newGrowth))
+        toast(item.toast, { tone: 'celebrate' });
+      services.bus.emit({
+        type: 'result',
+        data: { score: result.score, won: result.won ?? false, newBest: submitted.newBest },
+      });
       const receipt: ResultReceipt = {
         newBest: submitted.newBest,
         rank: submitted.rank,
@@ -518,7 +585,12 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
         // The bus delivers the result event (and any patch it earns) on a
         // microtask queued before this one, so the screen sees those patches too.
         queueMicrotask(() =>
-          showResults(result, { ...receipt, patchesEarned: [...receipt.patchesEarned, ...earnedThisRun.splice(0)] }, versusLine, aftermath),
+          showResults(
+            result,
+            { ...receipt, patchesEarned: [...receipt.patchesEarned, ...earnedThisRun.splice(0)] },
+            versusLine,
+            aftermath,
+          ),
         );
       }
       return receipt;
@@ -557,7 +629,8 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
     forgetGameData() {
       void confirmDialog({
         title: `Forget ${manifest.title}?`,
-        message: 'Your records, stats, save and patches for this game will be cleared. Other games are not touched.',
+        message:
+          'Your records, stats, save and patches for this game will be cleared. Other games are not touched.',
         confirm: 'Forget it',
         cancel: 'Keep it',
       }).then((ok) => {
@@ -574,11 +647,11 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
   };
 
   showChromeFor(view);
+  options.parent.append(element);
   instance = module.mount(host, context);
   host.focus();
 
   return {
-    element,
     confirmLeave,
     dispose() {
       if (disposed) return;
