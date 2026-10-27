@@ -20,6 +20,7 @@ export {
   createGroundPaint,
   type GroundPaint,
   type GroundPaintOptions,
+  type PaintResponse,
   type Stamp,
   type StampKind,
 } from './ground-paint.ts';
@@ -38,6 +39,9 @@ export {
 } from './heightmap.ts';
 export {
   createLightRig,
+  type DayMood,
+  type LightMood,
+  type NightMood,
   type LightPalette,
   type LightRig,
   type LightRigOptions,
@@ -60,7 +64,14 @@ export {
   type ParticleLook,
   type ParticleSpawn,
 } from './particles.ts';
-export { createPostChain, type FocusBand, type PostChain, type Quality } from './post.ts';
+export {
+  createPostChain,
+  type FinishOptions,
+  type FocusBand,
+  type Grade,
+  type PostChain,
+  type Quality,
+} from './post.ts';
 export { createRibbon, type Ribbon, type RibbonStyle } from './ribbon.ts';
 export { createCameraShake, type CameraShake, type ShakeOptions } from './shake.ts';
 export { projectBoxUvs } from './uv.ts';

@@ -140,6 +140,46 @@ Each personality trait influences AI behaviour:
 
 Benny has `mirrorsPlayer: true`. Games that can adapt should copy the human player's tactics, move choices, or symmetry.
 
+### The Kids' memory
+
+The Kids do not have perfect recall. A game whose Kids must remember things (clues, cards played,
+the board) keeps those things in a `KidMemory` from `kids/memory` (ADR-0011), and its AI reasons
+only over what the memory gives back.
+
+1. **Choose a profile.** Use `memoryProfile(kid, mode)`. The mode is the player's Kid memory
+   setting: `'human'` (each Kid's own memory, from `KID_MEMORY`) or `'sharp'` (perfect recall,
+   offered as the harder option).
+2. **Describe your facts** with a `FactAdapter`:
+   - `key(fact)`: facts with the same key are the same fact, so seeing it again refreshes it.
+   - `distort(fact, rng)`: a slightly wrong version, close to the truth. A distance off by one, an
+     arrow turned a notch, a card's rank one away.
+3. **Feed it** as the match goes:
+   - `observe(fact, salience, now)` for what the Kid found itself;
+   - `witness(fact, salience, now, rng)` for what the other player revealed. It is noticed only with
+     the Kid's attention, and is otherwise logged as missed.
+   - Use `salienceOf(profile, 'own' | 'theirs', striking)` for the salience. Striking facts
+     (bombs, surprises, big swings) stick better.
+4. **Ask it** with `recall(now, rng)` when the Kid decides. Faint facts are forgotten for good.
+   Faded ones may slip this time, or come back slightly wrong. Fresh ones come back exactly.
+5. **Show it.** `summary()` lists what the Kid kept, forgot, misremembered and missed, for a "What
+   the Kid remembered" panel on the results screen.
+
+`now` is seconds on the match clock, and `rng` a seeded stream of the Kid's own, so matches replay
+exactly. When the rules put everything on the table anyway (Hot & Cold's Notebook mode), skip the
+memory. Let the Kid take in only `profile.capacity` facts per decision instead, its reading budget.
+
+| Kid   | Capacity | Half-life | Distortion | Attention | Rehearses |
+| ----- | -------- | --------- | ---------- | --------- | --------- |
+| Lou   | 9        | 120 s     | 2%         | 90%       | yes       |
+| Moss  | 7        | 90 s      | 4%         | 80%       | yes       |
+| Rosa  | 6        | 60 s      | 6%         | 85%       | no        |
+| Benny | 6        | 60 s      | 5%         | 95%       | no        |
+| Dee   | 4        | 30 s      | 10%        | 50%       | no        |
+| Pip   | 3        | 20 s      | 18%        | 40%       | no        |
+
+Distortion is the chance of a mix-up once a fact has faded completely. A fact one half-life old is
+mixed up half as often.
+
 ## Versus
 
 Games supporting two players set `manifest.versus` to `'local'` (two humans on one machine) or `'local+bot'` (human versus human or bot).

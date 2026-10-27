@@ -1448,6 +1448,90 @@
       "note": "Lead replaced window.confirm (blocks automation), removed console.debug, fixed null handling.",
       "startedAt": "2026-10-26T14:42:21.566Z",
       "updatedAt": "2026-10-26T15:13:17.208Z"
+    },
+    {
+      "id": "hc-kid-memory",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 827.5,
+      "crewTokens": {
+        "input": 328032,
+        "output": 81648,
+        "thinking": 73674,
+        "cacheRead": 2785994,
+        "total": 409680
+      },
+      "violations": 0,
+      "leadTokens": 16000,
+      "soloTokens": 24000,
+      "note": "Lead wrote API, profiles and the 27 spec tests; crew implemented createKidMemory first round; lead simplified one condition.",
+      "startedAt": "2026-10-27T13:26:31.148Z",
+      "updatedAt": "2026-10-27T13:27:17.857Z"
+    },
+    {
+      "id": "hc-engine-tests",
+      "kind": "tests",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 814.4,
+      "crewTokens": {
+        "input": 346792,
+        "output": 62912,
+        "thinking": 35220,
+        "cacheRead": 5965273,
+        "total": 409704
+      },
+      "violations": 0,
+      "leadTokens": 14000,
+      "soloTokens": 30000,
+      "note": "38 of 42 tests right first time; lead fixed three test mistakes (bomb probe square, seats acting out of turn) and the engine bug they exposed (turn hand-over lost a tick for seat 1).",
+      "startedAt": "2026-10-27T13:34:02.072Z",
+      "updatedAt": "2026-10-27T13:55:50.474Z"
+    },
+    {
+      "id": "hc-settings-save",
+      "kind": "plumbing",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 455.6,
+      "crewTokens": {
+        "input": 129061,
+        "output": 38394,
+        "thinking": 25366,
+        "cacheRead": 1409562,
+        "total": 167455
+      },
+      "violations": 0,
+      "leadTokens": 4000,
+      "soloTokens": 14000,
+      "note": "Accepted as written; matches Tank Duel's patterns, 31 tests.",
+      "startedAt": "2026-10-27T14:24:23.148Z",
+      "updatedAt": "2026-10-27T14:33:02.068Z"
+    },
+    {
+      "id": "hc-sheets",
+      "kind": "plumbing",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 905.8,
+      "crewTokens": {
+        "input": 231917,
+        "output": 80739,
+        "thinking": 55596,
+        "cacheRead": 4997222,
+        "total": 312656
+      },
+      "violations": 0,
+      "leadTokens": 9000,
+      "soloTokens": 20000,
+      "note": "Lint and format failed acceptance; the lead fixed them, then rewrote the records rows and the settings rows' update path for plain reading. 11 tests kept.",
+      "startedAt": "2026-10-27T14:51:35.961Z",
+      "updatedAt": "2026-10-27T14:53:47.344Z"
     }
   ]
 }

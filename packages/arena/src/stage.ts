@@ -19,8 +19,8 @@ import {
 } from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { createTableCamera, frameTable, type TableFraming } from './camera.ts';
-import { createLightRig, type LightRig } from './lighting.ts';
-import { createPostChain, type PostChain, type Quality } from './post.ts';
+import { createLightRig, type LightMood, type LightRig } from './lighting.ts';
+import { createPostChain, type FinishOptions, type PostChain, type Quality } from './post.ts';
 
 export interface StageOptions {
   readonly host: HTMLElement;
@@ -36,6 +36,16 @@ export interface StageOptions {
   readonly preserveDrawingBuffer?: boolean;
   /** A fixed picture size in CSS pixels, for a canvas that is never laid out (the Den TV). */
   readonly size?: { readonly width: number; readonly height: number };
+  /** The game's own light and finish over the shared defaults. */
+  readonly mood?: LightMood;
+  readonly finish?: FinishOptions;
+  /** How strongly the studio reflections show on paint and metal, by appearance. */
+  readonly reflections?: Partial<Record<Appearance, number>>;
+  /**
+   * Exposure at the final tone mapping, by appearance. Bloom picks what glows before exposure, so a
+   * bright scene such as sunlit snow can be lit low, kept clear of the bloom, and exposed up.
+   */
+  readonly exposure?: Partial<Record<Appearance, number>>;
 }
 
 /** A small camera offset for shake, in world units and radians. */
@@ -95,13 +105,21 @@ export function createStage(options: StageOptions): Stage {
     halfWidth,
     halfDepth,
     shadowMapSize: SHADOW_MAP_SIZE[options.quality],
+    ...(options.mood ? { mood: options.mood } : {}),
   });
   scene.add(lights.group);
 
   const post: PostChain | null =
     options.quality === 'low'
       ? null
-      : createPostChain(renderer, scene, camera, options.quality, options.appearance);
+      : createPostChain(
+          renderer,
+          scene,
+          camera,
+          options.quality,
+          options.appearance,
+          options.finish,
+        );
 
   let framing = options.framing;
   let appearance = options.appearance;
@@ -110,7 +128,8 @@ export function createStage(options: StageOptions): Stage {
 
   function applyAppearance(next: Appearance): void {
     appearance = next;
-    scene.environmentIntensity = ENVIRONMENT_INTENSITY[next];
+    scene.environmentIntensity = options.reflections?.[next] ?? ENVIRONMENT_INTENSITY[next];
+    renderer.toneMappingExposure = options.exposure?.[next] ?? 1;
     lights.setAppearance(next);
     post?.setAppearance(next);
   }

@@ -13,7 +13,7 @@ import type {
   Seat,
   SeatFrame,
 } from '@woodgrain-88/kit';
-import { KID_IDS } from '@woodgrain-88/kit';
+import { DEFAULT_BINDINGS, KID_IDS } from '@woodgrain-88/kit';
 import { KID_LINES, kidLine, type KidMood } from '../src/copy/kid-lines.ts';
 import { CHANNELS } from '../src/engine/channels.ts';
 import type { ChannelRules, MatchState } from '../src/engine/types.ts';
@@ -55,6 +55,7 @@ function createMockInput(): MockInput {
     pointer: { x: null, y: null, down: false, pressed: false, released: false, kind: null },
     layout: 'split',
     setLayout: () => undefined,
+    bindings: DEFAULT_BINDINGS,
     setBindings: () => undefined,
     onPause: () => () => undefined,
     reset: () => undefined,

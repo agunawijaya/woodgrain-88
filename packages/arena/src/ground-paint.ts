@@ -1,7 +1,8 @@
 /**
  * Ground paint: a texture laid over the board that remembers what happened
  * on it. Explosions leave soot and, for a few seconds, glowing embers; tanks
- * press tread marks into the sand that fade slowly; walls get a soft contact
+ * press tread marks into the sand that fade slowly, and walkers leave boot
+ * prints the same way; walls get a soft contact
  * shadow at their feet once, when the board is built. Marks are drawn as
  * small procedural stamps into a render target, so nothing is loaded and the
  * cost per frame is a handful of quads.
@@ -31,7 +32,7 @@ import {
   type WebGLRenderer,
 } from 'three';
 
-export type StampKind = 'scorch' | 'track' | 'contact' | 'scuff';
+export type StampKind = 'scorch' | 'track' | 'contact' | 'scuff' | 'print';
 
 export interface Stamp {
   readonly kind: StampKind;
@@ -55,14 +56,25 @@ export interface GroundPaint {
   stamp(stamp: Stamp): void;
   /** Fades marks by elapsed time: embers in seconds, soot and tracks over minutes. */
   age(dt: number): void;
+  /**
+   * Clears every mark of play (soot, tracks, embers) at the next flush, keeping the permanent
+   * contact shadows: a fresh board for the next round.
+   */
+  wipeMarks(): void;
   /** Draws pending stamps and fading into the texture; call once per frame before rendering. */
   flush(renderer: WebGLRenderer): void;
   /** Hooks the paint into a ground material: soot darkens, tracks compact the sand, embers glow. */
-  applyTo(material: MeshStandardMaterial): void;
+  applyTo(material: MeshStandardMaterial, options?: PaintResponse): void;
   dispose(): void;
 }
 
-const KIND_CODE: Record<StampKind, number> = { scorch: 0, track: 1, contact: 2, scuff: 3 };
+const KIND_CODE: Record<StampKind, number> = {
+  scorch: 0,
+  track: 1,
+  contact: 2,
+  scuff: 3,
+  print: 4,
+};
 const MAX_PENDING = 512;
 /** Fraction kept per second for each channel: soot and tracks linger, embers die in seconds. */
 const KEEP_PER_SECOND = [0.996, 0.985, 1, 0.55] as const;
@@ -150,8 +162,21 @@ const STAMP_FRAGMENT = /* glsl */ `
     return vec4(soot * vStrength, 0.0, 0.0, soot * 0.6 * vStrength);
   }
 
+  vec4 bootPrint() {
+    // One boot sole along the stamp's length (toe towards +x): a broad toe pad and a smaller
+    // heel, with the arch between pressing in less. It compacts the ground like a tread.
+    float toe = 1.0 - smoothstep(0.7, 1.0, length(vec2((vLocal.x - 0.3) / 0.68, vLocal.y / 0.92)));
+    float heel = 1.0 - smoothstep(0.7, 1.0, length(vec2((vLocal.x + 0.62) / 0.36, vLocal.y / 0.78)));
+    float arch = (1.0 - smoothstep(0.5, 0.95, abs(vLocal.y))) * 0.45 * step(abs(vLocal.x + 0.2), 0.3);
+    return vec4(0.0, max(max(toe, heel), arch) * vStrength, 0.0, 0.0);
+  }
+
   void main() {
-    vec4 paint = vKind < 0.5 ? scorch() : vKind < 1.5 ? track() : vKind < 2.5 ? contact() : scuff();
+    vec4 paint = vKind < 0.5 ? scorch()
+      : vKind < 1.5 ? track()
+      : vKind < 2.5 ? contact()
+      : vKind < 3.5 ? scuff()
+      : bootPrint();
     gl_FragColor = paint;
   }
 `;
@@ -159,6 +184,12 @@ const STAMP_FRAGMENT = /* glsl */ `
 interface FadeUniforms {
   [name: string]: IUniform;
   keep: IUniform<Vector4>;
+}
+
+/** How a ground answers its paint. */
+export interface PaintResponse {
+  /** How much a full-strength track or print darkens the ground: 0.26 suits sand. */
+  readonly trackShade?: number;
 }
 
 export interface GroundPaintOptions {
@@ -234,6 +265,7 @@ export function createGroundPaint(options: GroundPaintOptions): GroundPaint {
   let pending = 0;
   let fadeSeconds = 0;
   let cleared = false;
+  let wipe = false;
   const applied = new WeakSet<MeshStandardMaterial>();
 
   function drawWith(renderer: WebGLRenderer, mesh: Mesh): void {
@@ -258,6 +290,10 @@ export function createGroundPaint(options: GroundPaintOptions): GroundPaint {
     age(dt) {
       fadeSeconds += dt;
     },
+    wipeMarks() {
+      wipe = true;
+      pending = 0;
+    },
     flush(renderer) {
       const previousTarget = renderer.getRenderTarget();
       const previousAutoClear = renderer.autoClear;
@@ -267,6 +303,11 @@ export function createGroundPaint(options: GroundPaintOptions): GroundPaint {
         renderer.setClearColor(0x000000, 0);
         renderer.clear(true, false, false);
         cleared = true;
+      }
+      if (wipe) {
+        fadeUniforms.keep.value.set(0, 0, 1, 0);
+        drawWith(renderer, fadeQuad);
+        wipe = false;
       }
       // Fading in quarter-second steps keeps 8-bit precision from stalling faint marks.
       if (fadeSeconds >= 0.25) {
@@ -290,10 +331,14 @@ export function createGroundPaint(options: GroundPaintOptions): GroundPaint {
       renderer.setRenderTarget(previousTarget);
       renderer.autoClear = previousAutoClear;
     },
-    applyTo(material) {
+    applyTo(material, response = {}) {
       if (applied.has(material)) return;
       applied.add(material);
+      const trackShade = (response.trackShade ?? 0.26).toFixed(3);
       const previous = material.onBeforeCompile.bind(material);
+      // The shade is written into the shader, so grounds that differ must not share a program.
+      const previousKey = material.customProgramCacheKey.bind(material);
+      material.customProgramCacheKey = () => `${previousKey()}|paint:${trackShade}`;
       material.onBeforeCompile = (shader, renderer) => {
         previous(shader, renderer);
         shader.uniforms.groundPaint = { value: target.texture };
@@ -305,7 +350,15 @@ export function createGroundPaint(options: GroundPaintOptions): GroundPaint {
           )
           .replace(
             '#include <worldpos_vertex>',
-            '#include <worldpos_vertex>\nvec4 paintWorld = modelMatrix * vec4(transformed, 1.0);\nvPaintUv = (paintWorld.xz - paintArea.xy) / paintArea.zw;',
+            [
+              '#include <worldpos_vertex>',
+              'vec4 paintLocal = vec4(transformed, 1.0);',
+              '#ifdef USE_INSTANCING',
+              'paintLocal = instanceMatrix * paintLocal;',
+              '#endif',
+              'vec2 paintWorld = (modelMatrix * paintLocal).xz;',
+              'vPaintUv = (paintWorld - paintArea.xy) / paintArea.zw;',
+            ].join('\n'),
           );
         shader.fragmentShader = shader.fragmentShader
           .replace(
@@ -318,7 +371,7 @@ export function createGroundPaint(options: GroundPaintOptions): GroundPaint {
               '#include <map_fragment>',
               'vec4 paint = texture2D(groundPaint, vPaintUv);',
               'diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.16, 0.14, 0.13), paint.r);',
-              'diffuseColor.rgb *= 1.0 - paint.g * 0.26;',
+              `diffuseColor.rgb *= 1.0 - paint.g * ${trackShade};`,
               'diffuseColor.rgb *= 1.0 - paint.b * 0.55;',
             ].join('\n'),
           )

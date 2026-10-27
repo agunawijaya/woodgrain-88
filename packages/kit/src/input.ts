@@ -127,6 +127,8 @@ export interface InputController {
   readonly pointer: PointerState;
   readonly layout: Layout;
   setLayout(layout: Layout): void;
+  /** The keys and pad inputs in use, so a game can add its own actions beside the player's choices. */
+  readonly bindings: Bindings;
   setBindings(bindings: Bindings): void;
   /** Escape or gamepad Start. */
   onPause(listener: () => void): Unsubscribe;
@@ -390,6 +392,9 @@ export function createInput(options: InputOptions = {}): InputController {
     setLayout(next) {
       releaseEverything();
       layout = next;
+    },
+    get bindings() {
+      return bindings;
     },
     setBindings(next) {
       releaseEverything();

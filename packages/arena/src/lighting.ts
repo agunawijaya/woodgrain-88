@@ -4,6 +4,10 @@
  * night a single warm desk lamp pools light over the board while a cool
  * moonlight fill keeps the far corners readable; muzzle flashes and
  * explosions light everything around them, which is most of the night look.
+ *
+ * A game can set its own mood over these defaults: a colder sun for a
+ * snowfield, or a night lit by the moon alone, with the moon casting the
+ * shadows instead of the lamp.
  */
 import type { Appearance } from '@woodgrain-88/kit';
 import type { Object3D } from 'three';
@@ -23,6 +27,37 @@ export interface LightRigOptions {
   readonly halfWidth: number;
   readonly halfDepth: number;
   readonly shadowMapSize: number;
+  readonly mood?: LightMood;
+}
+
+export interface DayMood {
+  readonly sun: ColorRepresentation;
+  readonly sunIntensity: number;
+  readonly sky: ColorRepresentation;
+  readonly ground: ColorRepresentation;
+  readonly hemiIntensity: number;
+}
+
+export interface NightMood {
+  readonly lamp: ColorRepresentation;
+  /** 0 turns the lamp off. */
+  readonly lampIntensity: number;
+  /** The lamp's cone half-angle in radians, and how soft its edge is (0 hard to 1 soft). */
+  readonly lampAngle: number;
+  readonly lampPenumbra: number;
+  readonly moon: ColorRepresentation;
+  readonly moonIntensity: number;
+  readonly sky: ColorRepresentation;
+  readonly ground: ColorRepresentation;
+  readonly hemiIntensity: number;
+  /** Which light casts the night's shadows: the desk lamp (default) or the moon. */
+  readonly shadowsFrom: 'lamp' | 'moon';
+}
+
+/** A game's own light over the defaults; anything left out keeps the default. */
+export interface LightMood {
+  readonly day?: Partial<DayMood>;
+  readonly night?: Partial<NightMood>;
 }
 
 /** The colours effects need to light themselves like the scene (smoke, clouds, dust). */
@@ -54,22 +89,25 @@ const FLASH_LIGHTS = 4;
 
 // Late afternoon: a warm, low sun for long shadows that show every height, and a cool sky fill so
 // the shadows read blue against the warm sand.
-const DAY = {
-  sun: new Color('#ffd7a6'),
+const DAY: DayMood = {
+  sun: '#ffd7a6',
   sunIntensity: 3.5,
-  sky: new Color('#b7cdf2'),
-  ground: new Color('#b48a58'),
+  sky: '#b7cdf2',
+  ground: '#b48a58',
   hemiIntensity: 0.6,
 };
 
-const NIGHT = {
-  lamp: new Color('#ffcf8f'),
+const NIGHT: NightMood = {
+  lamp: '#ffcf8f',
   lampIntensity: 9500,
-  moon: new Color('#7ea4ff'),
+  lampAngle: 0.5,
+  lampPenumbra: 0.9,
+  moon: '#7ea4ff',
   moonIntensity: 0.95,
-  sky: new Color('#1c2a4d'),
-  ground: new Color('#0d0b09'),
+  sky: '#1c2a4d',
+  ground: '#0d0b09',
   hemiIntensity: 0.32,
+  shadowsFrom: 'lamp',
 };
 
 interface Flash {
@@ -82,19 +120,33 @@ interface Flash {
 export function createLightRig(initial: Appearance, options: LightRigOptions): LightRig {
   const group = new Group();
   group.name = 'light-rig';
+  const day = { ...DAY, ...options.mood?.day };
+  const night = { ...NIGHT, ...options.mood?.night };
+  const colours = {
+    sun: new Color(day.sun),
+    daySky: new Color(day.sky),
+    dayGround: new Color(day.ground),
+    lamp: new Color(night.lamp),
+    moon: new Color(night.moon),
+    nightSky: new Color(night.sky),
+    nightGround: new Color(night.ground),
+  };
 
-  const hemisphere = new HemisphereLight(DAY.sky, DAY.ground, DAY.hemiIntensity);
+  const hemisphere = new HemisphereLight(colours.daySky, colours.dayGround, day.hemiIntensity);
   group.add(hemisphere);
 
-  const sun = createSun(options);
+  const sun = createSun(options, colours.sun, day.sunIntensity);
   group.add(sun, sun.target);
 
-  const lamp = createLamp(options);
+  const lampOn = night.lampIntensity > 0;
+  const lamp = createLamp(options, colours.lamp, night);
   group.add(lamp, lamp.target);
 
-  const moon = new DirectionalLight(NIGHT.moon, NIGHT.moonIntensity);
+  const moonCastsShadows = night.shadowsFrom === 'moon';
+  const moon = new DirectionalLight(colours.moon, night.moonIntensity);
   moon.position.set(40, 48, 34);
-  group.add(moon);
+  if (moonCastsShadows) castBoardShadows(moon, options);
+  group.add(moon, moon.target);
 
   const flashes: Flash[] = [];
   for (let index = 0; index < FLASH_LIGHTS; index++) {
@@ -113,21 +165,25 @@ export function createLightRig(initial: Appearance, options: LightRigOptions): L
 
   function setAppearance(next: Appearance): void {
     appearance = next;
-    const day = next === 'light';
-    sun.visible = day;
-    sun.castShadow = day;
-    lamp.visible = !day;
-    lamp.castShadow = !day;
-    moon.visible = !day;
-    hemisphere.color.copy(day ? DAY.sky : NIGHT.sky);
-    hemisphere.groundColor.copy(day ? DAY.ground : NIGHT.ground);
-    hemisphere.intensity = day ? DAY.hemiIntensity : NIGHT.hemiIntensity;
+    const isDay = next === 'light';
+    sun.visible = isDay;
+    sun.castShadow = isDay;
+    lamp.visible = !isDay && lampOn;
+    lamp.castShadow = !isDay && lampOn && !moonCastsShadows;
+    moon.visible = !isDay;
+    moon.castShadow = !isDay && moonCastsShadows;
+    hemisphere.color.copy(isDay ? colours.daySky : colours.nightSky);
+    hemisphere.groundColor.copy(isDay ? colours.dayGround : colours.nightGround);
+    hemisphere.intensity = isDay ? day.hemiIntensity : night.hemiIntensity;
 
-    const key: Object3D = day ? sun : lamp;
+    const nightKey = lampOn && !moonCastsShadows ? lamp : moon;
+    const key: Object3D = isDay ? sun : nightKey;
     palette.keyDirection.copy(key.position).normalize();
     // Smoke at night is lit mostly by fire and the lamp's edge, so it stays dark against the board.
-    palette.key.copy(day ? DAY.sun : NIGHT.lamp).multiplyScalar(day ? 1 : 0.42);
-    palette.ambient.copy(day ? DAY.sky : NIGHT.moon).multiplyScalar(day ? 0.55 : 0.16);
+    palette.key
+      .copy(isDay ? colours.sun : nightKey === lamp ? colours.lamp : colours.moon)
+      .multiplyScalar(isDay ? 1 : 0.42);
+    palette.ambient.copy(isDay ? colours.daySky : colours.moon).multiplyScalar(isDay ? 0.55 : 0.16);
   }
 
   setAppearance(initial);
@@ -174,17 +230,24 @@ export function createLightRig(initial: Appearance, options: LightRigOptions): L
     dispose() {
       sun.shadow.map?.dispose();
       lamp.shadow.map?.dispose();
+      moon.shadow.map?.dispose();
       group.removeFromParent();
     },
   };
 }
 
 /** Low and from the back left, so shadows fall long towards the viewer and show every height. */
-function createSun(options: LightRigOptions): DirectionalLight {
-  const sun = new DirectionalLight(DAY.sun, DAY.sunIntensity);
+function createSun(options: LightRigOptions, colour: Color, intensity: number): DirectionalLight {
+  const sun = new DirectionalLight(colour, intensity);
   sun.position.set(-48, 38, -24);
   sun.target.position.set(0, 0, 0);
-  const shadow = sun.shadow;
+  castBoardShadows(sun, options);
+  return sun;
+}
+
+/** A shadow camera that covers the whole board from a directional light. */
+function castBoardShadows(light: DirectionalLight, options: LightRigOptions): void {
+  const shadow = light.shadow;
   shadow.mapSize.set(options.shadowMapSize, options.shadowMapSize);
   const reach = Math.hypot(options.halfWidth, options.halfDepth) + 4;
   shadow.camera.left = -reach;
@@ -196,12 +259,18 @@ function createSun(options: LightRigOptions): DirectionalLight {
   shadow.bias = -0.0004;
   shadow.normalBias = 0.03;
   shadow.radius = 1.6;
-  return sun;
 }
 
 /** A desk lamp above the back-left corner: one warm pool that covers the board and fades past it. */
-function createLamp(options: LightRigOptions): SpotLight {
-  const lamp = new SpotLight(NIGHT.lamp, NIGHT.lampIntensity, 0, 0.5, 0.9, 2);
+function createLamp(options: LightRigOptions, colour: Color, night: NightMood): SpotLight {
+  const lamp = new SpotLight(
+    colour,
+    night.lampIntensity,
+    0,
+    night.lampAngle,
+    night.lampPenumbra,
+    2,
+  );
   lamp.position.set(-8, 70, -12);
   lamp.target.position.set(0, 0, 2);
   const shadow = lamp.shadow;

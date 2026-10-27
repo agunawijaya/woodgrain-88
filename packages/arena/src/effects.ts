@@ -50,6 +50,11 @@ export interface ExplosionOptions {
   readonly paint?: Color;
   /** Leave a scorch mark (false for explosions in the air). */
   readonly scorch?: boolean;
+  /**
+   * The smoke, when not a tank's black soot: its colour as it rises and as it thins, and how much of
+   * it there is (1 the full column). A blast in snow throws up a pale plume that clears quickly.
+   */
+  readonly smoke?: { readonly colour: Color; readonly thin: Color; readonly amount: number };
 }
 
 export interface Effects {
@@ -193,7 +198,14 @@ export function createEffects(options: EffectsOptions): Effects {
     }
   }
 
-  function smokeColumn(at: Vector3, scale: number, count: number, lifeScale: number): void {
+  function smokeColumn(
+    at: Vector3,
+    scale: number,
+    count: number,
+    lifeScale: number,
+    colour = SOOT,
+    colourEnd = SOOT_THIN,
+  ): void {
     for (let index = 0; index < count; index++) {
       later((index / count) * 1.4, () => {
         smoke.emit({
@@ -208,8 +220,8 @@ export function createEffects(options: EffectsOptions): Effects {
           life: rng.float(2.8, 4.4) * lifeScale,
           size: rng.float(1.1, 1.8) * scale,
           sizeEnd: rng.float(4.5, 6.5) * scale,
-          colour: SOOT,
-          colourEnd: SOOT_THIN,
+          colour,
+          colourEnd,
           alpha: rng.float(0.85, 0.95),
           alphaEnd: 0,
           rotation: rng.float(0, Math.PI * 2),
@@ -267,7 +279,7 @@ export function createEffects(options: EffectsOptions): Effects {
     }
   }
 
-  function smokeBurst(at: Vector3, scale: number): void {
+  function smokeBurst(at: Vector3, scale: number, colour = SOOT, colourEnd = SOOT_THIN): void {
     for (let index = 0; index < 9; index++) {
       const direction = new Vector3(spread(1), rng.float(0.2, 0.9), spread(1)).normalize();
       const speed = rng.float(2, 4.5) * scale;
@@ -283,8 +295,8 @@ export function createEffects(options: EffectsOptions): Effects {
         life: rng.float(1.6, 2.6),
         size: rng.float(1.4, 2) * scale,
         sizeEnd: rng.float(4, 5.5) * scale,
-        colour: SOOT,
-        colourEnd: SOOT_THIN,
+        colour,
+        colourEnd,
         alpha: 0.9,
         alphaEnd: 0,
         rotation: rng.float(0, Math.PI * 2),
@@ -368,9 +380,12 @@ export function createEffects(options: EffectsOptions): Effects {
       });
     }
 
+    const smokeColour = explosionOptions.smoke?.colour ?? SOOT;
+    const smokeThin = explosionOptions.smoke?.thin ?? SOOT_THIN;
+    const smokeAmount = explosionOptions.smoke?.amount ?? 1;
     if (!full) {
       fireball(at, scale * 0.7, push, 6);
-      smokeColumn(at, scale * 0.6, 5, 0.4);
+      smokeColumn(at, scale * 0.6, Math.ceil(5 * smokeAmount), 0.4, smokeColour, smokeThin);
       return;
     }
 
@@ -379,7 +394,7 @@ export function createEffects(options: EffectsOptions): Effects {
     const ring = rings.find((candidate) => candidate.idle()) ?? rings[0];
     ring?.start(at, 6 * blast);
     // Dark smoke from the first instant frames the fire; the column keeps rolling after it.
-    smokeBurst(at, blast);
+    smokeBurst(at, blast, smokeColour, smokeThin);
     dustRing(at, blast);
     fireball(at, blast, push, 18);
     hotCore(at, blast);
@@ -387,7 +402,14 @@ export function createEffects(options: EffectsOptions): Effects {
     later(0.16, () => fireball(at.clone().setY(at.y + 0.8), blast * 0.7, push, 8));
     sparks(at, 46, [8, 20]);
     embers(at, 22);
-    smokeColumn(at, blast, 46, 1.15);
+    smokeColumn(
+      at,
+      blast,
+      Math.ceil(46 * smokeAmount),
+      1.15 * Math.max(0.4, smokeAmount),
+      smokeColour,
+      smokeThin,
+    );
     debris.burst(at, push, scale, explosionOptions.paint ?? DEBRIS_METAL);
     options.shake?.addTrauma(0.55 * scale);
   }

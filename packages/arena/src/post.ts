@@ -153,12 +153,19 @@ function finishMaterial(): ShaderMaterial & { uniforms: FinishUniforms } {
   return material as ShaderMaterial & { uniforms: FinishUniforms };
 }
 
-interface Grade {
+export interface Grade {
   readonly lift: readonly [number, number, number];
   readonly gain: readonly [number, number, number];
   readonly saturation: number;
   readonly vignette: number;
   readonly bloom: number;
+}
+
+/** A game's own finish over the defaults. */
+export interface FinishOptions {
+  readonly grades?: Partial<Record<Appearance, Partial<Grade>>>;
+  /** False for a scene with no miniature to sell (a flat screen seen head on). */
+  readonly tiltShift?: boolean;
 }
 
 const GRADES: Record<Appearance, Grade> = {
@@ -184,6 +191,7 @@ export function createPostChain(
   camera: Camera,
   quality: Quality,
   appearance: Appearance,
+  options: FinishOptions = {},
 ): PostChain {
   const target = new WebGLRenderTarget(1, 1, {
     type: HalfFloatType,
@@ -192,12 +200,14 @@ export function createPostChain(
   const composer = new EffectComposer(renderer, target);
   composer.addPass(new RenderPass(scene, camera));
 
+  const gradeFor = (next: Appearance): Grade => ({ ...GRADES[next], ...options.grades?.[next] });
+
   // A high threshold: only things brighter than lit paint (tracers, fire, lamps) glow.
-  const bloom = new UnrealBloomPass(new Vector2(1, 1), GRADES[appearance].bloom, 0.5, 0.95);
+  const bloom = new UnrealBloomPass(new Vector2(1, 1), gradeFor(appearance).bloom, 0.5, 0.95);
   composer.addPass(bloom);
 
   const tiltMaterials = [tiltShiftMaterial(true), tiltShiftMaterial(false)];
-  if (quality !== 'low') {
+  if (quality !== 'low' && options.tiltShift !== false) {
     for (const material of tiltMaterials) composer.addPass(new ShaderPass(material));
   }
 
@@ -208,7 +218,7 @@ export function createPostChain(
   let frame = 0;
 
   function setAppearance(next: Appearance): void {
-    const grade = GRADES[next];
+    const grade = gradeFor(next);
     bloom.strength = grade.bloom;
     finish.uniforms.lift.value.set(...grade.lift);
     finish.uniforms.gain.value.set(...grade.gain);
