@@ -8,8 +8,9 @@ CLI (`tools/crew/`, built in 00); the owner never relays messages between them.
 |---|---|---|---|
 | 00 | `00-foundation.md` — crew bridge, 30 dossiers, kit, contract, The Den | — | Done 2026-10-26 |
 | 00a | `00a-owner-decisions.md` — faithful themes, five renames, cartridge versions | 00 | Done 2026-10-26 |
-| 01 | `01-den-life.md` — patches, the jacket, Pro switch, channels, Power Cycle of the day and Run, Versus Night, the Neighbourhood Kids, the Counter | 00, 00a | In progress (started 2026-10-26; owner checkpoint at stage 4) |
-| 02 | `02-tank-duel.md` — Tank Duel (pilot game) + `packages/arena` (three.js diorama toolkit) | 01 | Ready to run after 01 (alone; owner checkpoint at stage 1) |
+| 01 | `01-den-life.md` — patches, the jacket, Pro switch, channels, Power Cycle of the day and Run, Versus Night, the Neighbourhood Kids, the Counter | 00, 00a | Done 2026-10-27 |
+| 02 | `02-tank-duel.md` — Tank Duel (pilot game) + `packages/arena` (three.js diorama toolkit) | 01 | Done 2026-10-27 |
+| 03 | `03-hot-and-cold.md` — Hot & Cold + kit human-like Kid memory; three looks (Polar, Tabletop, Radar) | 02 | Ready to run (alone; owner checkpoint at stage 1) |
 | 03+ | One prompt per game, after each game's brief. The first game of each family builds that family's shared package (board, sport) | 02 | Not written yet |
 
 ## Conventions
