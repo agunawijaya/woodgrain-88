@@ -23,6 +23,7 @@ import {
   type ResultReceipt,
   type Seat as PlayerSeat,
   type Unsubscribe,
+  withDiagonalKeys,
 } from '@woodgrain-88/kit';
 import type { ClueMode } from '../ai/kid.ts';
 import { channelById, DAILY_RULES, type HotColdChannel } from '../channels.ts';
@@ -44,7 +45,6 @@ import { createResultsScreen, type ResultsScreen } from '../screens/results.ts';
 import { createSettingsSheet } from '../screens/settings-sheet.ts';
 import { ensureScreenStyle } from '../screens/style.ts';
 import { createTutorialScreen } from '../screens/tutorial.ts';
-import { withDiagonals } from '../session/controls.ts';
 import {
   createMatchSession,
   type MatchOutcome,
@@ -131,7 +131,7 @@ export function mountHotAndCold(host: HTMLElement, context: GameContext): GameIn
 
   // The 1978 joystick's diagonals, added for this game only and handed back on the way out.
   const playerBindings: Bindings = context.input.bindings;
-  context.input.setBindings(withDiagonals(playerBindings));
+  context.input.setBindings(withDiagonalKeys(playerBindings));
 
   let look: LookId = settings.get().look;
   let stage: Stage = buildStage();

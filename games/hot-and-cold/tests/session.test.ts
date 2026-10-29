@@ -3,7 +3,7 @@
  * only where free), the mouse's walk, the progress events for Den Life, and
  * how a finished match reads as a result.
  */
-import { DEFAULT_BINDINGS, type SeatFrame } from '@woodgrain-88/kit';
+import { DEFAULT_BINDINGS, withDiagonalKeys, type SeatFrame } from '@woodgrain-88/kit';
 import { describe, expect, it } from 'vitest';
 import { squareAt } from '../src/engine/grid.ts';
 import {
@@ -16,7 +16,7 @@ import {
 import { cartridgeRules, SETTLE_TICKS } from '../src/engine/rules.ts';
 import { squareAtPoint, squareCentre } from '../src/look/field-space.ts';
 import { createProgressTracker } from '../src/progress/tracker.ts';
-import { seatInput, withDiagonals } from '../src/session/controls.ts';
+import { seatInput } from '../src/session/controls.ts';
 import { createMouseWalk } from '../src/session/mouse.ts';
 import { buildResult, DAILY_PAR, emojiTrail, seatOneOutcome } from '../src/session/result.ts';
 
@@ -32,7 +32,7 @@ function frame(held: string[], axis = { x: 0, y: 0 }, pressed: string[] = []): S
 
 describe('keys', () => {
   it('adds the diagonals beside each seat’s keys', () => {
-    const bindings = withDiagonals(DEFAULT_BINDINGS);
+    const bindings = withDiagonalKeys(DEFAULT_BINDINGS);
     expect(bindings[2].keys['up-left']).toEqual(['KeyQ']);
     expect(bindings[2].keys['down-right']).toEqual(['KeyC']);
     expect(bindings[1].keys['up-right']).toEqual(['Numpad9']);
@@ -44,7 +44,7 @@ describe('keys', () => {
       ...DEFAULT_BINDINGS,
       2: { ...DEFAULT_BINDINGS[2], keys: { ...DEFAULT_BINDINGS[2].keys, fire: ['KeyQ'] } },
     };
-    const bindings = withDiagonals(custom);
+    const bindings = withDiagonalKeys(custom);
     expect(bindings[2].keys['up-left']).toBeUndefined();
     expect(bindings[2].keys.fire).toEqual(['KeyQ']);
   });

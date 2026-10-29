@@ -14,6 +14,8 @@ export * from './events.ts';
 export * from './input.ts';
 export * from './kids.ts';
 export * from './kids/memory.ts';
+export * from './kids/reflex.ts';
+export * from './sticks.ts';
 export * from './kid-portrait.ts';
 export * from './loop.ts';
 export * from './micro.ts';

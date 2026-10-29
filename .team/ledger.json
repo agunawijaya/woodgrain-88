@@ -1532,6 +1532,321 @@
       "note": "Lint and format failed acceptance; the lead fixed them, then rewrote the records rows and the settings rows' update path for plain reading. 11 tests kept.",
       "startedAt": "2026-10-27T14:51:35.961Z",
       "updatedAt": "2026-10-27T14:53:47.344Z"
+    },
+    {
+      "id": "tb-engine",
+      "kind": "engine",
+      "model": "gemini-4-argon-medium",
+      "rounds": 2,
+      "status": "accepted",
+      "seconds": 1679,
+      "crewTokens": {
+        "input": 427564,
+        "output": 137689,
+        "thinking": 73463,
+        "cacheRead": 5153367,
+        "total": 565253
+      },
+      "violations": 0,
+      "leadTokens": 30000,
+      "soloTokens": 95000,
+      "note": "Engine to the lead's contract in one round; follow-up fixed a 20-minute fuzz (now 1.2 s for the whole suite) and disassembly labels in comments. Lead corrected one wrong test expectation (pilot heading on the shared-cell write).",
+      "startedAt": "2026-10-29T02:41:07.454Z",
+      "updatedAt": "2026-10-29T02:53:41.611Z"
+    },
+    {
+      "id": "tb-computer-1977",
+      "kind": "ai",
+      "model": "gemini-4-argon-medium",
+      "rounds": 2,
+      "status": "accepted",
+      "seconds": 456,
+      "crewTokens": {
+        "input": 151219,
+        "output": 21761,
+        "thinking": 0,
+        "cacheRead": 1999823,
+        "total": 172980
+      },
+      "violations": 0,
+      "leadTokens": 12000,
+      "soloTokens": 45000,
+      "note": "Computer 1977 pilot with every quirk under test. Follow-up fixed three scenario tests and made the all-blocked case follow the cartridge (it steers right), against the order's guess.",
+      "startedAt": "2026-10-29T04:09:49.354Z",
+      "updatedAt": "2026-10-29T04:15:39.786Z"
+    },
+    {
+      "id": "kit-kid-reflex",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 2,
+      "status": "accepted",
+      "seconds": 604.5,
+      "crewTokens": {
+        "input": 292001,
+        "output": 63773,
+        "thinking": 44747,
+        "cacheRead": 2330993,
+        "total": 355774
+      },
+      "violations": 0,
+      "leadTokens": 9000,
+      "soloTokens": 30000,
+      "note": "Reflex model to the lead's API in one round (flash-high, argon quota out). Lead reworded the module comment, simplified one branch and ran prettier.",
+      "startedAt": "2026-10-29T08:24:02.749Z",
+      "updatedAt": "2026-10-29T08:36:06.228Z"
+    },
+    {
+      "id": "tb-kid-rider",
+      "kind": "ai",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 762.7,
+      "crewTokens": {
+        "input": 191671,
+        "output": 89042,
+        "thinking": 76443,
+        "cacheRead": 2049582,
+        "total": 280713
+      },
+      "violations": 0,
+      "leadTokens": 14000,
+      "soloTokens": 45000,
+      "note": "Kid rider and perception to the order in one round (flash-high). Lead fixed two wrong test imports, a lint nit and set the solo-endurance floor to 280 cells (Lou laid 299 on one seed); type errors in that round came from the lead's own play page, not the crew.",
+      "startedAt": "2026-10-29T08:49:12.565Z",
+      "updatedAt": "2026-10-29T08:50:56.479Z"
+    },
+    {
+      "id": "tb-session",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 821.1,
+      "crewTokens": {
+        "input": 231416,
+        "output": 81186,
+        "thinking": 62529,
+        "cacheRead": 5118102,
+        "total": 312602
+      },
+      "violations": 0,
+      "leadTokens": 12000,
+      "soloTokens": 40000,
+      "note": "Session and trap spotting in one round (flash-high), all 16 tests passing. Lead fixed type narrowing after tick(), dropped two impossible undefined checks and ran prettier.",
+      "startedAt": "2026-10-29T08:51:49.211Z",
+      "updatedAt": "2026-10-29T08:54:05.096Z"
+    },
+    {
+      "id": "tb-sims",
+      "kind": "tests",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 534.6,
+      "crewTokens": {
+        "input": 171340,
+        "output": 53534,
+        "thinking": 44543,
+        "cacheRead": 2754012,
+        "total": 224874
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "",
+      "startedAt": "2026-10-29T09:00:22.320Z",
+      "updatedAt": "2026-10-29T11:32:47.891Z"
+    },
+    {
+      "id": "tb-progress",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 1029.4,
+      "crewTokens": {
+        "input": 248135,
+        "output": 64463,
+        "thinking": 45893,
+        "cacheRead": 5685809,
+        "total": 312598
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "",
+      "startedAt": "2026-10-29T11:27:45.776Z",
+      "updatedAt": "2026-10-29T11:32:47.623Z"
+    },
+    {
+      "id": "tb-app-data",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 2,
+      "status": "accepted",
+      "seconds": 887.2,
+      "crewTokens": {
+        "input": 524623,
+        "output": 74524,
+        "thinking": 47194,
+        "cacheRead": 11772466,
+        "total": 599147
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "",
+      "startedAt": "2026-10-29T11:43:48.117Z",
+      "updatedAt": "2026-10-29T11:54:19.506Z"
+    },
+    {
+      "id": "tb-remix",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 937.4,
+      "crewTokens": {
+        "input": 207410,
+        "output": 82013,
+        "thinking": 57736,
+        "cacheRead": 3070118,
+        "total": 289423
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "",
+      "startedAt": "2026-10-29T12:29:08.192Z",
+      "updatedAt": "2026-10-29T12:32:05.412Z"
+    },
+    {
+      "id": "tb-screens",
+      "kind": "plumbing",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 4,
+      "status": "accepted",
+      "seconds": 2387.2,
+      "crewTokens": {
+        "input": 776210,
+        "output": 185350,
+        "thinking": 99911,
+        "cacheRead": 30485950,
+        "total": 961560
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "",
+      "startedAt": "2026-10-29T12:32:14.454Z",
+      "updatedAt": "2026-10-29T13:01:43.904Z"
+    },
+    {
+      "id": "tb-four-way",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 2,
+      "status": "accepted",
+      "seconds": 3015.9,
+      "crewTokens": {
+        "input": 1063672,
+        "output": 146055,
+        "thinking": 76219,
+        "cacheRead": 28172844,
+        "total": 1209727
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "",
+      "startedAt": "2026-10-29T13:32:52.605Z",
+      "updatedAt": "2026-10-29T14:02:07.968Z"
+    },
+    {
+      "id": "tb-controller",
+      "kind": "plumbing",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 2,
+      "status": "rejected",
+      "seconds": 929.3,
+      "crewTokens": {
+        "input": 313878,
+        "output": 37237,
+        "thinking": 29784,
+        "cacheRead": 9050701,
+        "total": 351115
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "",
+      "startedAt": "2026-10-29T14:17:48.237Z",
+      "updatedAt": "2026-10-29T14:21:32.581Z"
+    },
+    {
+      "id": "tb-controller-core",
+      "kind": "plumbing",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "rejected",
+      "seconds": 908.6,
+      "crewTokens": {
+        "input": 339529,
+        "output": 48494,
+        "thinking": 35976,
+        "cacheRead": 10296902,
+        "total": 388023
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "",
+      "startedAt": "2026-10-29T14:37:00.108Z",
+      "updatedAt": "2026-10-29T14:44:36.893Z"
+    },
+    {
+      "id": "tb-harness",
+      "kind": "tests",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "rejected",
+      "seconds": 385.4,
+      "crewTokens": {
+        "input": 139714,
+        "output": 14999,
+        "thinking": 13297,
+        "cacheRead": 1382978,
+        "total": 154713
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "",
+      "startedAt": "2026-10-29T14:50:44.212Z",
+      "updatedAt": "2026-10-29T15:44:50.414Z"
+    },
+    {
+      "id": "tb-ghost-kid",
+      "kind": "ai",
+      "model": "gemini-3.8-flash-high",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 635.1,
+      "crewTokens": {
+        "input": 188230,
+        "output": 63356,
+        "thinking": 53796,
+        "cacheRead": 3007394,
+        "total": 251586
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "",
+      "startedAt": "2026-10-29T15:22:37.469Z",
+      "updatedAt": "2026-10-29T15:40:21.736Z"
     }
   ]
 }

@@ -35,8 +35,8 @@ import { manifest as slalomLine } from './coming-soon/slalom-line.ts';
 import { manifest as sumRush } from './coming-soon/sum-rush.ts';
 import { manifest as swarmGarden } from './coming-soon/swarm-garden.ts';
 import { manifest as tableTwentyone } from './coming-soon/table-21.ts';
-import { manifest as trailblaze } from './coming-soon/trailblaze.ts';
 import { manifest as tankDuel } from '@woodgrain-88/tank-duel/manifest';
+import { manifest as trailblaze } from '@woodgrain-88/trailblaze/manifest';
 
 export const BASE_ENTRIES: readonly GameEntry[] = [
   { manifest: baseline },
@@ -72,7 +72,11 @@ export const BASE_ENTRIES: readonly GameEntry[] = [
   { manifest: sumRush },
   { manifest: swarmGarden },
   { manifest: tableTwentyone },
-  { manifest: trailblaze },
+  // As with Tank Duel: three.js and the four looks arrive with this chunk only.
+  {
+    manifest: trailblaze,
+    load: () => import('@woodgrain-88/trailblaze/module').then((module) => module.trailblaze),
+  },
 ];
 
 export interface Registry {

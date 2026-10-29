@@ -1,6 +1,6 @@
 # Progress
 
-Updated once at the end of each prompt. Last update: prompt 02 (Tank Duel), 2026-10-27.
+Updated once at the end of each prompt. Last update: prompt 04 (Trailblaze), 2026-10-29.
 
 ## Foundation (prompt 00)
 
@@ -59,6 +59,24 @@ Updated once at the end of each prompt. Last update: prompt 02 (Tank Duel), 2026
 | Performance | 60 fps at 1920 × 1080 on seven channels by day and night; memory flat over ten minutes on the menu (45–46 MB); Hall entry 377 kB (gzip 122), game chunk 825 kB (gzip 225), loaded on demand |
 | Tests | 32 bridge; 185 kit, 110 Hall, 3 scripts, 58 arena, 261 Tank Duel (Vitest; 6 balance checks opt-in); 59 Hall Playwright, 11 Tank Duel flows, 32 screenshot runs |
 
+## Trailblaze (prompt 04)
+
+| Part | Status |
+|---|---|
+| Engine: the 14 cartridge variations, every 1977 rule and quirk, Remix rules (Fading, Shrinking, Boost Lanes), Four Way | done; pure and fixed-step; the scripted filler lays 616 of 684 open cells |
+| Computer 1977 | done; faithful to the program, including steering right when boxed in |
+| Kit `kids/reflex` (human reflexes) and `sticks` (eight-way keys) | done; ADR-0012; Hot & Cold moved onto the kit's sticks |
+| Kid riders, Ghost Trails memory | done; foreseen moves timed, surprises reacted to, a reaction's worth of open road |
+| Balance targets | Lou v Pip 84% (v3 65%), Moss v Dee 70% (Dee +11 at speed): met and locked. Moss v Computer 1977 95–100% against 60–80%: missed, kept faithful (NOTES.md) |
+| Four looks (Neon Grid, Toy Trains, Mummy's Wrap, Ice Trail), light and dark, Chase camera, Remix pieces | done; hero frames approved by the owner (two review rounds); ADR-0013 |
+| Menu, pre-match, HUD, results with "How Rosa saw it", tutorial, records, Doodle gallery, settings | done |
+| Modes: vs a Kid, Versus, vs Computer 1977, Doodle (SVG export), Four Way; daily, challenge links, micro-challenges | done |
+| Sound (four synthesised palettes, held hums that climb with the speed-up) | done |
+| Hall integration (registry, lazy chunk, Den TV demo) | done; Hall entry 386 kB (gzip 124), game chunk 207 kB (gzip 65) plus the shared three.js chunk |
+| Performance | 60 fps at 1920 × 1080 with every cell laid, all looks, day and night (RTX 4060 laptop); 15–24 fps on the same laptop's integrated GPU, limited by the stage, not the trails |
+| Open | The picture runs about one cell behind the rules (feel pass idea in NOTES.md); the Den has no Kid memory setting yet, so Kids ride as Human; neon start chevrons show for an unused seat in solo Doodle |
+| Tests | 207 Trailblaze, 239 kit, 110 Hall (Vitest; balance and 100k fuzz opt-in); 10 Trailblaze flows, 16 screenshot runs (96 pictures) |
+
 ## Games
 
 Status values: **coming soon** (manifest, label, slate and details in the Hall; no game yet) ·
@@ -73,7 +91,7 @@ Status values: **coming soon** (manifest, label, slate and details in the Hall; 
 | 05 | Hot & Cold | Brain | 1 | coming soon | Pilot wave |
 | 06 | Disc Duel | Brain | 3 | coming soon | Hidden board editor in the original |
 | 07 | Pocket Links | Sports | 5 | coming soon | |
-| 08 | Trailblaze | Duels | 2 | coming soon | The original never tests the two players against each other |
+| 08 | Trailblaze | Duels | 2 | playable | The original never tests the two players against each other; four looks, Kids with human reflexes |
 | 09 | Crown Jump | Brain | 3 | coming soon | |
 | 10 | Table 21 | Brain | 10 | coming soon | Chips and bets as play money; optional coach |
 | 11 | Lane Hopper | Arcade | 4 | coming soon | Versions: chicken (default, program 19), rabbit (program 11, Counter place 31) |

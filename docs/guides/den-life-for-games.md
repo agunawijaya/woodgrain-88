@@ -180,6 +180,41 @@ memory. Let the Kid take in only `profile.capacity` facts per decision instead, 
 Distortion is the chance of a mix-up once a fact has faded completely. A fact one half-life old is
 mixed up half as often.
 
+### The Kids' reflexes
+
+In a real-time game the Kids' limits are reflexes, not memory: they react late, read only so far
+ahead, miss the rival's moves, panic at speed and fumble. `kids/reflex` (ADR-0012) models this. The
+game's AI decides what the Kid wants. The reflex decides when its hands get there, and whether they
+get it right.
+
+1. **Choose a profile.** Use `reflexProfile(kid, mode)`, with the same Human / Sharp setting as
+   memory. Sharp removes slips and halves reaction times.
+2. **Perceive like a player.** Use `profile.lookahead` (cells along the Kid's course) and
+   `profile.awareness` (how far around itself it takes things in) to limit what your AI sees.
+   Beyond that, treat the board as open.
+3. **Measure pressure** each decision: `speed` (how fast the game runs now, 0–1) and `cramp` (how
+   little room the Kid has, 0–1).
+4. **Plan for the lag.** `expectedDelay(pressure, foreseen)` is when the hands will act. Plan from
+   where the Kid will be by then, not from where it is.
+5. **Decide** with `decide(action, now, pressure, alternatives, foreseen)`. Pass only alternatives
+   a fumble could plausibly hit. Mark moves the Kid saw coming as `foreseen`. Compare each new
+   decision with `planned()`, not with your last intent, so a fumble gets put right.
+6. **Act** each tick with `act(now)`. When the rival does something, call `notices(now, pressure)`
+   and react only if it returns true.
+7. **Show it.** The `log` holds every decision, action, slip and noticed or missed move, for a "How
+   the Kid saw it" panel.
+
+The values below are Trailblaze's tuned ones (its NOTES.md has the runs):
+
+| Kid   | Reaction    | Lookahead | Awareness | Attention | Panic | Slips | Style (space · cut-off · safety · mirror) |
+| ----- | ----------- | --------- | --------- | --------- | ----- | ----- | ----------------------------------------- |
+| Lou   | 360 ± 40 ms | 7         | 9         | 90%       | 0.15  | 5%    | 0.9 · 0.3 · 0.8 · 0                       |
+| Moss  | 260 ± 40 ms | 6         | 7         | 80%       | 0.2   | 6%    | 1 · 0.2 · 0.9 · 0                         |
+| Rosa  | 220 ± 50 ms | 5         | 6         | 85%       | 0.45  | 7%    | 0.4 · 1 · 0.4 · 0                         |
+| Benny | 240 ± 50 ms | 5         | 6         | 80%       | 0.45  | 7%    | 0.5 · 0.3 · 0.5 · 1                       |
+| Dee   | 160 ± 30 ms | 3         | 4         | 70%       | 0.6   | 5%    | 0.25 · 0.25 · 0.4 · 0                     |
+| Pip   | 280 ± 60 ms | 3         | 4         | 50%       | 0.5   | 8%    | 0.4 · 0.4 · 0.3 · 0                       |
+
 ## Versus
 
 Games supporting two players set `manifest.versus` to `'local'` (two humans on one machine) or `'local+bot'` (human versus human or bot).

@@ -39,7 +39,7 @@ and the TV changes channel.
 | 05   | Hot & Cold      | Brain  | 1–2 (couch versus) | coming soon | Find the hidden flag with clues that paint the board.           |
 | 06   | Disc Duel       | Brain  | 1–2 (couch versus) | coming soon | Flip the board in one move, if you can see it coming.           |
 | 07   | Pocket Links    | Sports | 1–2 (couch versus) | coming soon | Nine holes, a breeze you can read, a swing in three clicks.     |
-| 08   | Trailblaze      | Duels  | 1–2 (couch versus) | coming soon | Leave a trail of light and box your rival in.                   |
+| 08   | Trailblaze      | Duels  | 1–2 (couch versus) | playable    | Every cell you ride becomes a wall. Box your rival in first.    |
 | 09   | Crown Jump      | Brain  | 1–2 (couch versus) | coming soon | Chain the jumps in one sweep and crown your king.               |
 | 10   | Table 21        | Brain  | 1–2 (couch versus) | coming soon | Chips, bets and the dealer's upcard. Hit, stand or double.      |
 | 11   | Lane Hopper     | Arcade | 1–2 (couch versus) | coming soon | Race a friend across ten lanes of traffic.                      |
