@@ -80,7 +80,9 @@ const GLOW_FRAGMENT = /* glsl */ `
   varying float vAlong;
   void main() {
     float core = exp(-vSide * vSide * 3.5);
-    float life = pow(1.0 - vFade, 1.6);
+    // pow() of a negative base is undefined, and interpolation can take 1.0 - vFade a hair below
+    // zero at a fully faded tail; on Direct3D that is a NaN the bloom spreads over the whole frame.
+    float life = pow(max(1.0 - vFade, 0.0), 1.6);
     vec3 colour = mix(headColour, tailColour, vFade);
     gl_FragColor = vec4(colour * core * life * alpha, 1.0);
   }

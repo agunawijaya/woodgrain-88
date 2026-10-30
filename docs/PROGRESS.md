@@ -1,6 +1,6 @@
 # Progress
 
-Updated once at the end of each prompt. Last update: prompt 04a (Trailblaze polish), 2026-10-30.
+Updated once at the end of each prompt. Last update: prompt 05 (Gravity Duel), 2026-10-30.
 
 ## Foundation (prompt 00)
 
@@ -97,6 +97,24 @@ Updated once at the end of each prompt. Last update: prompt 04a (Trailblaze poli
 | Open | Variation 4's marathon (warn before it?); turns between unequal Kids are one-sided (NOTES.md) |
 | Tests | 122 Hot & Cold, 247 kit, 110 Hall (Vitest; balance opt-in); 14 Hot & Cold flows, 1 Trailblaze Kid flow, 12 screenshot runs (60 pictures) |
 
+## Gravity Duel (prompt 05)
+
+| Part | Status |
+|---|---|
+| DeepSeek joins the crew (OpenCode CLI, members `deepseek-pro` and `deepseek-flash`) | done; ADR-0015; the runner accepts only DeepSeek models and never passes `--auto`; a clean finish is no longer misread as a quota stop |
+| Engine: the 17 cartridge variations (7 duels, 6 docking races, 4 solo docking), every verified rule, Remix (Binary Stars, Comet, Asteroid Belt, Last Fuel) | done; pure, fixed-step, whole numbers; the speed fold, the 128-tick missile life, the cloak that skips every touch; all 12 hooks confirmed by an independent DeepSeek Pro read |
+| Kit `kids/aim` (lead share and overshoot) | done; ADR-0017 |
+| Kid pilots: the real physics run forward on the Kid's slightly wrong idea of the target, reflexes, memory of the bars, aim | done; "How Rosa flew it" after a match |
+| Balance targets | Lou v Pip 87.7% (75–90), Moss v Dee 68.3% (55–70), Dee's star crashes 2.22× Moss's (≥ 2), Lou's docks 1.65× Pip's (≥ 1.5), the perfect docker 20/20 on switches B and A: met and locked (300 matches, seed 23) |
+| Four looks (Deep Space, Brass Orrery, Paper Sky, Whirlpool), light and dark, Follow camera, hit nudge, the trajectory guide | done; ADR-0016; hero frames approved by the owner; three critique rounds on the real screens |
+| Menu, pre-match, HUD, results, tutorial (seven lessons on the real engine), records, settings | done, to Trailblaze's standard; the tutorial's lessons were made reachable at 60 Hz and its taps counted |
+| Modes: vs a Kid, Versus, docking race, solo docking, Remix; daily, challenge links, four micro-challenges, eight patches (two secret) | done |
+| Sound (four synthesised palettes; the two engines a fourth apart) | done |
+| Hall integration (registry, lazy chunk, Den TV demo) | done; Hall entry 341 kB (gzip 109), game chunk 198 kB (gzip 63) plus the shared three.js chunk |
+| Performance | 26–38 fps at 1920 × 1080 in every look, day and night, measured in headless Playwright Chromium, where Trailblaze gives 27–40; not yet measured in a desktop browser |
+| Open | Challenge links carry no opponent (the kit's `Challenge` has none; the Hall seats the Kid); the tutorial has no unit test (its e2e flow covers every lesson) |
+| Tests | 261 Gravity Duel (Vitest, including all 17 variations flown by Kids), 75 bridge; 16 Gravity Duel flows, 16 screenshot runs (96 pictures) |
+
 ## Games
 
 Status values: **coming soon** (manifest, label, slate and details in the Hall; no game yet) ·
@@ -119,7 +137,7 @@ Status values: **coming soon** (manifest, label, slate and details in the Hall; 
 | 13 | Chalk Talk | Sports | 9 | coming soon | |
 | 14 | Bumper Chase | Duels | 10 | coming soon | |
 | 15 | Pier Derby | Sports | 8 | coming soon | Versions: derby (default, program 26), hack (program 15, Counter place 32) |
-| 16 | Gravity Duel | Duels | 2 | coming soon | |
+| 16 | Gravity Duel | Duels | 2 | playable | DeepSeek joined the crew for its engine; four looks, Kids that forecast the real physics |
 | 17 | Glove Box | Duels | 7 | coming soon | |
 | 18 | Shore Battery | Arcade | 6 | coming soon | Renamed in 00a |
 | 19 | Baseline | Sports | 7 | coming soon | |

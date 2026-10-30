@@ -755,7 +755,9 @@ function createShockRing() {
       varying vec2 vUv;
       void main() {
         float radius = length(vUv);
-        float ring = exp(-pow((radius - progress) / (0.06 + progress * 0.12), 2.0));
+        // Squared by hand: pow() of a negative base is undefined on some GPUs.
+        float offset = (radius - progress) / (0.06 + progress * 0.12);
+        float ring = exp(-offset * offset);
         float inner = (1.0 - smoothstep(0.0, progress, radius)) * 0.25;
         float fade = (1.0 - progress) * (1.0 - progress);
         gl_FragColor = vec4(vec3(2.4, 1.6, 0.9) * (ring + inner) * fade * strength, 1.0);

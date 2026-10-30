@@ -1,6 +1,7 @@
 # AGENTS.md — rules for every agent on Woodgrain '88
 
-These rules apply to every lead (Claude Code) and every crew member (Gemini through `tools/crew/`).
+These rules apply to every lead (Claude Code) and every crew member (Gemini through `agy` and
+DeepSeek through `opencode`, both driven by `tools/crew/`).
 `CLAUDE.md` holds the hard rules and wins on them; this file wins on build details.
 
 ## Hard rules, short

@@ -13,6 +13,7 @@ export * from './emitter.ts';
 export * from './events.ts';
 export * from './input.ts';
 export * from './kids.ts';
+export * from './kids/aim.ts';
 export * from './kids/memory.ts';
 export * from './kids/mode.ts';
 export * from './kids/reflex.ts';

@@ -217,6 +217,31 @@ The values below are Trailblaze's tuned ones (its NOTES.md has the runs):
 | Dee   | 160 ± 30 ms | 3         | 4         | 70%       | 0.6   | 5%    | 0.25 · 0.25 · 0.4 · 0                     |
 | Pip   | 280 ± 60 ms | 3         | 4         | 50%       | 0.5   | 8%    | 0.4 · 0.4 · 0.3 · 0                       |
 
+### The Kids' aim and touch
+
+When things move, people make two more mistakes: they lead a moving target by the wrong amount,
+and they hold a push (a thrust, a brake, a turn) past the point before correcting. `kids/aim`
+(ADR-0017) models both. Your game still works out the truth; the kit says how far off the Kid's
+hands come out.
+
+1. **Choose a profile.** Use `aimProfile(kid, mode)`. Sharp Kids lead exactly and never overshoot.
+2. **Leading.** Before solving a shot, call `leadShare(profile, rng)` once for that shot, and
+   scale the target's predicted travel by it: 1 leads exactly, less leads short.
+3. **Pushing.** When the Kid knows a push needs `needed` (ticks of thrust, metres of braking),
+   `heldFor(needed, profile, rng)` is how long its hands actually hold it. Let the Kid notice and
+   correct afterwards, through its reflexes.
+
+Starting values; Gravity Duel's NOTES.md records its tuning:
+
+| Kid   | Lead bias | Lead spread | Overshoot |
+| ----- | --------- | ----------- | --------- |
+| Lou   | 0.95      | 0.08        | 0.10      |
+| Moss  | 0.85      | 0.12        | 0.15      |
+| Rosa  | 0.80      | 0.15        | 0.30      |
+| Benny | 0.75      | 0.15        | 0.25      |
+| Dee   | 0.60      | 0.20        | 0.60      |
+| Pip   | 0.50      | 0.35        | 0.35      |
+
 ## Versus
 
 Games supporting two players set `manifest.versus` to `'local'` (two humans on one machine) or `'local+bot'` (human versus human or bot).

@@ -50,6 +50,9 @@ const ID_PATTERN = /^[a-z0-9][a-z0-9-]{2,63}$/;
 const UNSEEN_ROOTS = ['.claude', '.team', '.git', 'node_modules'];
 
 export function timeoutSecondsFor(kind) {
+  // Test-only escape hatch: a real timeout test would otherwise take minutes.
+  const override = Number(process.env.CREW_TEST_TIMEOUT_SECONDS);
+  if (Number.isFinite(override) && override >= 0) return override;
   return TIMEOUT_SECONDS_BY_KIND[kind] ?? DEFAULT_TIMEOUT_SECONDS;
 }
 
@@ -115,6 +118,7 @@ export function parseOrder(text) {
     id: fields.id,
     kind: fields.kind,
     model: fields.model,
+    member: fields.member,
     fence: asList(fields.fence),
     acceptance: asList(fields.acceptance),
     reads: asList(fields.reads),
@@ -152,7 +156,9 @@ export function validateOrder(order, fileName) {
     problems.push(`file name must be ${order.id}.md`);
   }
   if (!KINDS.includes(order.kind)) problems.push(`kind must be one of ${KINDS.join(', ')}`);
-  if (order.model !== undefined && !ALLOWED_MODEL.test(order.model)) {
+  // A named member picks its own runner and model family (see members.mjs);
+  // without one, the order runs on Agy and must name a Gemini model.
+  if (order.member === undefined && order.model !== undefined && !ALLOWED_MODEL.test(order.model)) {
     problems.push(`model "${order.model}" is not a gemini-* model`);
   }
   if (order.fence.length === 0) problems.push('fence must list at least one path');

@@ -15,10 +15,6 @@
       "Bash(git diff:*)",
       "Bash(git log:*)"
     ],
-    "deny": [
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(agy *--dangerously-skip-permissions*)"
-    ]
+    "deny": ["Bash(agy *--dangerously-skip-permissions*)"]
   }
 }

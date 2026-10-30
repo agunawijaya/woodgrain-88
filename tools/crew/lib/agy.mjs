@@ -8,7 +8,7 @@
  * turn. That is why the crew is told never to run commands and the bridge runs
  * acceptance itself.
  */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { ALLOWED_MODEL } from './order.mjs';
 
 const FORBIDDEN_FLAGS = ['--dangerously-skip-permissions'];
@@ -16,6 +16,12 @@ const FORBIDDEN_FLAGS = ['--dangerously-skip-permissions'];
 // agy's own --print-timeout is not always honoured, so the bridge kills the
 // process itself once this grace period has passed.
 const KILL_GRACE_SECONDS = 60;
+
+/** Test-only escape hatch: a real timeout test would otherwise take a minute. */
+function killGraceSeconds() {
+  const override = Number(process.env.CREW_TEST_KILL_GRACE_SECONDS);
+  return Number.isFinite(override) && override >= 0 ? override : KILL_GRACE_SECONDS;
+}
 
 /** Decides how to launch agy: the real executable, or a script for tests. */
 export function resolveAgyCommand(env = process.env) {
@@ -71,7 +77,32 @@ export function buildPingArgs(model) {
   ];
 }
 
-export function runProcess({ command, args, cwd, timeoutSeconds, env, shell = false }) {
+/**
+ * Kills a process and everything it started. `--standalone` (the opencode
+ * runner) starts a private server under the client process, so killing just
+ * the client would leave that server running after the bridge gives up.
+ */
+function killProcessTree(pid) {
+  if (process.platform === 'win32') {
+    spawnSync('taskkill', ['/PID', String(pid), '/T', '/F']);
+    return;
+  }
+  try {
+    process.kill(-pid);
+  } catch {
+    // Already gone.
+  }
+}
+
+export function runProcess({
+  command,
+  args,
+  cwd,
+  timeoutSeconds,
+  env,
+  shell = false,
+  killTree = false,
+}) {
   return new Promise((resolve) => {
     const started = Date.now();
     let stdout = '';
@@ -79,17 +110,28 @@ export function runProcess({ command, args, cwd, timeoutSeconds, env, shell = fa
     let timedOut = false;
     let child;
     try {
-      child = spawn(command, args, { cwd, env: env ?? process.env, windowsHide: true, shell });
+      child = spawn(command, args, {
+        cwd,
+        env: env ?? process.env,
+        windowsHide: true,
+        shell,
+        detached: killTree,
+      });
     } catch (error) {
       resolve({ exitCode: null, stdout, stderr, timedOut, spawnError: String(error), seconds: 0 });
       return;
     }
+    // Nothing is ever piped in. `opencode run` reads stdin until it closes when stdin is not a
+    // terminal (verified on v2.2.2: an open pipe held a one-word turn until the pipe closed), so
+    // left open it would wait out the whole timeout.
+    child.stdin?.end();
     const killer = setTimeout(
       () => {
         timedOut = true;
-        child.kill();
+        if (killTree) killProcessTree(child.pid);
+        else child.kill();
       },
-      (timeoutSeconds + KILL_GRACE_SECONDS) * 1000,
+      (timeoutSeconds + killGraceSeconds()) * 1000,
     );
     child.stdout.on('data', (chunk) => (stdout += chunk));
     child.stderr.on('data', (chunk) => (stderr += chunk));

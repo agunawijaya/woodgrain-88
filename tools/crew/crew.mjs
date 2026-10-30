@@ -5,17 +5,19 @@
  * See docs/team/PROTOCOL.md for when and how to use it, and ADR-0007 for why it
  * works the way it does.
  *
- *   crew dispatch <order.md> [--model gemini-...] [--wait]
+ *   crew dispatch <order.md> [--member agy-argon|agy-flash|deepseek-pro|deepseek-flash]
+ *                            [--model <model>] [--wait]
  *   crew followup <order-id> "<numbered notes>" [--wait]
  *   crew review <order-id> [--verdict accepted|rejected|taken-over]
  *               [--lead-tokens N] [--solo-tokens N] [--note "..."]
  *   crew status
- *   crew ping
+ *   crew ping          (every member: both Agy models, both DeepSeek models, the subagents)
  *   crew allow        (lets the crew run its check commands; see lib/permissions.mjs)
  *
  * Every command prints one JSON object on stdout.
  */
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -26,7 +28,15 @@ import {
   runProcess,
 } from './lib/agy.mjs';
 import { readLedger, recordReview, writeLedger } from './lib/ledger.mjs';
+import { MEMBERS } from './lib/members.mjs';
 import { DEFAULT_MODEL_BY_KIND } from './lib/order.mjs';
+import {
+  buildOpencodeArgs,
+  interpretOpencodeRun,
+  PING_TIMEOUT_SECONDS as OPENCODE_PING_TIMEOUT_SECONDS,
+  resolveOpencodeCommand,
+  writePingConfig,
+} from './lib/opencode.mjs';
 import { installCrewRules, missingCrewRules, readAgySettings } from './lib/permissions.mjs';
 import { dispatchOrder, followUp, readState } from './lib/run.mjs';
 import { activeClaims, withLock } from './lib/slots.mjs';
@@ -60,6 +70,46 @@ function optionalCount(value, name) {
   return count;
 }
 
+/** `opencode models` output is the same shape as `agy models`: id, then a tab, then its name. */
+async function listOpencodeModels(opencode) {
+  const run = await runProcess({
+    command: opencode.command,
+    args: [...opencode.prefix, 'models'],
+    cwd: repoRoot,
+    timeoutSeconds: 60,
+  });
+  return run.stdout
+    .split(/\r?\n/)
+    .map((line) => line.split(/\s/)[0])
+    .filter(Boolean);
+}
+
+/** A no-tool turn in `.team/worktrees/_ping-opencode/`, denying every tool (behaviour 19). */
+async function pingOpencodeModel(opencode, model) {
+  const pingDir = join(repoRoot, '.team', 'worktrees', '_ping-opencode');
+  mkdirSync(pingDir, { recursive: true });
+  writePingConfig(pingDir);
+  const args = buildOpencodeArgs({
+    prompt: 'Reply with the single word READY and nothing else. Do not use any tools.',
+    model,
+  });
+  const run = await runProcess({
+    command: opencode.command,
+    args: [...opencode.prefix, ...args],
+    cwd: pingDir,
+    // OpenCode works in PWD, not the process's directory; see run.mjs.
+    env: { ...process.env, PWD: pingDir },
+    timeoutSeconds: OPENCODE_PING_TIMEOUT_SECONDS,
+    killTree: true,
+  });
+  const verdict = interpretOpencodeRun(run);
+  const ready = verdict.outcome === 'ok' && /READY/i.test(verdict.result?.response ?? '');
+  return ready ? 'ready' : verdict.outcome;
+}
+
+const subagentAvailable = (name) =>
+  existsSync(join(homedir(), '.claude', 'agents', `${name}.md`)) ? 'available' : 'missing';
+
 async function ping() {
   const agy = resolveAgyCommand();
   const models = await runProcess({
@@ -90,10 +140,33 @@ async function ping() {
   }
   const ready = Object.values(byModel).filter((state) => state === 'ready').length;
   const missingRules = missingCrewRules(readAgySettings()).length;
+
+  const opencode = resolveOpencodeCommand();
+  const opencodeModels = await listOpencodeModels(opencode);
+  const deepseekResults = {};
+  for (const [name, member] of Object.entries(MEMBERS)) {
+    if (member.runner !== 'opencode') continue;
+    deepseekResults[name] = opencodeModels.includes(member.model)
+      ? await pingOpencodeModel(opencode, member.model)
+      : `model "${member.model}" not listed by opencode models`;
+  }
+
+  const members = {
+    'agy-argon': byModel[MEMBERS['agy-argon'].model],
+    'agy-flash': byModel[MEMBERS['agy-flash'].model],
+    ...deepseekResults,
+    engineer: subagentAvailable('engineer'),
+    'qa-scout': subagentAvailable('qa-scout'),
+  };
+  const everyMemberReady = Object.values(members).every(
+    (state) => state === 'ready' || state === 'available',
+  );
+
   return {
-    ok: ready === defaults.length && geminiModels.length > 0,
+    ok: ready === defaults.length && geminiModels.length > 0 && everyMemberReady,
     geminiModels,
     defaultModels: byModel,
+    members,
     crewChecks:
       missingRules === 0
         ? 'ready'
@@ -118,6 +191,7 @@ function status() {
         kind: order.kind,
         status: running.has(order.id) ? 'running' : order.status,
         rounds: order.rounds,
+        member: order.member ?? 'agy',
         model: order.model,
         seconds: order.seconds,
         crewTokens: order.crewTokens.total,
@@ -149,11 +223,13 @@ async function main(argv) {
   const { positional, flags } = readFlags(rest);
   switch (command) {
     case 'dispatch':
-      if (!positional[0]) throw new Error('Usage: crew dispatch <order.md> [--model gemini-...]');
+      if (!positional[0])
+        throw new Error('Usage: crew dispatch <order.md> [--member <name>] [--model <model>]');
       return dispatchOrder({
         repoRoot,
         orderPath: positional[0],
         modelOverride: flags.model,
+        memberOverride: flags.member,
         waitForSlot: flags.wait === true,
       });
     case 'followup':
@@ -162,6 +238,7 @@ async function main(argv) {
         repoRoot,
         id: positional[0],
         message: positional.slice(1).join(' '),
+        memberOverride: flags.member,
         waitForSlot: flags.wait === true,
       });
     case 'review':

@@ -63,11 +63,18 @@ export function hashTree(root, options) {
   return new Map(listFiles(root, options).map((rel) => [rel, hashFile(join(root, rel))]));
 }
 
-/** Copies the repo into a fresh staging folder and returns the baseline hashes. */
-export function createStagingCopy(repoRoot, stagingDir) {
+/**
+ * Copies the repo into a fresh staging folder and returns the baseline
+ * hashes. `extraExcludedRoots` leaves out more than the usual roots — the
+ * free-tier DeepSeek member also skips `research/`, so it cannot read the
+ * dossiers by browsing even though they are not in its order's reads.
+ */
+export function createStagingCopy(repoRoot, stagingDir, { extraExcludedRoots = [] } = {}) {
   rmSync(stagingDir, { recursive: true, force: true });
   mkdirSync(stagingDir, { recursive: true });
-  const files = listFiles(repoRoot, { excludeRoots: STAGING_EXCLUDED_ROOTS });
+  const files = listFiles(repoRoot, {
+    excludeRoots: [...STAGING_EXCLUDED_ROOTS, ...extraExcludedRoots],
+  });
   const baseline = new Map();
   for (const rel of files) {
     const source = join(repoRoot, rel);

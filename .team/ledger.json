@@ -1910,6 +1910,160 @@
       "note": "",
       "startedAt": "2026-10-30T03:43:07.758Z",
       "updatedAt": "2026-10-30T03:44:39.557Z"
+    },
+    {
+      "id": "crew-deepseek-live-check",
+      "kind": "docs",
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "member": "deepseek-flash",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 16.8,
+      "crewTokens": {
+        "input": 6679,
+        "output": 317,
+        "thinking": 129,
+        "cacheRead": 44032,
+        "total": 7125
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "Live check of the OpenCode runner: fence write applied, README edit and git status refused.",
+      "startedAt": "2026-10-30T06:47:36.931Z",
+      "updatedAt": "2026-10-30T06:47:49.288Z"
+    },
+    {
+      "id": "gd-physics",
+      "kind": "engine",
+      "model": "deepseek/deepseek-v4-pro",
+      "member": "deepseek-pro",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 894.2,
+      "crewTokens": {
+        "input": 37447,
+        "output": 10972,
+        "thinking": 49200,
+        "cacheRead": 1704064,
+        "total": 97619
+      },
+      "violations": 0,
+      "leadTokens": 14000,
+      "soloTokens": 30000,
+      "note": "Physics core to spec; 25 tests pass. Bridge misread the clean finish as quota (fixed in opencode.mjs); acceptance run by the lead. Lead fixed a unit name in gravityPull and one comment.",
+      "startedAt": "2026-10-30T07:55:35.475Z",
+      "updatedAt": "2026-10-30T07:58:13.135Z"
+    },
+    {
+      "id": "gd-progress",
+      "kind": "plumbing",
+      "model": "gemini-3.8-flash-medium",
+      "member": "agy-flash",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 577.7,
+      "crewTokens": {
+        "input": 255502,
+        "output": 50201,
+        "thinking": 33876,
+        "cacheRead": 5585506,
+        "total": 305703
+      },
+      "violations": 0,
+      "leadTokens": 9000,
+      "soloTokens": 22000,
+      "note": "Progress modules to spec, acceptance green. Lead fixed a missile swallow ending the near-star stretch, rewrote AI-style section comments, clarified the two-secret-patch test.",
+      "startedAt": "2026-10-30T08:24:10.589Z",
+      "updatedAt": "2026-10-30T08:26:22.388Z"
+    },
+    {
+      "id": "gd-match",
+      "kind": "engine",
+      "model": "deepseek/deepseek-v4-pro",
+      "member": "deepseek-pro",
+      "rounds": 2,
+      "status": "accepted",
+      "seconds": 2967.8,
+      "crewTokens": {
+        "input": 111617,
+        "output": 16876,
+        "thinking": 75170,
+        "cacheRead": 10018048,
+        "total": 135860
+      },
+      "violations": 0,
+      "leadTokens": 26000,
+      "soloTokens": 60000,
+      "note": "Match rules to spec over two rounds (first round timed out after match.ts and setup tests). Lead fixed two type errors in applyGravity; the crew's equivalent fix landed in conflicts and was dropped. 46 match tests pass; NOTES corrected to burn-then-toggle as the crew pointed out.",
+      "startedAt": "2026-10-30T08:24:27.916Z",
+      "updatedAt": "2026-10-30T08:49:57.057Z"
+    },
+    {
+      "id": "gd-engine-check",
+      "kind": "engine",
+      "model": "deepseek/deepseek-v4-pro",
+      "member": "deepseek-pro",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 966,
+      "crewTokens": {
+        "input": 54397,
+        "output": 8202,
+        "thinking": 52177,
+        "cacheRead": 982656,
+        "total": 114776
+      },
+      "violations": 0,
+      "leadTokens": 5000,
+      "soloTokens": 18000,
+      "note": "Fresh DeepSeek Pro read of the engine against NOTES.md and the dossier: all 12 hooks confirmed by end-to-end tests, no disagreements.",
+      "startedAt": "2026-10-30T09:06:16.484Z",
+      "updatedAt": "2026-10-30T09:06:42.504Z"
+    },
+    {
+      "id": "gd-remix",
+      "kind": "engine",
+      "model": "deepseek/deepseek-v4-pro",
+      "member": "deepseek-pro",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 1560.5,
+      "crewTokens": {
+        "input": 59297,
+        "output": 12622,
+        "thinking": 85740,
+        "cacheRead": 3858304,
+        "total": 157659
+      },
+      "violations": 0,
+      "leadTokens": 12000,
+      "soloTokens": 35000,
+      "note": "Remix engine and 17 tests from DeepSeek Pro; the turn timed out before its own checks. Lead fixed two tests (rock position read a tick early; a test missile parked on its own ship) and made the engine draw each comet pass on its first tick so rendering cannot shift the random stream.",
+      "startedAt": "2026-10-30T09:18:52.009Z",
+      "updatedAt": "2026-10-30T09:21:49.285Z"
+    },
+    {
+      "id": "gd-variation-smoke",
+      "kind": "tests",
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "member": "deepseek-flash",
+      "rounds": 1,
+      "status": "rejected",
+      "seconds": 268.5,
+      "crewTokens": {
+        "input": 47921,
+        "output": 1943,
+        "thinking": 14212,
+        "cacheRead": 1069440,
+        "total": 64076
+      },
+      "violations": 0,
+      "leadTokens": 3000,
+      "soloTokens": 6000,
+      "note": "DeepSeek Flash hit the free tier's usage limit (HTTP 429) before writing anything; the same order was given to qa-scout.",
+      "startedAt": "2026-10-30T09:32:13.526Z",
+      "updatedAt": "2026-10-30T09:32:35.003Z"
     }
   ]
 }

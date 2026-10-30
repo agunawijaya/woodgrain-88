@@ -34,13 +34,17 @@ function addTokens(a, b) {
 }
 
 /** Folds one finished round into the order's ledger entry. */
-export function recordRound(ledger, { id, kind, model, status, seconds, tokens, violations, at }) {
+export function recordRound(
+  ledger,
+  { id, kind, model, member = 'agy', status, seconds, tokens, violations, at },
+) {
   let entry = ledger.orders.find((order) => order.id === id);
   if (!entry) {
     entry = {
       id,
       kind,
       model,
+      member,
       rounds: 0,
       status,
       seconds: 0,
@@ -54,6 +58,7 @@ export function recordRound(ledger, { id, kind, model, status, seconds, tokens, 
     ledger.orders.push(entry);
   }
   entry.model = model;
+  entry.member = member;
   entry.rounds += 1;
   entry.status = status;
   entry.seconds = Math.round((entry.seconds + seconds) * 10) / 10;
@@ -142,12 +147,12 @@ export function renderLedger(ledger) {
       `lead estimate on ${plural(totals.reviewed, 'reviewed order')}: ${formatCount(totals.leadTokens)} Claude tokens spent ` +
       `vs ${formatCount(totals.soloTokens)} solo, ${describeSaving(totals.estimatedSaving)}.`,
     '',
-    '| Order | Kind | Model | Rounds | Status | Duration | Crew tokens | Fence violations | Lead tokens (spent / solo est.) | Note |',
-    '|---|---|---|---|---|---|---|---|---|---|',
+    '| Order | Kind | Model | Member | Rounds | Status | Duration | Crew tokens | Fence violations | Lead tokens (spent / solo est.) | Note |',
+    '|---|---|---|---|---|---|---|---|---|---|---|',
   ];
   for (const order of ledger.orders) {
     lines.push(
-      `| ${order.id} | ${order.kind} | ${order.model} | ${order.rounds} | ${order.status} | ` +
+      `| ${order.id} | ${order.kind} | ${order.model} | ${order.member ?? 'agy'} | ${order.rounds} | ${order.status} | ` +
         `${formatMinutes(order.seconds)} | ${formatCount(order.crewTokens.total)} | ${order.violations} | ` +
         `${formatCount(order.leadTokens)} / ${formatCount(order.soloTokens)} | ${escapeCell(order.note)} |`,
     );

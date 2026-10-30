@@ -12,6 +12,7 @@ import { readLedger } from '../lib/ledger.mjs';
 import { dispatchOrder, followUp, MAX_FOLLOWUPS } from '../lib/run.mjs';
 
 const fakeAgy = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'fake-agy.mjs');
+const fakeOpencode = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'fake-opencode.mjs');
 
 let repo;
 
@@ -22,12 +23,18 @@ function put(rel, text) {
 
 const read = (rel) => readFileSync(join(repo, rel), 'utf8');
 
-function writeOrder({ id = 'test-order', fence = ['docs/**'], acceptance = [], reads = [] } = {}) {
+function writeOrder({
+  id = 'test-order',
+  fence = ['docs/**'],
+  acceptance = [],
+  reads = [],
+  member,
+} = {}) {
   const list = (items) =>
     items.length === 0 ? ' []' : `\n${items.map((item) => `  - ${item}`).join('\n')}`;
   put(
     `.team/orders/${id}.md`,
-    `---\nid: ${id}\nkind: docs\nfence:${list(fence)}\nacceptance:${list(acceptance)}\nreads:${list(reads)}\n---\n\n## Goal\n\nTest.\n`,
+    `---\nid: ${id}\nkind: docs\n${member ? `member: ${member}\n` : ''}fence:${list(fence)}\nacceptance:${list(acceptance)}\nreads:${list(reads)}\n---\n\n## Goal\n\nTest.\n`,
   );
   return `.team/orders/${id}.md`;
 }
@@ -43,8 +50,28 @@ function envFor(scenario) {
   };
 }
 
+function envForOpencode(scenario) {
+  return {
+    ...process.env,
+    CREW_OPENCODE: fakeOpencode,
+    FAKE_OPENCODE_SCENARIO: scenario,
+    FAKE_OPENCODE_REAL_REPO: repo,
+    FAKE_OPENCODE_LOG: join(repo, 'opencode-calls.log'),
+    FAKE_OPENCODE_COUNTER: join(repo, 'opencode-counter.txt'),
+    FAKE_OPENCODE_CONFIG_LOG: join(repo, 'opencode-config-seen.json'),
+    FAKE_OPENCODE_LISTING: join(repo, 'opencode-listing.txt'),
+  };
+}
+
 function loggedCalls() {
   return read('agy-calls.log')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line));
+}
+
+function loggedOpencodeCalls() {
+  return read('opencode-calls.log')
     .trim()
     .split('\n')
     .map((line) => JSON.parse(line));
@@ -57,6 +84,7 @@ beforeEach(() => {
   put('README.md', 'original readme\n');
   put('src/game.asm', 'reference listing\n');
   put('original/cart.bin', 'reference image\n');
+  put('research/01-notes.md', 'dossier notes\n');
 });
 
 afterEach(() => rmSync(repo, { recursive: true, force: true }));
@@ -274,4 +302,140 @@ test('an order that is already running cannot be dispatched a second time', asyn
   const otherLiveProcess = process.ppid;
   claimSlot(repo, { id: 'busy', fence: ['docs/busy.md'] }, otherLiveProcess);
   assert.throws(() => claimSlot(repo, { id: 'busy', fence: ['docs/busy.md'] }), /already running/);
+});
+
+// --- the opencode runner (prompt 05, stage 0) -------------------------------
+
+test('a change from a DeepSeek member inside the fence is applied, through the opencode runner', async () => {
+  const orderPath = writeOrder({ member: 'deepseek-pro' });
+  const summary = await dispatchOrder({ repoRoot: repo, orderPath, env: envForOpencode('inside') });
+  assert.equal(summary.status, 'crew-done');
+  assert.equal(summary.member, 'deepseek-pro');
+  assert.deepEqual(summary.applied, ['docs/notes.md (added)']);
+  assert.equal(read('docs/notes.md'), 'crew notes\n');
+  const [args] = loggedOpencodeCalls();
+  assert.deepEqual(args.slice(0, 5), [
+    'run',
+    '--standalone',
+    '--model',
+    'deepseek/deepseek-v4-pro',
+    '--format',
+  ]);
+  assert.ok(!args.includes('--auto'));
+});
+
+test('the bridge closes stdin, which the real opencode reads to the end before it answers', async () => {
+  const orderPath = writeOrder({ member: 'deepseek-pro' });
+  const summary = await dispatchOrder({
+    repoRoot: repo,
+    orderPath,
+    env: envForOpencode('waits-for-stdin'),
+  });
+  assert.equal(summary.status, 'crew-done');
+  assert.deepEqual(summary.applied, ['docs/notes.md (added)']);
+});
+
+test('opencode works in the staging copy: the bridge sets PWD, which opencode reads instead of its own directory', async () => {
+  const orderPath = writeOrder({ member: 'deepseek-pro' });
+  const pwdLog = join(repo, 'pwd.log');
+  await dispatchOrder({
+    repoRoot: repo,
+    orderPath,
+    env: { ...envForOpencode('inside'), PWD: repo, FAKE_OPENCODE_PWD_LOG: pwdLog },
+  });
+  const [pwd, cwd] = read('pwd.log').split('\n');
+  assert.equal(pwd, cwd);
+  assert.match(pwd ?? '', /worktrees/);
+});
+
+test('opencode.json and .opencode/ never appear as applied or rejected changes', async () => {
+  const orderPath = writeOrder({ member: 'deepseek-pro', fence: ['docs/**'] });
+  const summary = await dispatchOrder({
+    repoRoot: repo,
+    orderPath,
+    env: envForOpencode('outside'),
+  });
+  assert.ok(!summary.applied.some((entry) => entry.includes('opencode.json')));
+  assert.ok(!summary.applied.some((entry) => entry.includes('.opencode')));
+  assert.ok(!summary.violations.includes('opencode.json'));
+  const rejected = join(repo, '.team', 'runs', 'test-order', 'round-1', 'rejected');
+  assert.ok(!existsSync(join(rejected, 'opencode.json')));
+  // The config the fake saw proves the bridge wrote one before the run.
+  assert.ok(existsSync(join(repo, 'opencode-config-seen.json')));
+});
+
+test('a free-tier staging copy leaves out research/ entirely', async () => {
+  const orderPath = writeOrder({ member: 'deepseek-flash' });
+  await dispatchOrder({ repoRoot: repo, orderPath, env: envForOpencode('inside') });
+  const listing = read('opencode-listing.txt').split(',');
+  assert.ok(
+    !listing.includes('research'),
+    `research/ should not be in the staging copy: ${listing}`,
+  );
+  assert.ok(listing.includes('docs'), 'other folders are still there');
+});
+
+test('a free-tier order refuses to read the reference folders or the dossiers', async () => {
+  const orderPath = writeOrder({ member: 'deepseek-flash', reads: ['research/01-notes.md'] });
+  await assert.rejects(
+    dispatchOrder({ repoRoot: repo, orderPath, env: envForOpencode('inside') }),
+    /free-tier/,
+  );
+});
+
+test('a follow-up to a DeepSeek member resumes with --session on the same member', async () => {
+  const orderPath = writeOrder({
+    member: 'deepseek-pro',
+    acceptance: ['node -e "console.log(\'boom\'); process.exit(1)"'],
+  });
+  await dispatchOrder({ repoRoot: repo, orderPath, env: envForOpencode('inside') });
+  const summary = await followUp({
+    repoRoot: repo,
+    id: 'test-order',
+    message: '1. Fix the thing.',
+    env: envForOpencode('inside'),
+  });
+  assert.equal(summary.member, 'deepseek-pro');
+  const calls = loggedOpencodeCalls();
+  const followupArgs = calls[1];
+  assert.equal(followupArgs[followupArgs.indexOf('--session') + 1], 'ses_123');
+  await assert.rejects(
+    followUp({ repoRoot: repo, id: 'test-order', message: 'x', memberOverride: 'deepseek-flash' }),
+    /cannot override the member/,
+  );
+});
+
+test('a scenario that never exits is killed at the timeout, and the round is timeout', async () => {
+  const orderPath = writeOrder({ member: 'deepseek-pro' });
+  process.env.CREW_TEST_TIMEOUT_SECONDS = '1';
+  process.env.CREW_TEST_KILL_GRACE_SECONDS = '1';
+  try {
+    const summary = await dispatchOrder({
+      repoRoot: repo,
+      orderPath,
+      env: envForOpencode('never-exits'),
+    });
+    assert.equal(summary.status, 'timeout');
+  } finally {
+    delete process.env.CREW_TEST_TIMEOUT_SECONDS;
+    delete process.env.CREW_TEST_KILL_GRACE_SECONDS;
+  }
+});
+
+test('the ledger and LEDGER.md show the member for both runners', async () => {
+  await dispatchOrder({ repoRoot: repo, orderPath: writeOrder(), env: envFor('inside') });
+  await dispatchOrder({
+    repoRoot: repo,
+    orderPath: writeOrder({ id: 'deepseek-order', member: 'deepseek-pro' }),
+    env: envForOpencode('inside'),
+  });
+  const ledger = readLedger(repo);
+  assert.equal(ledger.orders.find((order) => order.id === 'test-order').member, 'agy');
+  assert.equal(ledger.orders.find((order) => order.id === 'deepseek-order').member, 'deepseek-pro');
+  const renderedLedger = read('.team/LEDGER.md');
+  assert.match(renderedLedger, /\| Order \| Kind \| Model \| Member \|/);
+  assert.match(
+    renderedLedger,
+    /\| deepseek-order \| docs \| deepseek\/deepseek-v4-pro \| deepseek-pro \|/,
+  );
 });

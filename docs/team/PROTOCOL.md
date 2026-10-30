@@ -83,8 +83,9 @@ Copy [`.team/orders/TEMPLATE.md`](../../.team/orders/TEMPLATE.md) to `.team/orde
 ## Running orders
 
 ```sh
-pnpm crew ping                              # start of every session
+pnpm crew ping                              # start of every session; every member's state
 pnpm crew dispatch .team/orders/<id>.md     # one round; prints a JSON summary
+pnpm crew dispatch .team/orders/<id>.md --member deepseek-pro   # or put `member:` in the order
 pnpm crew status                            # every order: status, rounds, model, tokens
 pnpm crew followup <id> "1. ... 2. ..."     # resume the same conversation
 pnpm crew review <id> --verdict accepted --lead-tokens 3000 --solo-tokens 12000 --note "..."
@@ -97,8 +98,30 @@ pnpm crew review <id> --verdict accepted --lead-tokens 3000 --solo-tokens 12000 
 - Statuses: `crew-done` (clean: no violations, acceptance passed), `needs-work`, `crew-error`,
   `timeout`, `quota`, `transport` (one automatic retry already happened). After review:
   `accepted`, `rejected`, `taken-over`.
-- If the Antigravity quota runs out, do the work yourself or queue it, and say so in the ledger
-  note.
+- If the Antigravity quota runs out, move the order to a DeepSeek member, do the work yourself or
+  queue it, and say so in the ledger note.
+
+## Members
+
+| Member           | Runs on                                        | Good for                                                                                           |
+| ---------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `agy-argon`      | `gemini-4-argon-medium` (agy)                  | `engine`, `ai` and `dossier` orders with a full spec                                               |
+| `agy-flash`      | `gemini-3.8-flash-medium` (agy)                | small `plumbing`, `tests`, `docs` and `data` orders                                                |
+| `deepseek-pro`   | `deepseek/deepseek-v4-pro` (opencode)          | algorithm-heavy code: fixed-step physics, integration, property tests, simulations, engine reviews |
+| `deepseek-flash` | `opencode/deepseek-v4.1-flash-free` (opencode) | bulk mechanical work: tables, fixtures, data files, small unit tests, formatting fixes             |
+
+- Without `member:` (or `--member`) an order runs on Agy by its kind, as before members existed.
+- `deepseek-flash` is a free tier: its orders may not read `original/`, `src/` or `research/` (the
+  bridge refuses them) and its staging copy has no `research/`. `deepseek-pro` may read a dossier
+  when an order needs it.
+- OpenCode has no sandbox of its own. The bridge writes an `opencode.json` into each staging copy
+  that allows edits only inside the fence and only the check commands (plus Vitest) in the shell,
+  and denies the web, subagents and directories outside the copy; then it checks the fence on the
+  diff as for Agy. Unlike Agy, a refused action does not end an OpenCode turn.
+- A DeepSeek member may run the order's Vitest acceptance command itself, so its orders can name
+  tests in their acceptance and expect them to pass on the first round.
+- Never run `opencode` by hand inside a staging copy: OpenCode remembers a folder's permission file
+  the first time it sees it (the bridge always starts a private server so it reads it fresh).
 - `gemini` (Gemini CLI) is a fallback only if `agy` is unavailable; record it in the ledger note.
 
 ## Review checklist
