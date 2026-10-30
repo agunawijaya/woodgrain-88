@@ -10,10 +10,10 @@ CLI (`tools/crew/`, built in 00); the owner never relays messages between them.
 | 00a | `00a-owner-decisions.md` — faithful themes, five renames, cartridge versions | 00 | Done 2026-10-26 |
 | 01 | `01-den-life.md` — patches, the jacket, Pro switch, channels, Power Cycle of the day and Run, Versus Night, the Neighbourhood Kids, the Counter | 00, 00a | Done 2026-10-27 |
 | 02 | `02-tank-duel.md` — Tank Duel (pilot game) + `packages/arena` (three.js diorama toolkit) | 01 | Done 2026-10-27 |
-| 03 | `03-hot-and-cold.md` — Hot & Cold + kit human-like Kid memory; three looks (Polar, Tabletop, Radar) | 02 | Partly done: playable in its harness (`158f0b7`); open: Hall integration, e2e, ABOUT/HOW-TO-PLAY/ARCHITECTURE/CHANGES docs, critique pass — resume in a new session |
+| 03 | `03-hot-and-cold.md` — Hot & Cold + kit human-like Kid memory; three looks (Polar, Tabletop, Radar) | 02 | Done 2026-10-30 (finished by 03a, `48e7511`) |
 | 04 | `04-trailblaze.md` — Trailblaze + kit human-like Kid reflexes; four looks (Neon Grid, Toy Trains, Mummy's Wrap, Ice Trail) | 03 committed | Done 2026-10-29 (`b666453`) |
-| 03a | `03a-hot-and-cold-finish.md` — finish Hot & Cold (Hall, e2e, docs, critique) + the Den's Kid setting (Human / Sharp) | 04 | Ready to run; parallel with 04a |
-| 04a | `04a-trailblaze-polish.md` — readable riders, crash camera, Mummy cocoon crash, results fixes, one-cell lag | 04 | Ready to run; parallel with 03a; owner checkpoint at stage 1 |
+| 03a | `03a-hot-and-cold-finish.md` — finish Hot & Cold (Hall, e2e, docs, critique) + the Den's Kid setting (Human / Sharp) | 04 | Done 2026-10-30 (`48e7511`) |
+| 04a | `04a-trailblaze-polish.md` — readable riders, crash camera, Mummy cocoon crash, results fixes, one-cell lag | 04 | Done 2026-10-30 (`48e7511`) |
 | 05+ | One prompt per game, after each game's brief. The first game of each family builds that family's shared package (board, sport) | 02 | Not written yet |
 
 ## Conventions
