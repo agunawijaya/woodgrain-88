@@ -17,6 +17,7 @@ import {
   type GameInstance,
   type GameView,
   type KidId,
+  type MemoryMode,
   type MicroBrief,
   type RunInfo,
   type RunMode,
@@ -105,6 +106,16 @@ const reducedMotion =
 const leftPos: SwitchPosition = params.get('left') === 'A' ? 'A' : 'B';
 const rightPos: SwitchPosition = params.get('right') === 'A' ? 'A' : 'B';
 let switches: DifficultySwitches = { left: leftPos, right: rightPos };
+
+const kids: MemoryMode = params.get('kids') === 'sharp' ? 'sharp' : 'human';
+
+// The game reads its look from its own settings store (key `hc.look`), as if the player had
+// chosen it on the menu; this seeds that store so a test or a screenshot can ask for one directly.
+const lookParam = params.get('look');
+const initialGameSettings =
+  lookParam === 'polar' || lookParam === 'tabletop' || lookParam === 'radar'
+    ? { 'hc.look': lookParam }
+    : undefined;
 
 const host = document.getElementById('host');
 if (!host) {
@@ -210,7 +221,9 @@ const fake = createFakeContext({
   appearance,
   reducedMotion,
   switches,
+  kids,
   speed,
+  ...(initialGameSettings ? { initialGameSettings } : {}),
   chrome: {
     openPause(): void {
       fake.setPaused(true);

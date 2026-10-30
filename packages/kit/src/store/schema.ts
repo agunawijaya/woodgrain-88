@@ -9,6 +9,7 @@
  */
 import type { Bindings, PadInput, Seat, SeatBindings } from '../input.ts';
 import { KID_IDS, type KidId } from '../kids.ts';
+import type { MemoryMode } from '../kids/memory.ts';
 import {
   RUN_MODES,
   type AppearancePreference,
@@ -64,7 +65,7 @@ export interface RepoDataMap {
 
 export const SCHEMA_VERSIONS: Record<RepoName, number> = {
   profile: 1,
-  settings: 2,
+  settings: 3,
   progress: 3,
   records: 1,
   stats: 1,
@@ -76,7 +77,8 @@ export const SCHEMA_VERSIONS: Record<RepoName, number> = {
 export const MIGRATIONS: Record<RepoName, ((data: unknown) => unknown)[]> = {
   profile: [],
   // v1 → v2: console difficulty switches, growth toggle, share name, versus night bestOf and run sound.
-  settings: [migrateSettingsV1ToV2],
+  // v2 → v3: the Den's Kid setting (human or sharp).
+  settings: [migrateSettingsV1ToV2, migrateSettingsV2ToV3],
   // v1 → v2: the hidden-reskin "secrets" became cartridge versions you choose.
   // v2 → v3: Den Life added collection-wide streak, daily, kids, jacket, versus, runs and growth.
   progress: [migrateProgressSecretsToVersions, migrateProgressV2ToV3],
@@ -286,6 +288,18 @@ function migrateSettingsV1ToV2(data: unknown): unknown {
   };
 }
 
+function migrateSettingsV2ToV3(data: unknown): unknown {
+  if (!isPlainObject(data)) return data;
+  return {
+    ...data,
+    kids: 'human',
+  };
+}
+
+function sanitizeKidsMode(value: unknown): MemoryMode {
+  return value === 'sharp' ? 'sharp' : 'human';
+}
+
 function sanitizeSettings(data: Record<string, unknown>): SettingsData {
   const rawVolume = isPlainObject(data.volume) ? data.volume : {};
   const volume: VolumeSettings = {
@@ -333,6 +347,7 @@ function sanitizeSettings(data: Record<string, unknown>): SettingsData {
     shareWithName: booleanOr(data.shareWithName, false),
     versusBestOf: sanitizeVersusBestOf(data.versusBestOf),
     runSound: sanitizeRunSound(data.runSound),
+    kids: sanitizeKidsMode(data.kids),
   };
 }
 
@@ -809,6 +824,7 @@ function sanitizeRunRecord(value: unknown): RunRecord | null {
     durationMs: Math.max(0, value.durationMs),
     channel,
     mode: value.mode,
+    ...(value.kids === 'sharp' ? { kids: 'sharp' as const } : {}),
   };
 }
 
@@ -932,7 +948,7 @@ function sanitizeEventLog(data: Record<string, unknown>): EventLogData {
  * false, controls { bindings null, padSeats [1, 2] } (the keyboard layout is the game's to set:
  * whole for one player, split for two),
  * introSeen false, hintsSeen {}, games {}, difficulty { left 'B', right 'B' },
- * showGrowth true, shareWithName false, versusBestOf 3, runSound 'normal'.
+ * showGrowth true, shareWithName false, versusBestOf 3, runSound 'normal', kids 'human'.
  * Profile defaults: a new id, the display name "Player", avatar { hue 28,
  * shape 'round', pattern 'plain' }. Progress defaults: games {}, den emptyDenLife().
  */

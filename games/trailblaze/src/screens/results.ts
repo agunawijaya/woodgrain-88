@@ -1,6 +1,6 @@
 /**
  * Results screen for Trailblaze: score lines in seat colours, winner banner,
- * longest ride, claimed cells, sprung traps, earned patches, and
+ * longest ride, cells laid and traps sprung per rider, earned patches, and
  * "How Rosa saw it" replay frames with the Kid's awareness outline and reflex marks.
  */
 import { patchSvg, type KidId, type PatchEarned } from '@woodgrain-88/kit';
@@ -21,7 +21,9 @@ export interface KidReplayFrame {
 export interface ResultsSeat {
   readonly name: string;
   readonly score: number;
-  readonly cellsClaimed: number;
+  /** Cells this rider laid over the whole match. */
+  readonly cellsLaid: number;
+  /** Traps this rider closed on a rival over the whole match. */
   readonly trapsSprung: number;
   readonly colours: SeatColours;
   readonly isHuman: boolean;
@@ -117,14 +119,21 @@ const STYLE = /* css */ `
   font-size: clamp(13px, 1.6vh, 15px);
 }
 
-.tb-facts div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+.tb-facts-longest { margin: 0; display: flex; justify-content: space-between; gap: 12px; }
+.tb-facts-longest span { color: var(--tb-muted); }
+.tb-facts-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.tb-facts-table th, .tb-facts-table td { padding: 3px 0 3px 12px; text-align: right; }
+.tb-facts-table th[scope="row"] { padding-left: 0; text-align: left; font-weight: 400; color: var(--tb-muted); }
+.tb-facts-table td { font-weight: 700; }
+.tb-facts-table thead th {
+  font-weight: 700;
+  border-bottom: 3px solid var(--seat);
+  padding-bottom: 4px;
+  max-width: 9ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-
-.tb-facts dt { color: var(--tb-muted); }
-.tb-facts dd { margin: 0; font-weight: 700; }
 
 /* Actions */
 .tb-actions {
@@ -344,16 +353,31 @@ export function createResultsScreen(options: ResultsOptions): ResultsScreen {
     .join('');
 
   // Facts
-  const s0 = options.seats[0];
-  const s1 = options.seats[1];
-  const claimedStr = `${s0?.cellsClaimed ?? 0} / ${s1?.cellsClaimed ?? 0}`;
-  const trapsStr = `${s0?.trapsSprung ?? 0} / ${s1?.trapsSprung ?? 0}`;
+  const headersHtml = options.seats
+    .map(
+      (seat) =>
+        `<th scope="col" style="--seat: ${seat.colours.main}">${escapeText(seat.name)}</th>`,
+    )
+    .join('');
+  const cellsLaidHtml = options.seats.map((seat) => `<td>${seat.cellsLaid}</td>`).join('');
+  const trapsSprungHtml = options.seats.map((seat) => `<td>${seat.trapsSprung}</td>`).join('');
+
   const factsHtml =
-    `<dl class="tb-facts tb-card">` +
-    `<div><dt>Longest ride</dt><dd>${options.longestRideSeconds.toFixed(1)}s</dd></div>` +
-    `<div><dt>Cells claimed</dt><dd>${claimedStr}</dd></div>` +
-    `<div><dt>Traps sprung</dt><dd>${trapsStr}</dd></div>` +
-    `</dl>`;
+    `<div class="tb-facts tb-card">` +
+    `<p class="tb-facts-longest"><span>Longest ride</span><strong>${options.longestRideSeconds.toFixed(1)} s</strong></p>` +
+    `<table class="tb-facts-table">` +
+    `<thead>` +
+    `<tr>` +
+    `<td></td>` +
+    headersHtml +
+    `</tr>` +
+    `</thead>` +
+    `<tbody>` +
+    `<tr><th scope="row">Cells laid</th>${cellsLaidHtml}</tr>` +
+    `<tr><th scope="row">Traps sprung</th>${trapsSprungHtml}</tr>` +
+    `</tbody>` +
+    `</table>` +
+    `</div>`;
 
   // Patches stitched
   let patchesHtml = '';

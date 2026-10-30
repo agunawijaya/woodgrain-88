@@ -9,7 +9,7 @@
  * - Rosa races you for the squares you are heading to, and stands in your way.
  * - Benny follows your clues and tries to beat you to your conclusion.
  */
-import type { KidId } from '@woodgrain-88/kit';
+import type { KidId, MemoryMode } from '@woodgrain-88/kit';
 
 export interface HuntStyle {
   /** Seconds to decide where to go after learning something. */
@@ -124,6 +124,16 @@ export const HUNT_STYLES: Readonly<Record<KidId, HuntStyle>> = {
     fumble: 0.07,
   },
 };
+
+/**
+ * A Kid's style under the Den's Kid setting. Sharp follows the kit's reflex rule: no wrong steps,
+ * and decisions and the stand between steps in half the time; the rest is the Kid's own character.
+ */
+export function huntStyle(kid: KidId, mode: MemoryMode): HuntStyle {
+  const style = HUNT_STYLES[kid];
+  if (mode === 'human') return style;
+  return { ...style, think: style.think / 2, stepPause: style.stepPause / 2, fumble: 0 };
+}
 
 /**
  * Not a Kid: the simulations' perfect hunter, who forgets nothing, never fumbles and weighs every

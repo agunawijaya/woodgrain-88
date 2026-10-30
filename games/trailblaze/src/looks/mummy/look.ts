@@ -9,6 +9,8 @@ import { createMummyView } from './view.ts';
 export const MUMMY_LOOK: LookDefinition = {
   id: 'mummy',
   name: "Mummy's Wrap",
+  riders: ['Wick', 'Bun'],
+  ridesAs: 'Shuffles as',
   framing: { width: 41.5, depth: 21.5, tilt: 56, height: 5.2, margin: 0.03, topInset: 0.04 },
   mood: {
     day: {

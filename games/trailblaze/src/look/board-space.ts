@@ -50,3 +50,9 @@ export function yawDelta(from: number, to: number): number {
   if (turn <= -Math.PI) return turn + Math.PI * 2;
   return turn;
 }
+
+/**
+ * How far a vehicle's nose reaches ahead of the point the rider is drawn at, in cells. Vehicles are
+ * drawn longer than a cell, back from the nose, so their front stays where the rules have them.
+ */
+export const NOSE_AHEAD = 0.4;

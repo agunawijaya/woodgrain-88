@@ -8,6 +8,7 @@
  *
  * ?look=neon|trains|mummy|ice  ?scene=duel|trap  ?appearance=light|dark
  * ?t=<extra seconds>  ?quality=high|medium|low
+ * ?push=0 turns off the trap scene's crash push, for the old whole-board framing.
  * ?measure=1 keeps rendering for 300 frames and reports frame times in data-stats.
  * ?zoom=<factor>&at=<column>,<row> looks closer at one cell, for checking models.
  */
@@ -15,7 +16,7 @@ import type { Quality, Stage, TableFraming } from '@woodgrain-88/arena';
 import { createRng, type Appearance } from '@woodgrain-88/kit';
 import { START } from '../engine/grid.ts';
 import { vectorOf } from '../engine/headings.ts';
-import { createMatch, startMatch, stepMatch } from '../engine/match.ts';
+import { createMatch, startMatch, stepMatch, upcomingHeading } from '../engine/match.ts';
 import { pocketCells } from '../engine/space.ts';
 import {
   COLUMNS,
@@ -23,6 +24,7 @@ import {
   ROWS,
   SEATS,
   TICKS_PER_SECOND,
+  type Crash,
   type Heading,
   type Match,
   type MatchEvent,
@@ -30,6 +32,7 @@ import {
   type Stick,
 } from '../engine/types.ts';
 import { variationRules } from '../engine/variations.ts';
+import { createCrashPush } from '../look/crash-push.ts';
 import type { LookId, TrailView } from '../look/look.ts';
 import { createLookStage, lookById } from '../look/looks.ts';
 import { seatColours } from '../look/seats.ts';
@@ -162,7 +165,11 @@ function stickFor(heading: Heading | undefined): Stick {
 }
 
 /** Plays the match's events on the view, and spots the trap closing as the board changes. */
-function createDirector(view: TrailView, match: Match) {
+function createDirector(
+  view: TrailView,
+  match: Match,
+  onCrash?: (crashes: readonly Crash[]) => void,
+) {
   const trapped = new Set<Seat>();
   const playEvents = (events: readonly MatchEvent[]) => {
     for (const event of events) {
@@ -176,6 +183,7 @@ function createDirector(view: TrailView, match: Match) {
         view.setSpeedStage(event.stage);
       } else if (event.type === 'crash') {
         for (const crash of event.crashes) view.crash(crash);
+        onCrash?.(event.crashes);
       } else if (event.type === 'over') {
         view.freeze();
       }
@@ -239,7 +247,14 @@ function main(): void {
   stage.scene.add(view.root);
   lookCloser(stage, view, look.framing);
 
-  const director = createDirector(view, match);
+  // The trap scene shows the crash push, driven by the same fixed ticks as the rest of the scene.
+  const push =
+    sceneName === 'trap' && params.get('push') !== '0'
+      ? createCrashPush(stage, () => view, look.framing)
+      : null;
+  const director = createDirector(view, match, (crashes) => {
+    push?.start(crashes.map((crash) => crash.seat));
+  });
   director.playEvents(startMatch(match));
   const plans = story.runs.map(plannedHeadings);
   let afterSeconds = 0;
@@ -247,8 +262,12 @@ function main(): void {
   while (guard < TICKS_PER_SECOND * 120) {
     const sticks = SEATS.map((seat) => stickFor(plans[seat]?.[match.steps])) as [Stick, Stick];
     director.playEvents(stepMatch(match, sticks));
+    for (const seat of DUEL) {
+      if (!match.riders[seat]?.crashed) view.steer(seat, upcomingHeading(match, seat));
+    }
     view.update(TICK);
     stage.lights.update(TICK);
+    push?.update(TICK);
     guard++;
     if (match.steps >= story.step) afterSeconds += TICK;
     const delay = sceneName === 'trap' ? REACTION_DELAY[lookId] : 0;

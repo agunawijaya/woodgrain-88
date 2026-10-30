@@ -6,6 +6,7 @@
  */
 import type { Bindings, Seat } from '../input.ts';
 import type { KidId } from '../kids.ts';
+import type { MemoryMode } from '../kids/memory.ts';
 import type { AppearancePreference, DifficultySwitches, IsoTime, RunMode } from '../types.ts';
 
 export interface AvatarDescriptor {
@@ -68,6 +69,8 @@ export interface SettingsData {
   versusBestOf: 3 | 5;
   /** How loud the Power Cycle Run's transitions are (v2). */
   runSound: 'quiet' | 'normal' | 'loud';
+  /** The Neighbourhood Kids: human-like, or sharp (perfect memory, no slips, half reaction time). Settings v3. */
+  kids: MemoryMode;
 }
 
 export interface PatchProgressData {
@@ -211,6 +214,8 @@ export interface RunRecord {
   durationMs: number;
   channel: string;
   mode: RunMode;
+  /** Set exactly for a run played against Sharp Kids. */
+  kids?: 'sharp';
 }
 
 export interface RecordsData {

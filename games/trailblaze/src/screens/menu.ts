@@ -44,6 +44,8 @@ export interface MenuOptions {
   readonly switches?: readonly [SwitchPosition, SwitchPosition];
   readonly memory?: MemoryMode;
   readonly isUnlocked?: (channelId: string) => boolean;
+  /** The chosen look's two riders up close, for the card at the top right; left out without GL. */
+  readonly riders?: MenuRiders;
   readonly onStart?: (mode: TrailblazePlayMode, channelId: string, opponent: OpponentType) => void;
   readonly onChannel?: (channelId: string) => void;
   readonly onOpponent?: (opponent: OpponentType) => void;
@@ -54,6 +56,17 @@ export interface MenuOptions {
   readonly onSettings?: () => void;
   readonly onRecords?: () => void;
   readonly onGallery?: () => void;
+}
+
+export interface MenuRiders {
+  /** The look's name, for the card's label. */
+  readonly look: string;
+  /** Seat 1's rider first, each with its close-up (rider-portrait.ts) and its seat's colour. */
+  readonly seats: readonly {
+    readonly name: string;
+    readonly colour: string;
+    readonly portrait: HTMLCanvasElement;
+  }[];
 }
 
 export interface MenuScreen {
@@ -353,6 +366,52 @@ const STYLE = /* css */ `
   border-top: 1px solid var(--tb-border);
 }
 
+/* The chosen look's riders, up close, top right: the whole-board camera is too far to show them. */
+.tb-menu-riders {
+  position: absolute;
+  top: clamp(68px, 10vh, 100px);
+  right: 24px;
+  width: min(380px, 30vw);
+  padding: 12px 14px 14px;
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.tb-menu-riders-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.tb-menu-rider {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.tb-menu-rider-well {
+  aspect-ratio: 3 / 2;
+  border-radius: 6px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 62% 40% at 50% 78%, color-mix(in srgb, var(--seat) 30%, transparent), transparent 72%),
+    var(--tb-well);
+}
+
+.tb-menu-rider-well canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.tb-menu-rider figcaption {
+  font-weight: 700;
+  font-size: clamp(13px, 1.6vh, 15px);
+  padding-bottom: 3px;
+  border-bottom: 3px solid var(--seat);
+}
+
 /* Opponent picker on bottom right */
 .tb-rivals {
   --row-max-width: calc(7 * 120px + 6 * 10px);
@@ -420,6 +479,11 @@ const STYLE = /* css */ `
   }
   .tb-menu-scroll {
     overflow: visible;
+  }
+  .tb-menu-riders {
+    position: static;
+    width: auto;
+    margin: 0 16px 16px;
   }
   .tb-rivals {
     position: static;
@@ -684,6 +748,7 @@ export function createMenuScreen(options: MenuOptions): MenuScreen {
       `<button type="button" class="tb-link" data-link="gallery">Doodle gallery</button>` +
       `</div>` +
       `</div></div>` +
+      ridersHtml() +
       // Opponent picker
       `<div class="tb-rivals">` +
       `<span class="tb-label" id="tb-rivals-label">Pick your rival</span>` +
@@ -698,6 +763,31 @@ export function createMenuScreen(options: MenuOptions): MenuScreen {
       `</div>`;
 
     root.prepend(style);
+    root.querySelectorAll('.tb-menu-rider-well').forEach((well, seat) => {
+      const portrait = options.riders?.seats[seat]?.portrait;
+      if (portrait) well.append(portrait);
+    });
+  }
+
+  /** The card's frame; the close-ups go into its wells once the menu is drawn. */
+  function ridersHtml(): string {
+    const riders = options.riders;
+    if (!riders) return '';
+    const seats = riders.seats
+      .map(
+        (seat) =>
+          `<figure class="tb-menu-rider" style="--seat: ${seat.colour}">` +
+          `<div class="tb-menu-rider-well"></div>` +
+          `<figcaption>${escapeText(seat.name)}</figcaption>` +
+          `</figure>`,
+      )
+      .join('');
+    return (
+      `<section class="tb-menu-riders tb-card" aria-label="Riders in ${escapeText(riders.look)}">` +
+      `<span class="tb-label">Riders · ${escapeText(riders.look)}</span>` +
+      `<div class="tb-menu-riders-row">${seats}</div>` +
+      `</section>`
+    );
   }
 
   function scrollSelectedDialIntoView(): void {

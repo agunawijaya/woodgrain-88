@@ -61,10 +61,23 @@ All of them are kept, and each one is pinned by a test.
   CHANGES-FROM-ORIGINAL.
 - **Input is buffered one step.** The engine latches the last direction pushed before a step, so a
   quick tap between two steps is never lost.
-- **The picture runs a little behind the rules.** On screen, a rider crosses each cell along a
-  curve during the step after the rules moved it. Turns read as curves, at the cost of about one
-  cell of lag on average (0.3 s at the starting speed, 0.06 s at top speed). Rules and inputs are
-  not affected.
+- **The picture is never more than one cell behind the rules.** When a step moves a rider, the
+  picture glides it from the middle of the cell it left to the middle of the new one, along the
+  same curves the trail is drawn on, and has it where the rules do by the next step. A turn the
+  player has queued bends the glide at once, before the step that takes it; the engine's
+  `upcomingHeading` says which turn the step will really take, after the reversal filter. Rules
+  and inputs are not affected. Measured on a scripted round, frame by frame at 60 frames a second
+  (`tests/glide.test.ts`):
+
+  |                                  | Before (prompt 04)  | Now                 |
+  | -------------------------------- | ------------------- | ------------------- |
+  | Distance from the head, average  | 0.94 cell (0.28 s)  | 0.46 cell (0.14 s)  |
+  | Distance from the head, greatest | 1.44 cells (0.43 s) | 0.96 cell (0.29 s)  |
+  | A queued turn shows on screen    | after the next step | from the next frame |
+
+  Seconds are at the starting speed; at top speed each is a fifth as long. The test holds the
+  greatest distance to one cell. Crashes come sooner too: a rider reaches what it hit 0.8 of a step
+  after the crash step, not 1.3.
 
 ## How the Kids ride
 
@@ -166,6 +179,3 @@ input streams: no rider ever stands on a trail cell without a crash, and the sco
   arrives, `reflexProfile(kid, mode)` and `memoryProfile(kid, mode)` already take it.
 - A Kid's decision costs 0.5–1 ms (floods for space within its awareness). Two Kids at top speed
   spend about 3% of each second on it; the test holds it under 1 ms.
-- On average the picture runs one cell behind the rules: 0.3 s at the starting speed. The feel pass
-  (stage 6) should try starting each curve a step early from the latched turn, which the engine
-  already knows before the step.

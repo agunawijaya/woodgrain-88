@@ -34,6 +34,39 @@ describe('menu screen', () => {
     host.remove();
   });
 
+  it("shows the look's two riders up close, and keeps them through a redraw", () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const lancer = document.createElement('canvas');
+    const comet = document.createElement('canvas');
+
+    const menu = createMenuScreen({
+      host,
+      channelId: 'game-1',
+      opponent: 'rosa',
+      riders: {
+        look: 'Neon Grid',
+        seats: [
+          { name: 'Lancer', colour: '#ff8a2a', portrait: lancer },
+          { name: 'Comet', colour: '#38a8ff', portrait: comet },
+        ],
+      },
+    });
+
+    const card = host.querySelector('.tb-menu-riders');
+    expect(card?.getAttribute('aria-label')).toBe('Riders in Neon Grid');
+    const riders = host.querySelectorAll('.tb-menu-rider');
+    expect(riders[0]?.textContent).toBe('Lancer');
+    expect(riders[1]?.textContent).toBe('Comet');
+    expect(riders[0]?.querySelector('canvas')).toBe(lancer);
+
+    menu.setChannel('game-3');
+    expect(host.querySelectorAll('.tb-menu-rider')[1]?.querySelector('canvas')).toBe(comet);
+
+    menu.dispose();
+    host.remove();
+  });
+
   it('hides Kid mode and puts Computer 1977 first on channels 2 and 4', () => {
     const host = document.createElement('div');
     document.body.append(host);

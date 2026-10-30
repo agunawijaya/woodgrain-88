@@ -15,6 +15,7 @@ import {
   type GameInstance,
   type GameView,
   type KidId,
+  type MemoryMode,
   type MicroBrief,
   type RunInfo,
   type RunMode,
@@ -103,6 +104,8 @@ const reducedMotion =
 const leftPos: SwitchPosition = params.get('left') === 'A' ? 'A' : 'B';
 const rightPos: SwitchPosition = params.get('right') === 'A' ? 'A' : 'B';
 let switches: DifficultySwitches = { left: leftPos, right: rightPos };
+
+const kids: MemoryMode = params.get('kids') === 'sharp' ? 'sharp' : 'human';
 
 const host = document.getElementById('host');
 if (!host) {
@@ -208,6 +211,7 @@ const fake = createFakeContext({
   appearance,
   reducedMotion,
   switches,
+  kids,
   speed,
   chrome: {
     openPause(): void {

@@ -3,14 +3,16 @@
  * the way a roll of tissue unrolls when it is thrown along the floor: a long
  * strip of linen lying on the tomb flags, its edges curling up, following
  * the mummy's own path so it bends round every turn the way a walker does.
- * The edges are dyed in the mummy's colour, orange for Wick and blue for Bun,
- * so the two strips are told apart at a glance.
+ * The linen is dyed in the mummy's colour and woven with its own motif,
+ * chevrons for Wick and diamonds for Bun, so the two strips are told apart at
+ * a glance, by dye and by pattern.
  *
  * The curled edges stand about ankle high, enough for the strip to read as
  * something you cannot walk through.
  */
 import {
   CanvasTexture,
+  Color,
   DoubleSide,
   MeshStandardMaterial,
   RepeatWrapping,
@@ -36,8 +38,8 @@ const STRIP = Array.from({ length: 11 }, (_, index) => {
 export function createBandages(options: { readonly seats: readonly SeatColours[] }): SweptTrail {
   const materials: Material[] = [];
   const textures: Texture[] = [];
-  const layersFor = (colours: SeatColours): SweptLayer[] => {
-    const texture = clothTexture(colours.main);
+  const layersFor = (colours: SeatColours, seat: number): SweptLayer[] => {
+    const texture = clothTexture(colours, motifFor(seat));
     textures.push(texture);
     const cloth = new MeshStandardMaterial({ map: texture, roughness: 0.92, side: DoubleSide });
     materials.push(cloth);
@@ -51,7 +53,7 @@ export function createBandages(options: { readonly seats: readonly SeatColours[]
     ];
   };
   const trail = createSweptTrail({
-    seats: options.seats.map((colours) => layersFor(colours)),
+    seats: options.seats.map((colours, seat) => layersFor(colours, seat)),
   });
   return {
     ...trail,
@@ -63,43 +65,83 @@ export function createBandages(options: { readonly seats: readonly SeatColours[]
   };
 }
 
+/** Each mummy's own woven motif, so the two strips differ in pattern as well as dye. */
+export type LinenMotif = 'chevrons' | 'diamonds';
+
+/** Wick and the Four Way corners that reuse his build wear chevrons; Bun and hers wear diamonds. */
+export function motifFor(seat: number): LinenMotif {
+  return seat % 2 === 0 ? 'chevrons' : 'diamonds';
+}
+
+const LINEN = new Color('#efe3c8');
+
 /**
- * Old linen, cream with a fine weave and a few creases, its two long edges dyed with a band of
- * colour. Maps once across a strip (v) and once along each half cell (u). `repeat` tiles it, for a
- * cocoon.
+ * Linen dyed in the mummy's colour: a basket weave, a deep hem along each long edge and the
+ * mummy's motif down the middle, outlined in undyed cream so it reads by torchlight. Maps once
+ * across a strip (v) and once along each half cell (u). `repeat` tiles it, for a cocoon.
  */
-export function clothTexture(dye: string, repeat = 1): CanvasTexture {
+export function clothTexture(colours: SeatColours, motif: LinenMotif, repeat = 1): CanvasTexture {
   const size = 128;
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
   const context = canvas.getContext('2d');
   if (!context) throw new Error('no 2D canvas for the cloth');
-  context.fillStyle = '#f0e6cd';
+  const dyed = LINEN.clone().lerp(new Color(colours.main), 0.72).lerp(new Color(colours.deep), 0.2);
+  context.fillStyle = `#${dyed.getHexString()}`;
   context.fillRect(0, 0, size, size);
-  for (let line = 0; line < size; line += 3) {
-    context.fillStyle = line % 6 === 0 ? 'rgba(120, 96, 60, 0.08)' : 'rgba(255, 255, 255, 0.1)';
-    context.fillRect(0, line, size, 1);
-    context.fillRect(line, 0, 1, size);
-  }
-  context.strokeStyle = 'rgba(150, 120, 80, 0.25)';
-  context.lineWidth = 2;
-  for (const x of [22, 70, 104]) {
-    context.beginPath();
-    context.moveTo(x, 24);
-    context.lineTo(x + 6, 104);
-    context.stroke();
-  }
-  context.fillStyle = dye;
-  context.fillRect(0, 0, size, 18);
-  context.fillRect(0, size - 18, size, 18);
-  context.fillStyle = 'rgba(255, 255, 255, 0.25)';
-  context.fillRect(0, 18, size, 3);
-  context.fillRect(0, size - 21, size, 3);
+  weave(context, size);
+  // A wide hem at each long edge with a thin stripe inside it.
+  context.fillStyle = colours.deep;
+  context.fillRect(0, 0, size, 6);
+  context.fillRect(0, 12, size, 4);
+  context.fillRect(0, size - 16, size, 4);
+  context.fillRect(0, size - 6, size, 6);
+  context.lineJoin = 'round';
+  context.lineWidth = 14;
+  context.strokeStyle = '#f4ead4';
+  traceMotif(context, motif, size);
+  context.stroke();
+  context.lineWidth = 7;
+  context.strokeStyle = colours.deep;
+  traceMotif(context, motif, size);
+  context.stroke();
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
   texture.wrapS = RepeatWrapping;
   texture.wrapT = RepeatWrapping;
   texture.repeat.set(repeat, repeat);
   return texture;
+}
+
+/** Over-and-under threads in small squares, alternately running along and across. */
+function weave(context: CanvasRenderingContext2D, size: number): void {
+  const cell = 4;
+  for (let row = 0; row < size / cell; row++) {
+    for (let column = 0; column < size / cell; column++) {
+      const x = column * cell;
+      const y = row * cell;
+      context.fillStyle =
+        (row + column) % 2 === 0 ? 'rgba(255, 255, 255, 0.16)' : 'rgba(60, 40, 20, 0.1)';
+      if ((row + column) % 2 === 0) context.fillRect(x, y + 1, cell, 2);
+      else context.fillRect(x + 1, y, 2, cell);
+    }
+  }
+}
+
+/** The motif's path, centred across the strip; one chevron or diamond to each half cell. */
+function traceMotif(context: CanvasRenderingContext2D, motif: LinenMotif, size: number): void {
+  const middle = size / 2;
+  context.beginPath();
+  if (motif === 'chevrons') {
+    context.moveTo(middle - 22, middle - 26);
+    context.lineTo(middle + 14, middle);
+    context.lineTo(middle - 22, middle + 26);
+    return;
+  }
+  context.moveTo(middle, middle - 24);
+  context.lineTo(middle + 24, middle);
+  context.lineTo(middle, middle + 24);
+  context.lineTo(middle - 24, middle);
+  context.closePath();
 }

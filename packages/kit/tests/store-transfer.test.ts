@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { createLocalStore, memoryBackend } from '../src/store/local-store.ts';
 import { createRepositories } from '../src/store/repos.ts';
-import { emptyDenLife, type SchemaContext } from '../src/store/schema.ts';
+import { emptyDenLife, SCHEMA_VERSIONS, type SchemaContext } from '../src/store/schema.ts';
 import type { DenLifeData } from '../src/store/types.ts';
 import {
   applyImport,
@@ -109,7 +109,7 @@ describe('transfer', () => {
     expect(exportFileName(FIXED_DATE)).toBe('woodgrain-88-2026-10-25.json');
 
     const bundle = exportAll(sourceRepos, FIXED_DATE);
-    expect(bundle.repos.settings?.v).toBe(2);
+    expect(bundle.repos.settings?.v).toBe(SCHEMA_VERSIONS.settings);
     expect(bundle.repos.progress?.v).toBe(3);
 
     const preview = previewImport(JSON.stringify(bundle), makeContext());

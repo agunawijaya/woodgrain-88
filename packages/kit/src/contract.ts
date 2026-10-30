@@ -25,6 +25,7 @@ import type { MicroBrief, MicroChallengeDef, MicroResult } from './micro.ts';
 import type { PatchDef, PatchEarned, PatchStatus } from './patches.ts';
 import type { Rng } from './rng.ts';
 import type { KidId } from './kids.ts';
+import type { MemoryMode } from './kids/memory.ts';
 import type { GameSettingsStore } from './settings.ts';
 import type { Challenge, ShareCardInput } from './share.ts';
 import type { RunRecord } from './store/types.ts';
@@ -233,6 +234,8 @@ export interface GameResult {
    * person: the Kid, or null for a person. Left out, the Den goes by the seats it handed the game.
    */
   opponentKid?: KidId | null;
+  /** Which Kids the player faced, when Kids played. The Hall marks Sharp results on records and share lines. */
+  kids?: MemoryMode;
 }
 
 /** What the kit worked out from a reported result, for a game that presents its own results. */
@@ -261,6 +264,8 @@ export interface GameSettingsView {
   screenShake(): boolean;
   crtEnabled(): boolean;
   colorBlindHints(): boolean;
+  /** The Den's Kid setting. Read it when a match starts; a change applies from the next match. */
+  kids(): MemoryMode;
   /** The game's own settings namespace. */
   game: GameSettingsStore;
 }

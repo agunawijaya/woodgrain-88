@@ -41,7 +41,7 @@ export interface TrailView {
   readonly root: Group;
   /** A fresh round: every trail goes, and the border stands only round a bordered arena. */
   reset(edges: 'bordered' | 'wraparound'): void;
-  /** Puts a rider on its start cell at once. */
+  /** Puts a rider in the middle of its cell at once, where the rules have it. */
   placeRider(seat: Seat, cell: Cell, heading: Heading): void;
   /** One step: the cells laid and erased, and each rider gliding to its next cell over `seconds`. */
   step(
@@ -50,6 +50,11 @@ export interface TrailView {
     moves: readonly Move[],
     seconds: number,
   ): void;
+  /**
+   * The heading the rules will step this rider on next, as queued now: the picture starts the
+   * turn at once instead of after the step. Without it the rider glides straight on.
+   */
+  steer(seat: Seat, heading: Heading): void;
   /** Speed-up stage 0 (the start) to 4 (top speed). */
   setSpeedStage(stage: number): void;
   crash(crash: Crash): void;
@@ -73,6 +78,10 @@ export interface TrailView {
 export interface LookDefinition {
   readonly id: LookId;
   readonly name: string;
+  /** The two riders' names, seat 1's first; Four Way's corners ride the same two builds. */
+  readonly riders: readonly [string, string];
+  /** How a card says who rides what: "Rides Lancer", "Skates as Juniper". */
+  readonly ridesAs: string;
   readonly framing: TableFraming;
   readonly mood?: LightMood;
   readonly finish?: FinishOptions;

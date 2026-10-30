@@ -5,7 +5,7 @@
  * its score is points (a par less the checks taken) while its label and
  * share line say the checks plainly.
  */
-import type { GameResult, KidId, Seat as PlayerSeat } from '@woodgrain-88/kit';
+import type { GameResult, KidId, MemoryMode, Seat as PlayerSeat } from '@woodgrain-88/kit';
 import type { ClueMode } from '../ai/kid.ts';
 import type { Clue } from '../engine/board.ts';
 import type { Match, MatchResult } from '../engine/match.ts';
@@ -52,6 +52,8 @@ export interface ResultInput {
   readonly durationMs: number;
   /** The Kid in seat 2, or null for a person or nobody. */
   readonly kid: KidId | null;
+  /** The Kid memory the match was dealt with, when a Kid played. */
+  readonly kids?: MemoryMode;
   readonly clues: ClueMode;
   /** Two people at one machine: the result names a winning seat. */
   readonly versus: boolean;
@@ -71,6 +73,7 @@ export function buildResult(input: ResultInput): GameResult {
     emoji: emojiTrail(input.trail),
     presentation: 'game' as const,
     opponentKid: input.kid,
+    ...(input.kids === undefined ? {} : { kids: input.kids }),
   };
 
   if (result?.kind === 'single') {

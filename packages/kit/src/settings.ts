@@ -7,6 +7,7 @@
  * the OS does, without a reload.
  */
 import { createEmitter, type Unsubscribe } from './emitter.ts';
+import type { MemoryMode } from './kids/memory.ts';
 import type { Repository } from './store/repos.ts';
 import type { SettingsData } from './store/types.ts';
 import type { Appearance } from './types.ts';
@@ -32,6 +33,8 @@ export interface SettingsApi {
   crtEnabled(): boolean;
   /** The effective gain for a sound channel: master × channel, or 0 when muted. */
   volume(channel: VolumeChannel): number;
+  /** The Den's Kid setting, read now. */
+  kids(): MemoryMode;
   game(gameId: string): GameSettingsStore;
   dispose(): void;
 }
@@ -110,6 +113,7 @@ export function createSettings(
       const { muted, volume } = repo.get();
       return muted ? 0 : volume.master * volume[channel];
     },
+    kids: () => repo.get().kids,
     game(gameId) {
       return {
         get<T>(key: string, fallback: T): T {

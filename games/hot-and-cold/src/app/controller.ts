@@ -12,6 +12,7 @@ import {
   dailyShareLine,
   KID_IDS,
   kidById,
+  withKidsMark,
   type Appearance,
   type Bindings,
   type GameContext,
@@ -20,6 +21,7 @@ import {
   type KidId,
   type LoopOptions,
   type MemoryMode,
+  type PauseItem,
   type ResultReceipt,
   type Seat as PlayerSeat,
   type Unsubscribe,
@@ -31,7 +33,7 @@ import type { Match, MatchEvent, Seat } from '../engine/match.ts';
 import { cartridgeRules, shortened, type DifficultySwitch, type Rules } from '../engine/rules.ts';
 import { squareCentre } from '../look/field-space.ts';
 import type { LookId } from '../look/look.ts';
-import { createLookStage, LOOKS, paintBackground } from '../look/looks.ts';
+import { createLookStage, LOOK_IDS, LOOKS, paintBackground } from '../look/looks.ts';
 import { seatColours } from '../look/seats.ts';
 import { createProgressTracker, type ProgressTracker } from '../progress/tracker.ts';
 import { createMenuScreen, type MenuScreen, type PlayMode } from '../screens/menu.ts';
@@ -145,6 +147,10 @@ export function mountHotAndCold(host: HTMLElement, context: GameContext): GameIn
   let plan: MatchPlan | null = null;
   let tracker: ProgressTracker | null = null;
   let matchesStarted = 0;
+  /** The clues style the live match was dealt with; the Clues pause item may set a different one for next time. */
+  let matchClues: ClueMode = clues();
+  /** The Kid memory the live match was dealt with, for the result it reports when it ends. */
+  let matchKids: MemoryMode = kidMemory();
   const subscriptions: Unsubscribe[] = [];
 
   function buildStage(): Stage {
@@ -176,7 +182,7 @@ export function mountHotAndCold(host: HTMLElement, context: GameContext): GameIn
 
   /** The Den's Kid memory: human by default, sharp for players who want the harder Kids. */
   function kidMemory(): MemoryMode {
-    return 'human';
+    return context.settings.kids();
   }
 
   function clues(): ClueMode {
@@ -464,10 +470,13 @@ export function mountHotAndCold(host: HTMLElement, context: GameContext): GameIn
     context.setView('play');
     context.setPauseItems([]);
     const rules = rulesForRun();
+    // Fixed for this match: a Clues pause item selected later only changes the next one.
+    matchClues = clues();
+    matchKids = kidMemory();
     tracker = createProgressTracker(save.cleanStreak, {
       rules,
       kid: next.kid,
-      clues: clues(),
+      clues: matchClues,
       playerOnA: context.difficulty.get().left === 'A',
     });
     // The coming match's field, live but held, behind the cards.
@@ -479,7 +488,7 @@ export function mountHotAndCold(host: HTMLElement, context: GameContext): GameIn
       host: screens,
       channel,
       seats: prematchSeats(next.drivers, rules),
-      clues: clues(),
+      clues: matchClues,
       ...(challenge ? { challenge: `beat a score of ${challenge.score}` } : {}),
       input: context.input,
       createLoop: (options) => context.createLoop(options),
@@ -492,11 +501,8 @@ export function mountHotAndCold(host: HTMLElement, context: GameContext): GameIn
     clearScreens();
     view = 'match';
     context.setView('play');
-    context.setPauseItems(
-      context.run.mode === 'normal'
-        ? [{ id: 'change-channel', label: 'Change channel', onSelect: () => showMenu() }]
-        : [],
-    );
+    context.setPauseItems(matchPauseItems());
+    context.setPauseItems(matchPauseItems());
     // The press that said "ready" must not also check the first square.
     context.input.reset();
     session?.release();
@@ -515,6 +521,7 @@ export function mountHotAndCold(host: HTMLElement, context: GameContext): GameIn
       trail: outcome.trail,
       durationMs: outcome.durationMs,
       kid: finished.kid,
+      ...(finished.kid !== null ? { kids: matchKids } : {}),
       clues: clues(),
       versus,
     });
@@ -546,12 +553,15 @@ export function mountHotAndCold(host: HTMLElement, context: GameContext): GameIn
   /** A daily run's line for the share, as the Hall writes it for the games it presents. */
   function dailyShare(result: GameResult) {
     if (context.run.mode !== 'daily') return {};
-    const line = dailyShareLine({
-      title: context.manifest.title,
-      date: new Date(),
-      score: result.scoreLabel,
-      ...(result.emoji === undefined ? {} : { emoji: result.emoji }),
-    });
+    const line = withKidsMark(
+      dailyShareLine({
+        title: context.manifest.title,
+        date: new Date(),
+        score: result.scoreLabel,
+        ...(result.emoji === undefined ? {} : { emoji: result.emoji }),
+      }),
+      result.kids,
+    );
     return { share: { line, copy: () => context.share.copy(line) } };
   }
 
@@ -594,6 +604,58 @@ export function mountHotAndCold(host: HTMLElement, context: GameContext): GameIn
     if (view === 'menu') idleBehindMenu();
   }
 
+  /** The look pause item moves to the next look live, the match playing on throughout. */
+  function swapLookLive(next: LookId): void {
+    if (next === look) return;
+    look = next;
+    const previous = stage;
+    stage = buildStage();
+    session?.setLook({ stage, look: LOOKS[look] });
+    previous.dispose();
+    context.setPauseItems(matchPauseItems());
+  }
+
+  function cycleLook(): void {
+    const at = LOOK_IDS.indexOf(look);
+    const next = LOOK_IDS[(at + 1) % LOOK_IDS.length] ?? LOOK_IDS[0];
+    if (next === undefined) return;
+    settings.update({ look: next });
+  }
+
+  function lookPauseItem(): PauseItem {
+    return {
+      id: 'look',
+      label: `Look: ${LOOKS[look].name}`,
+      onSelect: () => cycleLook(),
+    };
+  }
+
+  /** Switching clues never touches the running match: it only sets what the next match deals. */
+  function cluesPauseItem(): PauseItem {
+    const next = clues();
+    const label = next === 'notebook' ? 'Notebook' : 'Classic Memory';
+    const pending = next === matchClues ? '' : ' (next match)';
+    return {
+      id: 'clues',
+      label: `Clues: ${label}${pending}`,
+      onSelect: () => {
+        settings.update({ clues: next === 'notebook' ? 'classic' : 'notebook' });
+        context.setPauseItems(matchPauseItems());
+      },
+    };
+  }
+
+  /** The pause menu's game items, during a match: Look everywhere, Clues and Change channel
+   *  only in normal runs (daily, challenge, Power Cycle Run and Versus Night fix both already). */
+  function matchPauseItems(): readonly PauseItem[] {
+    const items: PauseItem[] = [lookPauseItem()];
+    if (context.run.mode === 'normal') {
+      items.push(cluesPauseItem());
+      items.push({ id: 'change-channel', label: 'Change channel', onSelect: () => showMenu() });
+    }
+    return items;
+  }
+
   // Enter on the game menu plays, as its first button says, even before anything has focus.
   const onMenuKey = (event: KeyboardEvent): void => {
     if (view !== 'menu' || sheetClose !== null || event.key !== 'Enter' || event.repeat) return;
@@ -614,7 +676,8 @@ export function mountHotAndCold(host: HTMLElement, context: GameContext): GameIn
     }),
     settings.onChange((next) => {
       paintAppearance();
-      changeLook(next.look);
+      if (view === 'match') swapLookLive(next.look);
+      else changeLook(next.look);
     }),
     context.difficulty.onChange((positions) => menu?.setSwitches(positions)),
   );
@@ -629,10 +692,12 @@ export function mountHotAndCold(host: HTMLElement, context: GameContext): GameIn
   else if (context.run.micro) {
     plan = planFromSeats();
     const micro = plan;
+    matchClues = clues();
+    matchKids = kidMemory();
     tracker = createProgressTracker(save.cleanStreak, {
       rules: rulesForRun(),
       kid: micro.kid,
-      clues: clues(),
+      clues: matchClues,
       playerOnA: context.difficulty.get().left === 'A',
     });
     startSession(micro.drivers, rulesForRun(), true, (outcome) =>

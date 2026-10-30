@@ -29,6 +29,17 @@ const SNOW_PLUME = {
   thin: new Color(0.92, 0.95, 1),
   amount: 0.3,
 };
+/**
+ * By day a pale plume and a full-size fireball bloom into one white blur on the white snow, hiding
+ * the explorer it threw: the day's blast is smaller and its snow shadowed blue-grey, so the burst
+ * reads as snow flying against snow.
+ */
+const DAY_SNOW_PLUME = {
+  colour: new Color(0.6, 0.67, 0.78),
+  thin: new Color(0.8, 0.85, 0.92),
+  amount: 0.3,
+};
+const BLAST_SCALE = { day: 0.55, night: 0.85 };
 
 /**
  * A held direction's next step starts the moment the last one lands, give or take a frame: the
@@ -478,7 +489,10 @@ export function createPolarView(options: ViewOptions): FieldView {
       const walker = walkers[seat];
       const centre = squareCentre(square);
       snowfield.dig(square, 0);
-      effects.explosion(centre.clone().setY(0.5), { scale: 0.85, smoke: SNOW_PLUME });
+      effects.explosion(centre.clone().setY(0.5), {
+        scale: night ? BLAST_SCALE.night : BLAST_SCALE.day,
+        smoke: night ? SNOW_PLUME : DAY_SNOW_PLUME,
+      });
       snowPuff(centre, 36, 2.2);
       showPiece(square, pieces.crater(rng.fork(`crater/${square}`)), false);
       walker.explorer.setPose('tumble');

@@ -9,6 +9,8 @@ import { createNeonView } from './view.ts';
 export const NEON_LOOK: LookDefinition = {
   id: 'neon',
   name: 'Neon Grid',
+  riders: ['Lancer', 'Comet'],
+  ridesAs: 'Rides',
   framing: { width: 41, depth: 21, tilt: 50, height: 5.4, margin: 0.03, topInset: 0.04 },
   mood: {
     day: {

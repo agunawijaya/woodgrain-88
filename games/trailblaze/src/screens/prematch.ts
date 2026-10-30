@@ -1,7 +1,8 @@
 /**
- * Pre-match cards: two cards (four in Four Way) showing who rides,
- * their colour and trail pattern swatch, difficulty switch, keys,
- * look's name, and the 3-2-1 countdown to the match.
+ * Pre-match cards: two cards (four in Four Way) showing who rides and on
+ * what: a close-up of the look's rider in the seat's colour, the person or
+ * Kid riding it, their trail pattern swatch, difficulty switch and keys,
+ * then the look's name and the 3-2-1 countdown to the match.
  */
 import { kidById, kidPortraitSvg, type KidId, type SwitchPosition } from '@woodgrain-88/kit';
 import type { LookId, SeatColours } from '../look/look.ts';
@@ -15,12 +16,16 @@ export interface PrematchSeat {
   readonly colours: SeatColours;
   readonly switchPosition: SwitchPosition;
   readonly keys: string;
+  /** Who this seat rides in the look, as the card says it: "Rides Lancer", "Skates as Juniper". */
+  readonly rides: string;
 }
 
 export interface PrematchOptions {
   readonly host: HTMLElement;
   readonly look: LookId;
   readonly seats: readonly PrematchSeat[];
+  /** Each seat's rider close-up (rider-portrait.ts), in seat order; left out where there is no GL. */
+  readonly portraits?: readonly HTMLCanvasElement[];
   readonly onReady?: () => void;
   readonly onBack?: () => void;
 }
@@ -76,13 +81,43 @@ const STYLE = /* css */ `
 }
 
 .tb-seat-card {
-  width: clamp(200px, 20vw, 280px);
+  width: clamp(230px, 22vw, 320px);
   display: grid;
   justify-items: center;
   gap: 10px;
-  padding: clamp(18px, 2.5vh, 26px) 16px clamp(16px, 2.2vh, 22px);
+  padding: 12px 12px clamp(16px, 2.2vh, 22px);
   text-align: center;
   border-top: 0;
+}
+
+/* The rider close-up: a well lit from below in the seat's colour, the figure standing in it. */
+.tb-seat-ride {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 60% 38% at 50% 78%, color-mix(in srgb, var(--seat) 30%, transparent), transparent 72%),
+    var(--tb-well);
+}
+
+.tb-seat-ride canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.tb-seat-who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.tb-seat-rides {
+  display: block;
+  font-size: clamp(12px, 1.5vh, 14px);
+  color: var(--tb-muted);
 }
 
 .tb-seat-card::after {
@@ -94,7 +129,7 @@ const STYLE = /* css */ `
 }
 
 .tb-seat-portrait {
-  width: clamp(84px, 8vw, 120px);
+  width: clamp(48px, 4.4vw, 64px);
   display: grid;
   place-items: center;
 }
@@ -250,45 +285,53 @@ export function createPrematchScreen(options: PrematchOptions): PrematchScreen {
   style.textContent = STYLE;
   root.prepend(style);
 
-  let currentCount: number | null = null;
+  const cardsHtml = options.seats
+    .map((seat) => {
+      const portraitHtml = seatPortraitHtml(seat);
+      const patternSvg = trailPatternSvg(options.look, seat.colours);
 
-  function render(): void {
-    const cardsHtml = options.seats
-      .map((seat) => {
-        const portraitHtml = seatPortraitHtml(seat);
-        const patternSvg = trailPatternSvg(options.look, seat.colours);
+      return (
+        `<div class="tb-card tb-seat-card" style="--seat: ${seat.colours.main}">` +
+        `<div class="tb-seat-ride"></div>` +
+        `<div class="tb-seat-who">` +
+        `<div class="tb-seat-portrait">${portraitHtml}</div>` +
+        `<div><h3 class="tb-seat-name">${escapeText(seat.name)}</h3>` +
+        `<span class="tb-seat-rides">${escapeText(seat.rides)}</span></div>` +
+        `</div>` +
+        `<div class="tb-seat-meta">` +
+        `<div class="tb-swatch-line">` +
+        `<span class="tb-colour-pip" aria-hidden="true"></span>` +
+        patternSvg +
+        `</div>` +
+        `<span>Switch ${seat.switchPosition}</span>` +
+        `<span class="tb-seat-keys">${escapeText(seat.keys)}</span>` +
+        `</div>` +
+        `</div>`
+      );
+    })
+    .join('');
 
-        return (
-          `<div class="tb-card tb-seat-card" style="--seat: ${seat.colours.main}">` +
-          `<div class="tb-seat-portrait">${portraitHtml}</div>` +
-          `<h3 class="tb-seat-name">${escapeText(seat.name)}</h3>` +
-          `<div class="tb-seat-meta">` +
-          `<div class="tb-swatch-line">` +
-          `<span class="tb-colour-pip" aria-hidden="true"></span>` +
-          patternSvg +
-          `</div>` +
-          `<span>Switch ${seat.switchPosition}</span>` +
-          `<span class="tb-seat-keys">${escapeText(seat.keys)}</span>` +
-          `</div>` +
-          `</div>`
-        );
-      })
-      .join('');
+  root.innerHTML =
+    `<div class="tb-card tb-prematch-header">` +
+    `<span class="tb-label">Arena look</span>` +
+    `<span class="tb-prematch-look">${escapeText(LOOK_NAMES[options.look])}</span>` +
+    `</div>` +
+    `<div class="tb-prematch-cards">${cardsHtml}</div>` +
+    `<div class="tb-card tb-prematch-foot"></div>`;
+  root.prepend(style);
+  root.querySelectorAll('.tb-seat-ride').forEach((well, seat) => {
+    const portrait = options.portraits?.[seat];
+    if (portrait) well.append(portrait);
+  });
+  const foot = root.querySelector('.tb-prematch-foot');
 
-    const footHtml =
-      currentCount !== null
-        ? `<div class="tb-countdown">${currentCount}</div>`
+  /** Only the foot changes as the count runs, so the riders keep riding in their cards. */
+  function showCount(count: number | null): void {
+    if (!foot) return;
+    foot.innerHTML =
+      count !== null
+        ? `<div class="tb-countdown">${String(count)}</div>`
         : `<p class="tb-prompt-text">Press Enter or Space to ride</p>`;
-
-    root.innerHTML =
-      `<div class="tb-card tb-prematch-header">` +
-      `<span class="tb-label">Arena look</span>` +
-      `<span class="tb-prematch-look">${escapeText(LOOK_NAMES[options.look])}</span>` +
-      `</div>` +
-      `<div class="tb-prematch-cards">${cardsHtml}</div>` +
-      `<div class="tb-card tb-prematch-foot">${footHtml}</div>`;
-
-    root.prepend(style);
   }
 
   const onKeyDown = (event: KeyboardEvent) => {
@@ -306,13 +349,12 @@ export function createPrematchScreen(options: PrematchOptions): PrematchScreen {
   };
 
   window.addEventListener('keydown', onKeyDown);
-  render();
+  showCount(null);
   options.host.append(root);
 
   return {
     setCount(n: number | null) {
-      currentCount = n;
-      render();
+      showCount(n);
     },
     dispose() {
       window.removeEventListener('keydown', onKeyDown);

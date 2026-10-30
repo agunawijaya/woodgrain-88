@@ -92,6 +92,8 @@ One shared AI (`src/ai/`), fair by construction.
 - It aims with the same shell rules as a player. The aim planner traces every heading's shot,
   bounces included, and leads moving targets.
 - Its stick is a person's stick.
+- The Den's Kid setting (Human / Sharp, prompt 03a) does not change Tank Duel's Kids: they use
+  neither `kids/memory` nor `kids/reflex`.
 
 Personality from the kit sets how often a kid decides, how sloppily it judges range and steers a
 guided shell, how close it likes to fight, how readily it dodges or takes cover, and how deep it

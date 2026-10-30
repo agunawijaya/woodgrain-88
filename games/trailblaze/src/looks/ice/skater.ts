@@ -5,12 +5,13 @@
  * 2's Sorrel wears a blue suit, a hood and big earmuffs. From above, the
  * bobble and the earmuffs tell them apart.
  *
- * Touching ice sends a skater's feet out from under them: they go over
- * backwards, land flat on the ice with their skates in the air, and slide on
- * a little before they stop.
+ * Touching ice freezes a skater solid: frost creeps up from the skates to
+ * the hat, the ice cracks with a burst of crystals, and the frozen figure
+ * slides back off the wall to a stop, still in its skating pose.
  */
 import {
   CapsuleGeometry,
+  Color,
   CylinderGeometry,
   Group,
   Mesh,
@@ -23,13 +24,19 @@ import {
 } from 'three';
 import type { Crash, Seat } from '../../engine/types.ts';
 import type { SeatColours } from '../../look/look.ts';
+import { createRiderHalo } from '../../look/rider-halo.ts';
 import type { RiderFigure } from '../../look/trail-rig.ts';
 import { ICE_TOP } from './ice-wall.ts';
 
-const FALL_SECONDS = 0.35;
-const SLIDE_DISTANCE = 0.5;
-/** Built to a cell and drawn larger, so a skater reads on a full board. */
-const SKATER_SCALE = 1.45;
+/** How long the frost takes to climb from the skates to the hat; the ice cracks when it gets there. */
+export const FROST_SECONDS = 0.6;
+/** How far the frozen figure slides back off the wall, in cells. */
+const SLIDE_DISTANCE = 0.7;
+/** Built to a cell and drawn larger, so each skater reads from the overhead camera. */
+const SKATER_SCALE = 3.8;
+/** Lowers the scaled figure so its skates stay on the ice. */
+const STAND = -ICE_TOP * (SKATER_SCALE - 1);
+const FROST = new Color('#bfe4ff');
 
 export interface Skater extends RiderFigure {
   /** The trailing hand, where frost streams from, in world space. */
@@ -63,7 +70,24 @@ export function createSkater(options: {
   root.name = `skater-${seat}`;
   const figure = new Group();
   figure.scale.setScalar(SKATER_SCALE);
+  figure.position.y = STAND;
   root.add(figure);
+  const halo = createRiderHalo({
+    colours: options.colours,
+    length: 0.42 * SKATER_SCALE,
+    width: 0.36 * SKATER_SCALE,
+    floor: ICE_TOP,
+    night: options.night,
+  });
+  root.add(halo.root);
+  // The frost climbs in three bands: skates and legs, then the suit, then the face and hat.
+  const frostBands = [[blade, dark], [suit], [trim, skin]].map((band) =>
+    band.map((material) => ({
+      material,
+      colour: material.color.clone(),
+      roughness: material.roughness,
+    })),
+  );
   const lean = new Group();
   figure.add(lean);
   const add = (geometry: BufferGeometry, material: Material, x: number, y: number, z = 0) => {
@@ -154,26 +178,34 @@ export function createSkater(options: {
     },
     reset() {
       fallen = null;
-      figure.position.set(0, 0, 0);
+      figure.position.set(0, STAND, 0);
       figure.rotation.set(0, 0, 0);
       for (const leg of legs) leg.rotation.set(0, 0, 0);
+      for (const band of frostBands) {
+        for (const part of band) {
+          part.material.color.copy(part.colour);
+          part.material.emissive.setRGB(0, 0, 0);
+          part.material.roughness = part.roughness;
+        }
+      }
     },
     update(dt) {
       if (!fallen) return;
       fallen.age += dt;
-      const fall = Math.min(1, fallen.age / FALL_SECONDS);
-      // Over backwards, pivoting on the skates, with a small bounce as the back meets the ice.
-      const bounce =
-        fall >= 1
-          ? Math.abs(Math.sin((fallen.age - FALL_SECONDS) * 12)) *
-            Math.exp(-(fallen.age - FALL_SECONDS) * 6) *
-            0.06
-          : 0;
-      figure.rotation.z = fall * fall * (Math.PI / 2 - 0.12);
-      figure.position.y = bounce + fall * 0.12;
-      figure.position.x = SLIDE_DISTANCE * (1 - Math.exp(-fallen.age * 2.5));
-      for (const leg of legs) leg.rotation.z = -fall * 0.9;
-      lean.rotation.x *= 0.9;
+      const climbed = Math.min(1, fallen.age / FROST_SECONDS);
+      frostBands.forEach((band, index) => {
+        const frozen = Math.min(1, Math.max(0, climbed * frostBands.length - index));
+        for (const part of band) {
+          part.material.color.copy(part.colour).lerp(FROST, frozen * 0.85);
+          part.material.emissive.copy(FROST).multiplyScalar(frozen * (options.night ? 0.35 : 0.08));
+          // Frozen glassy and smooth, whatever the part was made of.
+          part.material.roughness = part.roughness + (0.15 - part.roughness) * frozen;
+        }
+      });
+      const sliding = Math.max(0, fallen.age - FROST_SECONDS);
+      const slid = 1 - Math.exp(-sliding * 3);
+      figure.position.x = -SLIDE_DISTANCE * slid;
+      figure.rotation.y = 0.5 * slid;
     },
     handPosition(target) {
       return lean.localToWorld(target.copy(handLocal));
@@ -184,6 +216,7 @@ export function createSkater(options: {
     dispose() {
       for (const geometry of geometries) geometry.dispose();
       for (const material of materials) material.dispose();
+      halo.dispose();
     },
   };
 }

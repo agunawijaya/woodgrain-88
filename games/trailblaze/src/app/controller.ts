@@ -13,6 +13,7 @@ import {
   KID_IDS,
   kidById,
   withDiagonalKeys,
+  withKidsMark,
   type Appearance,
   type Bindings,
   type GameContext,
@@ -31,8 +32,10 @@ import { createMatchSound, type MatchSound } from '../audio/match-sound.ts';
 import { channelById, CHANNELS, type TrailblazeChannel } from '../channels.ts';
 import { IDLE, type MatchSetup, type Seat, type StepPilot } from '../engine/types.ts';
 import { createChaseCamera, type ChaseCamera } from '../look/chase-camera.ts';
+import { createCrashPush, type CrashPush } from '../look/crash-push.ts';
 import type { LookId, SeatColours, TrailView } from '../look/look.ts';
 import { createLookStage, LOOK_IDS, lookById, paintBackground } from '../look/looks.ts';
+import { createRiderPortraits, type RiderPortraits } from '../look/rider-portrait.ts';
 import { fourWayColours, seatColours, type SeatPalette } from '../look/seats.ts';
 import { pointSymbols, shareLine } from '../progress/share.ts';
 import { createProgressTracker, type ProgressTracker } from '../progress/tracker.ts';
@@ -101,6 +104,7 @@ interface Ride {
   /** The first Kid's last seconds before its crash, for "How Rosa saw it". */
   readonly replay: KidReplay | null;
   chase: ChaseCamera | null;
+  push: CrashPush | null;
   /** Held behind the pre-match cards: drawn, not moving. */
   held: boolean;
   frozenFor: number;
@@ -177,6 +181,7 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
   let ride: Ride | null = null;
   let menu: MenuScreen | null = null;
   let prematch: PrematchScreen | null = null;
+  let closeUps: RiderPortraits | null = null;
   let results: ResultsScreen | null = null;
   let sheetClose: (() => void) | null = null;
   let matchesStarted = 0;
@@ -201,9 +206,31 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
     return channelById(channelId) ?? channelById('game-1') ?? (CHANNELS[0] as TrailblazeChannel);
   }
 
+  /** The look's riders up close in the given colours; none where the browser gives no GL. */
+  function riderCloseUps(
+    colours: readonly SeatColours[],
+    width: number,
+    height: number,
+  ): RiderPortraits | null {
+    try {
+      return createRiderPortraits({
+        look,
+        appearance,
+        seats: colours,
+        width,
+        height,
+        animate: !context.settings.reducedMotion(),
+      });
+    } catch {
+      return null;
+    }
+  }
+
   function clearScreens(): void {
     menu?.dispose();
     prematch?.dispose();
+    closeUps?.dispose();
+    closeUps = null;
     results?.dispose();
     sheetClose?.();
     menu = null;
@@ -236,7 +263,12 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
   function driverFor(rider: Rider, seat: Seat, seed: string): SeatDriver | KidRider {
     if (rider.kind === 'person') return controls.driver(rider.player);
     if (rider.kind === 'kid') {
-      return createKidRider({ kid: rider.kid, seat, mode: 'human', seed: `${seed}/${rider.kid}` });
+      return createKidRider({
+        kid: rider.kid,
+        seat,
+        mode: context.settings.kids(),
+        seed: `${seed}/${rider.kid}`,
+      });
     }
     return { stick: () => IDLE };
   }
@@ -317,10 +349,9 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
         if (event.type === 'speed') current.hud?.setSpeedStage(event.stage);
         if (event.type === 'trap') current.hud?.trap(event.seat);
         if (event.type === 'crash') {
-          current.replay?.crashed(
-            current.session.match,
-            event.crashes.map((crash) => crash.seat),
-          );
+          const crashedSeats = event.crashes.map((crash) => crash.seat);
+          current.replay?.crashed(current.session.match, crashedSeats);
+          current.push?.start(crashedSeats);
         }
       },
     });
@@ -340,12 +371,16 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
       tracker,
       replay: live && firstKid ? createKidReplay(firstKid) : null,
       chase: null,
+      push: null,
       held: live,
       frozenFor: 0,
       finished: false,
     };
     ride = current;
-    if (live) applyCamera(current);
+    if (live) {
+      applyCamera(current);
+      applyPush(current);
+    }
     loop.start();
     return current;
   }
@@ -370,6 +405,7 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
     if (!current || current.held) return;
     current.session.advance(dt);
     current.chase?.update(dt);
+    current.push?.update(dt);
     current.replay?.watch(current.session.match);
     const match = current.session.match;
     current.plan.riders.forEach((rider, seat) => {
@@ -388,6 +424,7 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
     if (!ride) return;
     ride.loop.stop();
     ride.chase?.release();
+    ride.push?.release();
     ride.sound?.dispose();
     ride.hud?.dispose();
     stage.scene.remove(ride.view.root);
@@ -408,12 +445,21 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
 
   function buildMenu(): void {
     menu?.dispose();
+    closeUps?.dispose();
     const { left, right } = context.difficulty.get();
+    const shown = lookById(look);
+    const colours = seatColours(palette());
+    closeUps = riderCloseUps(colours, 180, 120);
+    const riders = shown.riders.flatMap((name, seat) => {
+      const portrait = closeUps?.canvases[seat];
+      return portrait ? [{ name, colour: colours[seat]?.main ?? '#ffffff', portrait }] : [];
+    });
     menu = createMenuScreen({
       host: screens,
       channelId,
       opponent,
       look,
+      ...(riders.length > 0 ? { riders: { look: shown.name, seats: riders } } : {}),
       matchLength: settings.get().matchLength,
       switches: [left, right],
       memory: 'human',
@@ -591,9 +637,12 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
     const current = startRide(plan, true);
     const switches = switchesFor(plan.riders, true);
     const shared = plan.riders.filter((rider) => rider.kind === 'person').length === 2;
+    const { riders: riderNames, ridesAs } = lookById(look);
+    closeUps = riderCloseUps(current.colours, 300, 169);
     prematch = createPrematchScreen({
       host: screens,
       look,
+      ...(closeUps ? { portraits: closeUps.canvases } : {}),
       seats: plan.riders.map((rider, seat) => ({
         name: riderName(rider),
         role:
@@ -614,6 +663,7 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
             : rider.player === PLAYER_FOR_RIDER[0] && shared
               ? 'WASD · Space'
               : 'Arrows · Enter',
+        rides: `${ridesAs} ${riderNames[seat % 2] ?? riderNames[0]}`,
       })),
       onReady: () => countDown(current),
       onBack: () => showMenu(),
@@ -656,9 +706,11 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
     const others = scores.filter((_, seat) => seat !== playerSeat);
     const best = others.length > 0 ? Math.max(...others) : 0;
     const kidRider = plan.riders.find((rider) => rider.kind === 'kid');
+    const kids = kidRider ? context.settings.kids() : undefined;
     const versus =
       plan.riders.every((rider) => rider.kind === 'person') && plan.riders.length === 2;
-    const line = playerSeat === null ? '' : shareLine(session.stats.points, playerSeat);
+    const line =
+      playerSeat === null ? '' : withKidsMark(shareLine(session.stats.points, playerSeat), kids);
     const result: GameResult = {
       score: mine,
       scoreLabel: `${String(mine)}–${String(best)}`,
@@ -672,6 +724,7 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
       ],
       ...(playerSeat === null ? {} : { emoji: pointSymbols(session.stats.points, playerSeat) }),
       opponentKid: kidRider?.kind === 'kid' ? kidRider.kid : null,
+      ...(kids === undefined ? {} : { kids }),
     };
     const receipt = context.reportResult(result);
     recordFinished(plan, mine, best, session.stats.longestRoundSeconds);
@@ -692,7 +745,7 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
     save = recordMatch(save, {
       channelId: plan.channel.def.id,
       opponent: opponentChoice,
-      memory: 'human',
+      memory: context.settings.kids(),
       playerScore: mine,
       rivalScore: theirs,
       longestRideSeconds: longest,
@@ -715,7 +768,7 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
       seats: plan.riders.map((rider, seat) => ({
         name: riderName(rider),
         score: session.match.riders[seat]?.score ?? 0,
-        cellsClaimed: session.stats.cellsLaid[seat] ?? 0,
+        cellsLaid: session.stats.cellsLaid[seat] ?? 0,
         trapsSprung: traps.filter((trap) => trap.seat !== seat).length,
         colours: colours[seat] ?? seatColours()[0],
         isHuman: rider.kind === 'person',
@@ -753,6 +806,7 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
       ride.view = rebuilt;
       ride.sound?.setLook(next);
       applyCamera(ride);
+      applyPush(ride);
     }
     old.dispose();
     if (view === 'match') showPauseItems();
@@ -768,6 +822,15 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
       return;
     }
     current.chase = createChaseCamera(stage, () => current.view, lookById(look).framing, seat);
+  }
+
+  /** The push shows only over the whole board: never with Chase (it is already close) or the menu. */
+  function applyPush(current: Ride): void {
+    current.push?.release();
+    current.push = null;
+    if (view === 'menu' || current.chase) return;
+    if (settings.get().reducedEffects || context.settings.reducedMotion()) return;
+    current.push = createCrashPush(stage, () => current.view, lookById(look).framing);
   }
 
   function showPauseItems(): void {
@@ -789,7 +852,10 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
         onSelect: () => {
           if (people !== 1) return;
           settings.update({ camera: camera === 'chase' ? 'overhead' : 'chase' });
-          if (ride) applyCamera(ride);
+          if (ride) {
+            applyCamera(ride);
+            applyPush(ride);
+          }
           showPauseItems();
         },
       },
@@ -835,6 +901,7 @@ export function mountTrailblaze(host: HTMLElement, context: GameContext): GameIn
     const rebuilt = buildView(ride.session.match.setup.players, ride.colours);
     ride.session.setView(rebuilt);
     ride.view = rebuilt;
+    applyPush(ride);
   }
 
   subscriptions.push(

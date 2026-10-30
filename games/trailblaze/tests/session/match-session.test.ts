@@ -66,6 +66,9 @@ function createFakeView(): TrailView & { readonly calls: readonly RecordedCall[]
     step(laid, erased, moves, seconds) {
       calls.push({ method: 'step', args: [laid, erased, moves, seconds] });
     },
+    steer() {
+      // Called every frame with the queued turn; these tests follow steps and crashes instead.
+    },
     setSpeedStage(stage) {
       calls.push({ method: 'setSpeedStage', args: [stage] });
     },

@@ -3,13 +3,11 @@
  * stone dais beyond the far wall, shaven-headed, in a white linen robe with a
  * broad collar of gold and turquoise, leaning on a tall staff crowned with a
  * sun disc. He follows the mummies with his eyes. When one of them is wound
- * up, he lifts his staff and strikes it on the stone, and a bolt of
- * lightning leaps from the disc to the fallen mummy.
+ * up, he lifts his staff and strikes it on the stone, and the sun disc glows
+ * for a moment. The glow stays on the disc: nothing crosses the board, so the
+ * cocoon is the only thing to watch.
  */
 import {
-  AdditiveBlending,
-  CatmullRomCurve3,
-  Color,
   CylinderGeometry,
   Group,
   LatheGeometry,
@@ -18,13 +16,11 @@ import {
   MeshStandardMaterial,
   SphereGeometry,
   TorusGeometry,
-  TubeGeometry,
   Vector2,
   Vector3,
   type BufferGeometry,
   type Material,
 } from 'three';
-import type { Rng } from '@woodgrain-88/kit';
 import type { Stage } from '@woodgrain-88/arena';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { turnHeadTowards, WATCHER_SPOT, type Watcher } from '../../look/watcher.ts';
@@ -32,15 +28,11 @@ import { turnHeadTowards, WATCHER_SPOT, type Watcher } from '../../look/watcher.
 const SCALE = 2.3;
 const LIFT_SECONDS = 0.3;
 const STRIKE_SECONDS = 0.1;
-const BOLT_SECONDS = 0.5;
-const REST_SECONDS = 0.5;
+/** How long the disc glows after the strike, fading all the while. */
+const GLOW_SECONDS = 1.2;
 
-export function createPriest(options: {
-  readonly night: boolean;
-  readonly stage: Stage;
-  readonly rng: Rng;
-}): Watcher {
-  const { night, rng } = options;
+export function createPriest(options: { readonly night: boolean; readonly stage: Stage }): Watcher {
+  const { night } = options;
   const geometries: BufferGeometry[] = [];
   const materials: Material[] = [];
   const keep = <T extends BufferGeometry>(geometry: T): T => {
@@ -58,18 +50,16 @@ export function createPriest(options: {
   const turquoise = own(new MeshStandardMaterial({ color: '#2fa3a0', roughness: 0.4 }));
   const kohl = own(new MeshBasicMaterial({ color: '#16100b' }));
   const wood = own(new MeshStandardMaterial({ color: '#6e4a2c', roughness: 0.6 }));
-  const boltCore = own(
-    new MeshBasicMaterial({ color: new Color('#fff6d8').multiplyScalar(night ? 4 : 2.5) }),
-  );
-  const boltGlow = own(
-    new MeshBasicMaterial({
-      color: new Color('#8fc8ff').multiplyScalar(night ? 2 : 1.2),
-      transparent: true,
-      opacity: 0.55,
-      depthWrite: false,
-      blending: AdditiveBlending,
+  const sunGold = own(
+    new MeshStandardMaterial({
+      color: '#e0b23f',
+      roughness: 0.3,
+      metalness: 0.85,
+      emissive: '#ffb347',
+      emissiveIntensity: 0,
     }),
   );
+  const fullGlow = night ? 1.6 : 0.8;
 
   const root = new Group();
   root.name = 'priest';
@@ -159,48 +149,16 @@ export function createPriest(options: {
   const crown = new Group();
   crown.position.y = 0.78;
   staff.add(crown);
-  const disc = add(crown, new CylinderGeometry(0.1, 0.1, 0.025, 28), gold, 0, 0.1);
+  const disc = add(crown, new CylinderGeometry(0.1, 0.1, 0.025, 28), sunGold, 0, 0.1);
   disc.rotation.x = Math.PI / 2;
   add(crown, new TorusGeometry(0.115, 0.015, 8, 28), turquoise, 0, 0.1);
   add(crown, new SphereGeometry(0.04, 12, 10), gold, 0, 0);
   const otherArm = add(figure, new CylinderGeometry(0.04, 0.032, 0.5, 10), linen, -0.2, 1.0, 0);
   otherArm.rotation.z = -0.12;
 
-  const bolt = new Group();
-  root.add(bolt);
   let target: Vector3 | null = null;
   let strike: { age: number; at: Vector3; struck: boolean } | null = null;
-  let boltTimer = 0;
   const crownWorld = new Vector3();
-
-  function clearBolt(): void {
-    for (const child of [...bolt.children]) {
-      child.removeFromParent();
-      if (child instanceof Mesh) (child.geometry as BufferGeometry).dispose();
-    }
-  }
-
-  /** A fresh jagged path from the staff's disc to the fallen mummy, redrawn so the bolt flickers. */
-  function drawBolt(at: Vector3): void {
-    clearBolt();
-    crown.getWorldPosition(crownWorld);
-    root.worldToLocal(crownWorld);
-    const end = root.worldToLocal(at.clone().setY(0.5));
-    const points: Vector3[] = [crownWorld.clone()];
-    const segments = 9;
-    for (let index = 1; index < segments; index++) {
-      const point = crownWorld.clone().lerp(end, index / segments);
-      // Arched up over the wall, jagged sideways.
-      point.y += Math.sin((index / segments) * Math.PI) * 0.5;
-      point.x += rng.float(-0.45, 0.45);
-      point.z += rng.float(-0.3, 0.3);
-      points.push(point);
-    }
-    points.push(end);
-    const curve = new CatmullRomCurve3(points, false, 'catmullrom', 0.05);
-    bolt.add(new Mesh(new TubeGeometry(curve, 64, 0.05, 6, false), boltCore));
-    bolt.add(new Mesh(new TubeGeometry(curve, 64, 0.16, 6, false), boltGlow));
-  }
 
   return {
     root,
@@ -228,21 +186,15 @@ export function createPriest(options: {
         shoulder.rotation.x = 0;
         if (!strike.struck) {
           strike.struck = true;
-          options.stage.lights.flash(strike.at.clone().setY(1), '#cfe6ff', night ? 60 : 20, 0.5);
           crown.getWorldPosition(crownWorld);
-          options.stage.lights.flash(crownWorld, '#fff1c0', night ? 30 : 10, 0.4);
+          options.stage.lights.flash(crownWorld, '#ffd27a', night ? 4 : 1.5, 0.6);
         }
-        boltTimer -= dt;
-        if (age < down + BOLT_SECONDS && boltTimer <= 0) {
-          boltTimer = 0.06;
-          drawBolt(strike.at);
-        }
-        if (age >= down + BOLT_SECONDS) clearBolt();
-        if (age >= down + BOLT_SECONDS + REST_SECONDS) strike = null;
+        const fading = Math.max(0, 1 - (age - down) / GLOW_SECONDS);
+        sunGold.emissiveIntensity = fullGlow * fading;
+        if (fading === 0) strike = null;
       }
     },
     dispose() {
-      clearBolt();
       for (const geometry of geometries) geometry.dispose();
       for (const material of materials) material.dispose();
     },

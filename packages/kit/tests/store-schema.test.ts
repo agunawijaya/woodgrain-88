@@ -56,6 +56,7 @@ describe('defaults', () => {
       shareWithName: false,
       versusBestOf: 3,
       runSound: 'normal',
+      kids: 'human',
     });
 
     expect(defaults('progress', ctx)).toEqual({
@@ -194,6 +195,7 @@ describe('sanitize', () => {
       shareWithName: false,
       versusBestOf: 3,
       runSound: 'normal',
+      kids: 'human',
     });
 
     const badControls = sanitize(
@@ -263,6 +265,14 @@ describe('sanitize', () => {
     );
     expect(nonObjectDifficulty?.difficulty).toEqual({ left: 'B', right: 'B' });
     expect(nonObjectDifficulty?.runSound).toBe('quiet');
+  });
+
+  it('sanitises settings v3 kids: sharp survives, garbage and missing become human', () => {
+    const ctx = makeContext();
+
+    expect(sanitize('settings', { kids: 'sharp' }, ctx)?.kids).toBe('sharp');
+    expect(sanitize('settings', { kids: 'loud' }, ctx)?.kids).toBe('human');
+    expect(sanitize('settings', {}, ctx)?.kids).toBe('human');
   });
 
   it('sanitises streak: drops invalid day keys and kinds, and floors best at zero', () => {
@@ -843,6 +853,36 @@ describe('sanitize', () => {
     expect(board?.[RECORDS_PER_BOARD - 1]?.score).toBe(100 - (RECORDS_PER_BOARD - 1));
   });
 
+  it('keeps a RunRecord kids: sharp and drops any other kids value', () => {
+    const ctx = makeContext();
+    const base = {
+      score: 10,
+      at: '2026-10-25T12:00:00.000Z',
+      seed: 1,
+      durationMs: 1000,
+      channel: 'ch-1',
+      mode: 'normal' as const,
+    };
+
+    const sanitized = sanitize(
+      'records',
+      {
+        boards: {
+          'game-a/ch-1/normal': [
+            { ...base, kids: 'sharp' },
+            { ...base, kids: 'loud' },
+          ],
+        },
+      },
+      ctx,
+    );
+
+    const board = sanitized?.boards['game-a/ch-1/normal'];
+    expect(board?.[0]).toEqual({ ...base, kids: 'sharp' });
+    expect(board?.[1]).toEqual(base);
+    expect(board?.[1] && 'kids' in board[1]).toBe(false);
+  });
+
   it('keeps valid sessions and caps the event log to the newest EVENT_LOG_LIMIT entries', () => {
     const ctx = makeContext();
     const count = EVENT_LOG_LIMIT + 10;
@@ -945,7 +985,7 @@ describe('upgrade', () => {
     });
   });
 
-  it('upgrades settings v1 to v2 adding defaults and keeping existing settings intact', () => {
+  it('upgrades settings v1 through v2 to v3 adding defaults and keeping existing settings intact', () => {
     const ctx = makeContext();
     const v1Settings = {
       appearance: 'dark',
@@ -962,7 +1002,7 @@ describe('upgrade', () => {
       games: { tank: { turbo: true } },
     };
 
-    expect(upgrade('settings', { v: 3, data: v1Settings }, ctx)).toBeNull();
+    expect(upgrade('settings', { v: 4, data: v1Settings }, ctx)).toBeNull();
 
     const upgraded = upgrade('settings', { v: 1, data: v1Settings }, ctx);
     expect(upgraded).toEqual({
@@ -974,7 +1014,34 @@ describe('upgrade', () => {
       shareWithName: false,
       versusBestOf: 3,
       runSound: 'normal',
+      kids: 'human',
     });
+  });
+
+  it('upgrades settings v2 to v3 adding kids: human and keeping everything else unchanged', () => {
+    const ctx = makeContext();
+    const v2Settings = {
+      appearance: 'light',
+      volume: { master: 0.6, sfx: 0.5, music: 0.4, ambience: 0.2 },
+      muted: false,
+      reducedMotion: 'off',
+      screenShake: true,
+      crtEffects: true,
+      colorBlindHints: false,
+      roomAmbience: false,
+      controls: { bindings: null, padSeats: [1, 2] as const },
+      introSeen: true,
+      hintsSeen: {},
+      games: {},
+      difficulty: { left: 'A', right: 'B' },
+      showGrowth: false,
+      shareWithName: true,
+      versusBestOf: 5 as const,
+      runSound: 'quiet' as const,
+    };
+
+    const upgraded = upgrade('settings', { v: 2, data: v2Settings }, ctx);
+    expect(upgraded).toEqual({ ...v2Settings, kids: 'human' });
   });
 
   it('upgrades progress v2 to v3 adding empty den and keeping games intact', () => {

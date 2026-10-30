@@ -69,7 +69,7 @@ export function createMummyView(options: ViewOptions): TrailView {
     createMummy({ seat: seat as Seat, colours, night }),
   );
 
-  const priest = createPriest({ night, stage: options.stage, rng: rng.fork('priest') });
+  const priest = createPriest({ night, stage: options.stage });
   root.add(priest.root);
 
   const dust: ParticleField = createParticleField('smoke', 900, options.stage.lights.palette);
@@ -190,7 +190,8 @@ export function createMummyView(options: ViewOptions): TrailView {
           });
         }
       }
-      options.stage.lights.flash(at.clone().setY(1), '#ffd9a0', night ? 16 : 5, 0.4);
+      // A warm glow at the cocoon's feet, kept low: the winding is the moment, not a flash.
+      options.stage.lights.flash(at.clone().setY(0.6), '#ffd9a0', night ? 3 : 1.2, 0.4);
     },
     trap(seat, cells, seal) {
       pocket.show(cells, coloursOf(options.seats, seat).deep);

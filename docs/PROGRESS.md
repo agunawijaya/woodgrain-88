@@ -1,6 +1,6 @@
 # Progress
 
-Updated once at the end of each prompt. Last update: prompt 04 (Trailblaze), 2026-10-29.
+Updated once at the end of each prompt. Last update: prompt 04a (Trailblaze polish), 2026-10-30.
 
 ## Foundation (prompt 00)
 
@@ -59,7 +59,7 @@ Updated once at the end of each prompt. Last update: prompt 04 (Trailblaze), 202
 | Performance | 60 fps at 1920 × 1080 on seven channels by day and night; memory flat over ten minutes on the menu (45–46 MB); Hall entry 377 kB (gzip 122), game chunk 825 kB (gzip 225), loaded on demand |
 | Tests | 32 bridge; 185 kit, 110 Hall, 3 scripts, 58 arena, 261 Tank Duel (Vitest; 6 balance checks opt-in); 59 Hall Playwright, 11 Tank Duel flows, 32 screenshot runs |
 
-## Trailblaze (prompt 04)
+## Trailblaze (prompts 04 and 04a)
 
 | Part | Status |
 |---|---|
@@ -68,14 +68,34 @@ Updated once at the end of each prompt. Last update: prompt 04 (Trailblaze), 202
 | Kit `kids/reflex` (human reflexes) and `sticks` (eight-way keys) | done; ADR-0012; Hot & Cold moved onto the kit's sticks |
 | Kid riders, Ghost Trails memory | done; foreseen moves timed, surprises reacted to, a reaction's worth of open road |
 | Balance targets | Lou v Pip 84% (v3 65%), Moss v Dee 70% (Dee +11 at speed): met and locked. Moss v Computer 1977 95–100% against 60–80%: missed, kept faithful (NOTES.md) |
-| Four looks (Neon Grid, Toy Trains, Mummy's Wrap, Ice Trail), light and dark, Chase camera, Remix pieces | done; hero frames approved by the owner (two review rounds); ADR-0013 |
+| Four looks (Neon Grid, Toy Trains, Mummy's Wrap, Ice Trail), light and dark, Chase camera, Remix pieces | done; ADR-0013. 04a: riders drawn at a readable size (Neon's a three-cell motorbike that banks into turns), a camera push toward every crash, the Mummy crash a cocoon wound from the feet up, dyed and woven linen; hero frames approved by the owner (third set) |
+| Feel and screens (04a) | done: the picture is never more than one cell behind the rules (0.46 cell on average, was 0.94; a queued turn shows from the next frame); each look's riders up close on the pre-match cards and in the menu's Riders card; results show cells laid and traps sprung per rider; solo Doodle marks only its own start |
 | Menu, pre-match, HUD, results with "How Rosa saw it", tutorial, records, Doodle gallery, settings | done |
 | Modes: vs a Kid, Versus, vs Computer 1977, Doodle (SVG export), Four Way; daily, challenge links, micro-challenges | done |
 | Sound (four synthesised palettes, held hums that climb with the speed-up) | done |
 | Hall integration (registry, lazy chunk, Den TV demo) | done; Hall entry 386 kB (gzip 124), game chunk 207 kB (gzip 65) plus the shared three.js chunk |
-| Performance | 60 fps at 1920 × 1080 with every cell laid, all looks, day and night (RTX 4060 laptop); 15–24 fps on the same laptop's integrated GPU, limited by the stage, not the trails |
-| Open | The picture runs about one cell behind the rules (feel pass idea in NOTES.md); the Den has no Kid memory setting yet, so Kids ride as Human; neon start chevrons show for an unused seat in solo Doodle |
-| Tests | 207 Trailblaze, 239 kit, 110 Hall (Vitest; balance and 100k fuzz opt-in); 10 Trailblaze flows, 16 screenshot runs (96 pictures) |
+| Performance | 60 fps at 1920 × 1080 with every cell laid, all looks, day and night (RTX 4060 laptop; re-measured after 04a); 15–24 fps on the same laptop's integrated GPU, limited by the stage, not the trails |
+| Open | By day, Neon's crash shards and Ice's frozen skater want more contrast on the pale floors (hero NOTES) |
+| Tests | 224 Trailblaze (Vitest; balance and 100k fuzz opt-in), including the glide's one-cell limit; 11 Trailblaze flows, 16 screenshot runs (96 pictures) |
+
+## Hot & Cold (prompts 03 and 03a)
+
+| Part | Status |
+|---|---|
+| Engine: the ten cartridge variations to the tick, the flag checked first, bouncing and wrapping flags; Remix (Two Flags, Minefield, Thin Ice, Drift Storm) | done; pure and fixed-step |
+| Solver and possibility fog | done; the exact solver never loses the flag in 100,000 fields per motion |
+| The Neighbourhood Kids with human memory (kit `kids/memory`, ADR-0011) | done; "What Lou remembered" after a match |
+| Balance targets | Lou v Pip 85.1% (75–90), Moss v Dee 61.6% (50–70), perfect hunter median 4 checks (4–8), Lou within perfect + 2: met and locked (7 opt-in checks pass) |
+| Three looks (Polar Expedition, Tabletop Board, Radar Room), light and dark | done; ADR-0014; the look switches live from the pause menu. 03a critique: the Polar day blast no longer whites out the explorer, the Radar static is round and lies under the blip, the Tabletop pennant reads from above |
+| Feel | a step is drawn within the 7-tick settle time, so the explorer stands on its square the moment a check is allowed |
+| Menu, pre-match, HUD, results, records, settings, tutorial | done |
+| Modes: vs a Kid, Versus, Alone; daily, challenge links, micro-challenges, Versus Night | done |
+| Sound (three synthesised palettes, one cue per meaning) | done |
+| Hall integration (registry, lazy chunk, channel groups Race / Turns / Solo / Remix, Look and Clues pause items) | done; Hall entry 397 kB (gzip 128), game chunk 186 kB (gzip 63), three.js kept out of the entry |
+| The Den's Kid setting, Human / Sharp (03a) | done: kit (settings schema v3, `kids()`, `withKidsMark`), the Den's settings, records and share lines marked "Sharp Kids", Hot & Cold and Trailblaze; Tank Duel's Kids use neither memory nor reflexes (noted in its NOTES) |
+| Performance | 60 fps at 1920 × 1080 in all three looks by day and night (frame p95 16.8 ms, CPU at most 4 ms at p95) |
+| Open | Variation 4's marathon (warn before it?); turns between unequal Kids are one-sided (NOTES.md) |
+| Tests | 122 Hot & Cold, 247 kit, 110 Hall (Vitest; balance opt-in); 14 Hot & Cold flows, 1 Trailblaze Kid flow, 12 screenshot runs (60 pictures) |
 
 ## Games
 
@@ -88,7 +108,7 @@ Status values: **coming soon** (manifest, label, slate and details in the Hall; 
 | 02 | Big Top Cannon | Arcade | 4 | coming soon | Renamed in 00a |
 | 03 | Sum Rush | Brain | 10 | coming soon | Label band darkened to meet AA |
 | 04 | Quad Cube | Brain | 3 | coming soon | Nine variations in the original |
-| 05 | Hot & Cold | Brain | 1 | coming soon | Pilot wave |
+| 05 | Hot & Cold | Brain | 1 | playable | Pilot wave |
 | 06 | Disc Duel | Brain | 3 | coming soon | Hidden board editor in the original |
 | 07 | Pocket Links | Sports | 5 | coming soon | |
 | 08 | Trailblaze | Duels | 2 | playable | The original never tests the two players against each other; four looks, Kids with human reflexes |

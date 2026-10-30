@@ -9,6 +9,8 @@ import { createTrainsView } from './view.ts';
 export const TRAINS_LOOK: LookDefinition = {
   id: 'trains',
   name: 'Toy Trains',
+  riders: ['Ember', 'Bluebell'],
+  ridesAs: 'Drives',
   framing: { width: 41.5, depth: 21.5, tilt: 54, height: 5, margin: 0.03, topInset: 0.04 },
   mood: {
     day: {

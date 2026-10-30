@@ -9,6 +9,12 @@
  *
  * The newest stretch, still being drawn behind the bike, burns hotter than
  * the rest. After a crash the crashed rider's walls flicker.
+ *
+ * The bike is drawn about three cells long over its own wall, which stays
+ * inside its body. The pool of light on the floor waits until the bike has
+ * passed, so the newest cells do not light up a box of floor round the bike;
+ * it comes out under the tail with the wall, and shows in full when the bike
+ * breaks up.
  */
 import {
   AdditiveBlending,
@@ -23,7 +29,8 @@ import {
   type Object3D,
   type Texture,
 } from 'three';
-import type { Seat } from '../../engine/types.ts';
+import type { Cell, Seat } from '../../engine/types.ts';
+import type { Crossing } from '../../look/crossing.ts';
 import type { SeatColours } from '../../look/look.ts';
 import { sweepSection } from '../../look/sweep.ts';
 import { createSweptTrail, type SweptLayer } from '../../look/swept-trail.ts';
@@ -32,6 +39,8 @@ import type { TrailPieces } from '../../look/trail-rig.ts';
 export const WALL_HEIGHT = 0.82;
 const WALL_THICKNESS = 0.07;
 const SPILL_WIDTH = 1.3;
+/** Laid cells whose pool of light waits under the bike: it covers the cell it is crossing and two more. */
+const POOLS_UNDER_BIKE = 2;
 
 /** The ribbon's section: up one face, across the top, down the other; v runs foot (0) to top (1). */
 const RIBBON = [
@@ -53,6 +62,8 @@ export interface NeonWalls extends TrailPieces {
   readonly meshes: readonly Object3D[];
   /** How brightly a seat's walls burn: 1 steady, lower and flickering after its crash. */
   setFlicker(seat: Seat, strength: number): void;
+  /** The bike is gone: the light it was riding over pools on the floor at once. */
+  uncover(seat: Seat): void;
 }
 
 export function createNeonWalls(options: NeonWallsOptions): NeonWalls {
@@ -89,30 +100,67 @@ export function createNeonWalls(options: NeonWallsOptions): NeonWalls {
       blending,
     });
     materials.push(wall, hot, spill);
-    const layers: SweptLayer[] = [
-      {
-        build: (path) => sweepSection(path, SPILL, { closed: false }),
-        material: spill,
-      },
-      {
-        build: (path) => sweepSection(path, RIBBON, { sectionV: RIBBON_V }),
-        material: wall,
-        tailMaterial: hot,
-        castShadow: !night,
-      },
-    ];
-    return { layers, wall, base };
+    const poolLayer: SweptLayer = {
+      build: (path) => sweepSection(path, SPILL, { closed: false }),
+      material: spill,
+      onTail: false,
+    };
+    const wallLayer: SweptLayer = {
+      build: (path) => sweepSection(path, RIBBON, { sectionV: RIBBON_V }),
+      material: wall,
+      tailMaterial: hot,
+      castShadow: !night,
+    };
+    return { poolLayer, wallLayer, wall, base };
   });
-  const trail = createSweptTrail({ seats: seatWalls.map((walls) => walls.layers) });
+  // The floor pools first, so the walls stand on their light.
+  const pools = createSweptTrail({ seats: seatWalls.map((walls) => [walls.poolLayer]) });
+  const ribbons = createSweptTrail({ seats: seatWalls.map((walls) => [walls.wallLayer]) });
+  const underBike = new Map<Seat, Crossing[]>();
+  const waiting = (seat: Seat): Crossing[] => {
+    const list = underBike.get(seat) ?? [];
+    underBike.set(seat, list);
+    return list;
+  };
 
   return {
-    ...trail,
+    meshes: [...pools.meshes, ...ribbons.meshes],
+    addCell(seat, crossing, laidAt) {
+      ribbons.addCell(seat, crossing, laidAt);
+      const list = waiting(seat);
+      list.push(crossing);
+      while (list.length > POOLS_UNDER_BIKE) {
+        const passed = list.shift();
+        if (passed) pools.addCell(seat, passed, laidAt);
+      }
+    },
+    removeCell(cell: Cell) {
+      ribbons.removeCell(cell);
+      pools.removeCell(cell);
+      for (const list of underBike.values()) {
+        const index = list.findIndex((crossing) => crossing.cell === cell);
+        if (index >= 0) list.splice(index, 1);
+      }
+    },
+    setTail(seat, crossing, progress) {
+      ribbons.setTail(seat, crossing, progress);
+    },
+    clear() {
+      ribbons.clear();
+      pools.clear();
+      underBike.clear();
+    },
+    uncover(seat) {
+      for (const crossing of waiting(seat)) pools.addCell(seat, crossing, 0);
+      underBike.delete(seat);
+    },
     setFlicker(seat, strength) {
       const walls = seatWalls[seat];
       walls?.wall.color.copy(walls.base).multiplyScalar(brightness * strength);
     },
     dispose() {
-      trail.dispose();
+      ribbons.dispose();
+      pools.dispose();
       for (const material of materials) material.dispose();
       for (const texture of textures) texture.dispose();
     },

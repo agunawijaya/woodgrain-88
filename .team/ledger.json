@@ -1847,6 +1847,69 @@
       "note": "",
       "startedAt": "2026-10-29T15:22:37.469Z",
       "updatedAt": "2026-10-29T15:40:21.736Z"
+    },
+    {
+      "id": "kit-kid-setting",
+      "kind": "engine",
+      "model": "gemini-3.8-flash-medium",
+      "rounds": 2,
+      "status": "rejected",
+      "seconds": 26.4,
+      "crewTokens": {
+        "input": 26075,
+        "output": 1322,
+        "thinking": 1242,
+        "cacheRead": 0,
+        "total": 27397
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "",
+      "startedAt": "2026-10-29T16:18:40.745Z",
+      "updatedAt": "2026-10-29T16:21:08.273Z"
+    },
+    {
+      "id": "hc-architecture",
+      "kind": "docs",
+      "model": "gemini-3.8-flash-medium",
+      "rounds": 1,
+      "status": "rejected",
+      "seconds": 10.4,
+      "crewTokens": {
+        "input": 12367,
+        "output": 363,
+        "thinking": 313,
+        "cacheRead": 0,
+        "total": 12730
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "",
+      "startedAt": "2026-10-29T16:46:14.387Z",
+      "updatedAt": "2026-10-29T16:46:39.278Z"
+    },
+    {
+      "id": "tb-results-per-rider",
+      "kind": "plumbing",
+      "model": "gemini-3.8-flash-medium",
+      "rounds": 1,
+      "status": "accepted",
+      "seconds": 296.3,
+      "crewTokens": {
+        "input": 134591,
+        "output": 27347,
+        "thinking": 19802,
+        "cacheRead": 1615637,
+        "total": 161938
+      },
+      "violations": 0,
+      "leadTokens": null,
+      "soloTokens": null,
+      "note": "",
+      "startedAt": "2026-10-30T03:43:07.758Z",
+      "updatedAt": "2026-10-30T03:44:39.557Z"
     }
   ]
 }

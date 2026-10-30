@@ -9,6 +9,8 @@ import { createIceView } from './view.ts';
 export const ICE_LOOK: LookDefinition = {
   id: 'ice',
   name: 'Ice Trail',
+  riders: ['Juniper', 'Sorrel'],
+  ridesAs: 'Skates as',
   framing: { width: 41.5, depth: 21.5, tilt: 57, height: 4.6, margin: 0.03, topInset: 0.04 },
   mood: {
     day: {

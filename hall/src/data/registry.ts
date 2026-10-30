@@ -17,7 +17,6 @@ import { manifest as dropZone } from './coming-soon/drop-zone.ts';
 import { manifest as gloveBox } from './coming-soon/glove-box.ts';
 import { manifest as gravityDuel } from './coming-soon/gravity-duel.ts';
 import { manifest as hoopDuel } from './coming-soon/hoop-duel.ts';
-import { manifest as hotAndCold } from './coming-soon/hot-and-cold.ts';
 import { manifest as hoverBlast } from './coming-soon/hover-blast.ts';
 import { manifest as laneHopper } from './coming-soon/lane-hopper.ts';
 import { manifest as laneTen } from './coming-soon/lane-ten.ts';
@@ -35,6 +34,7 @@ import { manifest as slalomLine } from './coming-soon/slalom-line.ts';
 import { manifest as sumRush } from './coming-soon/sum-rush.ts';
 import { manifest as swarmGarden } from './coming-soon/swarm-garden.ts';
 import { manifest as tableTwentyone } from './coming-soon/table-21.ts';
+import { manifest as hotAndCold } from '@woodgrain-88/hot-and-cold/manifest';
 import { manifest as tankDuel } from '@woodgrain-88/tank-duel/manifest';
 import { manifest as trailblaze } from '@woodgrain-88/trailblaze/manifest';
 
@@ -49,7 +49,11 @@ export const BASE_ENTRIES: readonly GameEntry[] = [
   { manifest: gloveBox },
   { manifest: gravityDuel },
   { manifest: hoopDuel },
-  { manifest: hotAndCold },
+  // As with Tank Duel: three.js and the three looks arrive with this chunk only.
+  {
+    manifest: hotAndCold,
+    load: () => import('@woodgrain-88/hot-and-cold/module').then((module) => module.hotAndCold),
+  },
   { manifest: hoverBlast },
   { manifest: laneHopper },
   { manifest: laneTen },

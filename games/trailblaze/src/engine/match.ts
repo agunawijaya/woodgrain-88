@@ -91,6 +91,25 @@ export function startMatch(match: Match): MatchEvent[] {
   return events;
 }
 
+/**
+ * The heading a rider will step on next if nothing more is pushed before the step: its latched
+ * push, filtered the way the step will filter it, or its current heading. The picture uses it to
+ * start a queued turn at once instead of after the step.
+ */
+export function upcomingHeading(match: Readonly<Match>, seat: Seat): Heading {
+  const rider = match.riders[seat];
+  if (!rider) return 'right';
+  if (match.setup.rules.motion === 'free-draw' || rider.latched === null) return rider.heading;
+  const switchPos = match.setup.switches[seat] ?? 'B';
+  const filtered = filterReversal(
+    rider.heading,
+    rider.latched,
+    switchPos,
+    match.setup.rules.steering,
+  );
+  return filtered ?? rider.heading;
+}
+
 /** One 20 ms tick with what each seat holds (idle sticks filled when omitted). */
 export function stepMatch(match: Match, sticks: readonly Stick[]): MatchEvent[] {
   const events: MatchEvent[] = [];

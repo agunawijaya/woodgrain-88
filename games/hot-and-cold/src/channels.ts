@@ -58,32 +58,27 @@ export const CHANNELS: readonly HotColdChannel[] = [
   original(
     5,
     'Hunt for Hunt',
-    'Hunt for hunt',
+    'Turns',
     'Take whole hunts in turn; every check counts. Fewest checks wins.',
   ),
   original(
     6,
     'Hunt · Bouncing',
-    'Hunt for hunt',
+    'Turns',
     'Hunt for hunt with a flag that bounces a square at every miss.',
   ),
-  original(
-    7,
-    'Hunt · Wrapping',
-    'Hunt for hunt',
-    'Hunt for hunt with a flag that wraps round the field.',
-  ),
-  original(8, 'Clock', 'Clock', 'Alone against a 75-tick clock: catch as many flags as you can.'),
+  original(7, 'Hunt · Wrapping', 'Turns', 'Hunt for hunt with a flag that wraps round the field.'),
+  original(8, 'Clock', 'Solo', 'Alone against a 75-tick clock: catch as many flags as you can.'),
   original(
     9,
     'Clock · Bouncing',
-    'Clock',
+    'Solo',
     'Against the clock, with a flag that bounces at every miss.',
   ),
   original(
     10,
     'Clock · Wrapping',
-    'Clock',
+    'Solo',
     'Against the clock, with a flag that wraps round the field.',
   ),
   {

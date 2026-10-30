@@ -175,7 +175,8 @@ function photoMarkup(kidId: KidId, index: number, chosen: KidId): string {
 
 /** How a Kid's memory reads in a sentence, from its profile. */
 export function memoryNote(kid: KidId, memory: MemoryMode): string {
-  if (memory === 'sharp') return 'Sharp memory is on: every Kid remembers every clue.';
+  if (memory === 'sharp')
+    return 'Sharp Kids are on: every Kid remembers every clue and never slips.';
   const profile = KID_MEMORY[kid];
   const pace =
     profile.halfLife >= 90

@@ -284,7 +284,7 @@ export function createTabletopView(options: ViewOptions): FieldView {
       ),
     );
     cloth.position.set(0.06, 4.4, 0);
-    cloth.scale.setScalar(1.45);
+    cloth.scale.setScalar(1.9);
     for (const part of [pin, ball, cloth]) {
       owned.geometries.push(part.geometry);
       part.castShadow = true;

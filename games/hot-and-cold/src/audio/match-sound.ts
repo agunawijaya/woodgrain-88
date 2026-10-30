@@ -18,6 +18,8 @@ export interface MatchSoundOptions {
 
 export interface MatchSound {
   hear(events: readonly MatchEvent[]): void;
+  /** Switches every cue to the new look's palette, for a live look change mid-match. */
+  setLook(next: LookId): void;
 }
 
 /** How far to either side a square on the field's edge is panned. */
@@ -30,7 +32,8 @@ function panAt(square: Square): number {
 }
 
 export function createMatchSound(options: MatchSoundOptions): MatchSound {
-  const { audio, look } = options;
+  const { audio } = options;
+  let look = options.look;
   audio.register(HOT_COLD_SOUNDS);
 
   function play(cue: Cue, square: Square | null, pitch = 1): void {
@@ -80,6 +83,9 @@ export function createMatchSound(options: MatchSoundOptions): MatchSound {
             break;
         }
       }
+    },
+    setLook(next) {
+      look = next;
     },
   };
 }

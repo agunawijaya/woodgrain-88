@@ -7,11 +7,12 @@
  * Riders cross each cell along a smooth curve from the edge they came in by
  * to the edge they leave by (crossing.ts), so a turn is a curve, the way a
  * bike leans through a bend or a walker rounds a corner. The engine moves a
- * rider to its next cell at the instant of a step; on screen the rider
- * crosses the cell it has just left during the step that follows, so the
- * picture runs a little behind the rules and every move is smooth. The cell
- * being crossed is drawn as a growing tail up to the rider, and becomes
- * trail when the rider leaves it.
+ * rider to its next cell at the instant of a step; on screen the rider then
+ * glides from the middle of the cell it left to the middle of the new one,
+ * so the picture is never more than one cell behind the rules and arrives
+ * where they are by the next step. A turn the player has queued bends the
+ * glide at once, before the step that takes it. The trail grows behind the
+ * rider as a tail, and a laid cell becomes trail once the rider is past it.
  */
 import { Group, Vector3 } from 'three';
 import {
@@ -23,14 +24,8 @@ import {
   type Move,
   type Seat,
 } from '../engine/types.ts';
-import { headingStep, wrapOntoBoard } from './board-space.ts';
-import {
-  crossingPoint,
-  crossingTangent,
-  entryPoint,
-  exitPoint,
-  type Crossing,
-} from './crossing.ts';
+import { cellCentre, headingStep, wrapOntoBoard } from './board-space.ts';
+import { crossingPoint, crossingTangent, exitPoint, type Crossing } from './crossing.ts';
 import type { TrailView, ViewOptions } from './look.ts';
 import { createRemixPieces, type RemixStyle } from './remix-pieces.ts';
 
@@ -79,15 +74,30 @@ export interface LookParts {
 
 /** How far past the cell's edge a crashing rider gets: up to the face of what it hit. */
 const CRASH_OVERSHOOT = 0.3;
+/** How fast the picture eases away a small jump when a predicted turn changes, in seconds. */
+const CORRECTION_SECONDS = 0.06;
+/** A jump longer than this is a wrap to the other side or a fresh start, never eased. */
+const TELEPORT = 1.5;
 
+/**
+ * One step's glide, from the middle of the cell the rider left to the middle of the cell the
+ * rules have just moved it into: the second half of one crossing, then the first half of the
+ * next. The next crossing's far edge is not decided until the next step, so it follows the turn
+ * the rules have queued, and changes the moment the player changes it.
+ */
 interface Ride {
-  readonly crossing: Crossing;
+  readonly leaving: Crossing;
   /** False while a gap is held open: the rider crosses, but lays nothing. */
   readonly laid: boolean;
+  entering: Crossing;
   readonly seconds: number;
+  /** 0 at the middle of the cell left, 0.5 at the edge between the two, 1 at the next middle. */
   progress: number;
-  /** Where the ride stops: 1 at the far edge, a little beyond when the rider crashes. */
+  /** Where the ride stops: 1, or a little past the edge when the rider crashes into what is next. */
   reach: number;
+  crashing: boolean;
+  /** The cell left has been drawn as trail, once the rider is past its far edge. */
+  leftBehind: boolean;
 }
 
 interface RiderState {
@@ -97,6 +107,8 @@ interface RiderState {
   ride: Ride | null;
   /** The heading the rider arrived on, for the next crossing when no trail says it. */
   heading: Heading;
+  /** What is left of a small jump in the picture, eased away over a few frames. */
+  readonly correction: Vector3;
   /** A crash the rules have called, played when the rider reaches what it hit. */
   pendingCrash: Crash | null;
   crashed: boolean;
@@ -144,6 +156,7 @@ export function createTrailView(options: ViewOptions, parts: LookParts): TrailVi
       yaw: 0,
       ride: null,
       heading: 'right',
+      correction: new Vector3(),
       pendingCrash: null,
       crashed: false,
     };
@@ -154,51 +167,103 @@ export function createTrailView(options: ViewOptions, parts: LookParts): TrailVi
     return rider;
   };
   const tangent = new Vector3();
+  const before = new Vector3();
+  const after = new Vector3();
 
-  /** The rider leaves the cell it was crossing; a laid cell becomes trail. */
+  /** The rider is past the far edge of the cell it left: a laid cell becomes trail. */
+  function leaveBehind(seat: Seat, ride: Ride): void {
+    if (ride.leftBehind) return;
+    ride.leftBehind = true;
+    if (ride.laid) drawCell(seat, ride.leaving);
+  }
+
   function finishRide(seat: Seat, rider: RiderState): void {
-    const ride = rider.ride;
-    if (ride?.laid) drawCell(seat, ride.crossing);
+    if (rider.ride) leaveBehind(seat, rider.ride);
     rider.ride = null;
     parts.pieces.setTail(seat, null, 0);
   }
 
+  /** Folds the gap between where the rider was drawn and where it is now into the easing. */
+  function easeJump(rider: RiderState, from: Vector3, to: Vector3): void {
+    rider.correction.add(from).sub(to);
+    if (rider.correction.length() > TELEPORT) rider.correction.set(0, 0, 0);
+  }
+
   function startRide(seat: Seat, move: Move, laid: Laid | undefined, seconds: number): void {
     const rider = riderOf(seat);
+    const drawnAt = before.copy(rider.position).sub(rider.correction);
+    const hadRide = rider.ride !== null;
     finishRide(seat, rider);
-    const crossing: Crossing = laid
+    const leaving: Crossing = laid
       ? { cell: laid.cell, entered: laid.entered, left: laid.left }
       : { cell: move.from, entered: rider.heading, left: move.heading };
-    rider.ride = {
-      crossing,
+    const ride: Ride = {
+      leaving,
       laid: laid !== undefined,
+      entering: { cell: move.to, entered: move.heading, left: move.heading },
       seconds: Math.max(seconds, 1e-3),
       progress: 0,
       reach: 1,
+      crashing: false,
+      leftBehind: false,
     };
+    rider.ride = ride;
     rider.heading = move.heading;
+    if (hadRide && !move.wrapped) {
+      placeOnRide(ride, after);
+      easeJump(rider, drawnAt, after);
+    }
   }
 
-  /** Where a ride puts the rider at its progress, running on past the far edge into a crash. */
+  /** Where a ride puts the rider at its progress, running on past the edge into a crash. */
   function placeOnRide(ride: Ride, target: Vector3): void {
-    if (ride.progress <= 1) {
-      crossingPoint(ride.crossing, ride.progress, target);
-      crossingTangent(ride.crossing, Math.min(ride.progress, 0.999), tangent);
+    const { leaving, entering, progress } = ride;
+    if (progress <= 0.5) {
+      crossingPoint(leaving, 0.5 + progress, target);
+      crossingTangent(leaving, Math.min(0.5 + progress, 0.999), tangent);
       return;
     }
-    exitPoint(ride.crossing.cell, ride.crossing.left, target);
-    headingStep(ride.crossing.left, tangent).normalize();
-    target.addScaledVector(tangent, ride.progress - 1);
+    if (!ride.crashing) {
+      crossingPoint(entering, progress - 0.5, target);
+      crossingTangent(entering, progress - 0.5, tangent);
+      return;
+    }
+    exitPoint(leaving.cell, leaving.left, target);
+    headingStep(leaving.left, tangent).normalize();
+    target.addScaledVector(tangent, progress - 0.5);
+  }
+
+  /** The trail grows up to the rider: the rest of the cell left, then the start of the next. */
+  function growTail(seat: Seat, ride: Ride): void {
+    if (ride.progress < 0.5) {
+      parts.pieces.setTail(seat, ride.laid ? ride.leaving : null, 0.5 + ride.progress);
+      return;
+    }
+    leaveBehind(seat, ride);
+    const growing = ride.laid && !ride.crashing;
+    parts.pieces.setTail(seat, growing ? ride.entering : null, Math.min(0.5, ride.progress - 0.5));
+  }
+
+  /** The turn queued for the next step bends the rest of the glide toward it at once. */
+  function aimAt(rider: RiderState, heading: Heading): void {
+    const ride = rider.ride;
+    if (!ride || ride.crashing || ride.entering.left === heading) return;
+    placeOnRide(ride, before);
+    ride.entering = { ...ride.entering, left: heading };
+    placeOnRide(ride, after);
+    easeJump(rider, before, after);
   }
 
   function updateRider(seat: Seat, rider: RiderState, dt: number): void {
     const ride = rider.ride;
     if (ride && !frozen && !rider.crashed) {
       ride.progress = Math.min(ride.reach, ride.progress + dt / ride.seconds);
+      rider.correction.multiplyScalar(Math.exp(-dt / CORRECTION_SECONDS));
       placeOnRide(ride, rider.position);
+      rider.position.add(rider.correction);
       wrapOntoBoard(rider.position);
       if (tangent.lengthSq() > 1e-6) rider.yaw = Math.atan2(-tangent.z, tangent.x);
-      parts.pieces.setTail(seat, ride.laid ? ride.crossing : null, Math.min(1, ride.progress));
+      growTail(seat, ride);
     }
     if (!rider.crashed) rider.figure.ride(rider.position, rider.yaw, frozen ? 0 : dt, speedStage);
     if (rider.pendingCrash && (!ride || ride.progress >= ride.reach)) {
@@ -210,7 +275,7 @@ export function createTrailView(options: ViewOptions, parts: LookParts): TrailVi
   function playCrash(seat: Seat, rider: RiderState, crash: Crash): void {
     rider.pendingCrash = null;
     rider.crashed = true;
-    const direction = headingStep(rider.ride?.crossing.left ?? rider.heading).normalize();
+    const direction = headingStep(rider.ride?.leaving.left ?? rider.heading).normalize();
     finishRide(seat, rider);
     rider.figure.crash(crash, direction);
     parts.crash(crash, rider.position.clone(), direction);
@@ -236,11 +301,12 @@ export function createTrailView(options: ViewOptions, parts: LookParts): TrailVi
     },
     placeRider(seat, cell, heading) {
       const rider = riderOf(seat);
-      entryPoint(cell, heading, rider.position);
+      cellCentre(cell, 0, rider.position);
       headingStep(heading, tangent);
       rider.yaw = Math.atan2(-tangent.z, tangent.x);
       rider.heading = heading;
       rider.ride = null;
+      rider.correction.set(0, 0, 0);
       rider.figure.ride(rider.position, rider.yaw, 0, speedStage);
     },
     step(laid, erased, moves, seconds) {
@@ -260,8 +326,17 @@ export function createTrailView(options: ViewOptions, parts: LookParts): TrailVi
     },
     crash(crash) {
       const rider = riderOf(crash.seat);
-      if (rider.ride) rider.ride.reach = 1 + CRASH_OVERSHOOT;
+      const ride = rider.ride;
+      // Into whatever is past the edge of the cell it is leaving; a rider already beyond that edge
+      // has nowhere further to go, and breaks up where it is.
+      if (ride) {
+        ride.crashing = ride.progress <= 0.5;
+        ride.reach = ride.crashing ? 0.5 + CRASH_OVERSHOOT : ride.progress;
+      }
       rider.pendingCrash = crash;
+    },
+    steer(seat, heading) {
+      aimAt(riderOf(seat), heading);
     },
     trap(seat, pocket, seal) {
       parts.trap(seat, pocket, seal);

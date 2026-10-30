@@ -175,6 +175,9 @@ export function createFakeContext(options: FakeContextOptions): FakeContext {
       screenShake: () => true,
       crtEnabled: () => false,
       colorBlindHints: () => false,
+      // Tank Duel's Kids use neither kids/memory nor kids/reflex, so the Den's setting has
+      // nothing to drive here; the harness always reports Human.
+      kids: () => 'human',
       game: gameStore,
     },
     difficulty: {

@@ -6,9 +6,12 @@
  * off their back and runs down to the floor.
  *
  * Seat 1's Wick is tall and thin with an orange sash; seat 2's Bun is short
- * and round with a blue sash. Both shuffle stiff-legged; at top speed the
- * shuffle becomes a frantic waddle. A crash winds the mummy up in its own
- * bandage in a blink, and it topples over.
+ * and round with a blue sash. Their wrappings are dyed in their colours. Both
+ * shuffle stiff-legged; at top speed the shuffle becomes a frantic waddle.
+ *
+ * A crash winds the mummy up in its own bandage: the linen spirals up from
+ * its feet to its head, the arms fold in, and the finished cocoon wobbles and
+ * topples over.
  */
 import {
   CanvasTexture,
@@ -20,23 +23,36 @@ import {
   MeshBasicMaterial,
   MeshStandardMaterial,
   PlaneGeometry,
+  BufferGeometry,
+  Float32BufferAttribute,
   RepeatWrapping,
   SphereGeometry,
   SRGBColorSpace,
   TorusGeometry,
-  type BufferGeometry,
   type Material,
   type Texture,
 } from 'three';
 import type { Crash, Seat } from '../../engine/types.ts';
 import type { SeatColours } from '../../look/look.ts';
+import { createRiderHalo } from '../../look/rider-halo.ts';
 import type { RiderFigure } from '../../look/trail-rig.ts';
-import { clothTexture, FLOOR_TOP } from './bandage.ts';
+import { clothTexture, FLOOR_TOP, motifFor } from './bandage.ts';
 
-const WIND_SECONDS = 0.35;
-const TOPPLE_SECONDS = 0.4;
-/** Built to a cell and drawn larger, so a small mummy still reads on a full board. */
-const MUMMY_SCALE = 1.5;
+/** The winding from feet to head, slow enough to follow from the overhead camera. */
+const WIND_SECONDS = 0.9;
+const WOBBLE_SECONDS = 0.6;
+const TOPPLE_SECONDS = 0.45;
+/** The arms fold in during the first part of the winding, so the linen can pass them. */
+const FOLD_SECONDS = 0.2;
+/** Built to a cell and drawn larger, so each mummy reads from the overhead camera. */
+const MUMMY_SCALE = 3.4;
+/**
+ * The shuffling mummy's forward stoop, head ahead of its feet. From the overhead camera it shows the
+ * body and the reaching arms, where an upright figure would show only the top of its head.
+ */
+const STOOP = 0.28;
+/** Lowers the scaled figure so its feet stay on the floor rather than three floors up. */
+const STAND = -FLOOR_TOP * (MUMMY_SCALE - 1);
 
 interface Build {
   readonly height: number;
@@ -73,8 +89,13 @@ export function createMummy(options: {
   const wrapsTexture = wrappedTexture();
   textures.push(wrapsTexture);
   const under = own(new MeshStandardMaterial({ map: wrapsTexture, roughness: 0.95 }));
+  // The strips wound over the body are dyed, so a mummy's colour shows from above as well as its sash.
   const strip = own(
-    new MeshStandardMaterial({ color: '#f1e8d2', roughness: 0.9, side: DoubleSide }),
+    new MeshStandardMaterial({
+      color: new Color('#f1e8d2').lerp(new Color(options.colours.main), 0.7),
+      roughness: 0.9,
+      side: DoubleSide,
+    }),
   );
   const sash = own(new MeshStandardMaterial({ color: options.colours.main, roughness: 0.7 }));
   const gap = own(new MeshBasicMaterial({ color: '#1b130c' }));
@@ -84,7 +105,8 @@ export function createMummy(options: {
     }),
   );
   const pupil = own(new MeshBasicMaterial({ color: '#16110d' }));
-  const trainTexture = clothTexture(options.colours.main);
+  const motif = motifFor(seat);
+  const trainTexture = clothTexture(options.colours, motif);
   textures.push(trainTexture);
   const train = own(
     new MeshStandardMaterial({ map: trainTexture, roughness: 0.9, side: DoubleSide }),
@@ -94,7 +116,16 @@ export function createMummy(options: {
   root.name = `mummy-${seat}`;
   const figure = new Group();
   figure.scale.setScalar(MUMMY_SCALE);
+  figure.position.y = STAND;
   root.add(figure);
+  const halo = createRiderHalo({
+    colours: options.colours,
+    length: build.radius * 2.6 * MUMMY_SCALE,
+    width: build.radius * 2.6 * MUMMY_SCALE,
+    floor: FLOOR_TOP,
+    night: options.night,
+  });
+  root.add(halo.root);
   const shuffle = new Group();
   figure.add(shuffle);
   const add = (
@@ -235,20 +266,28 @@ export function createMummy(options: {
   shuffle.add(trailing);
 
   const cocoonHeight = build.height * 1.32 + build.headRadius * 2;
-  const cocoonGeometry = keep(
-    new CapsuleGeometry(build.radius * 1.4, cocoonHeight - build.radius * 2.8, 6, 18),
-  );
-  cocoonGeometry.translate(0, cocoonHeight / 2, 0);
-  const cocoonTexture = clothTexture(options.colours.main, 3);
+  const cocoonRadius = build.radius * 1.4;
+  const winding = windingGeometry(cocoonHeight, cocoonRadius);
+  keep(winding.geometry);
+  const cocoonTexture = clothTexture(options.colours, motif);
   textures.push(cocoonTexture);
-  const cocoon = new Mesh(
-    cocoonGeometry,
-    own(new MeshStandardMaterial({ map: cocoonTexture, roughness: 0.9 })),
+  const cocoonCloth = own(
+    new MeshStandardMaterial({ map: cocoonTexture, roughness: 0.9, side: DoubleSide }),
   );
+  const cocoon = new Mesh(winding.geometry, cocoonCloth);
   cocoon.position.y = FLOOR_TOP;
   cocoon.castShadow = true;
   cocoon.visible = false;
   figure.add(cocoon);
+  // The knot that closes the top once the last turn is wound.
+  const knot = add(
+    figure,
+    new SphereGeometry(cocoonRadius * 0.62, 16, 10),
+    cocoonCloth,
+    0,
+    FLOOR_TOP + cocoonHeight - cocoonRadius * 0.2,
+  );
+  knot.visible = false;
 
   let phase = 0;
   let wound: { age: number; side: number } | null = null;
@@ -262,6 +301,7 @@ export function createMummy(options: {
       phase += dt * (8 + speedStage * 4);
       const swing = 0.08 + speedStage * 0.035;
       shuffle.rotation.x = Math.sin(phase) * swing;
+      shuffle.rotation.z = -STOOP;
       shuffle.position.y = Math.abs(Math.sin(phase)) * 0.025;
       legs.forEach((leg, index) => {
         leg.rotation.z = Math.sin(phase + index * Math.PI) * 0.35;
@@ -274,34 +314,112 @@ export function createMummy(options: {
     crash(_crash: Crash, direction) {
       wound = { age: 0, side: direction.x - direction.z >= 0 ? 1 : -1 };
       cocoon.visible = true;
-      cocoon.scale.set(1, 0.01, 1);
+      shuffle.rotation.z = 0;
+      winding.geometry.setDrawRange(0, 0);
+      trailing.visible = false;
     },
     reset() {
       wound = null;
       cocoon.visible = false;
+      knot.visible = false;
       shuffle.visible = true;
+      trailing.visible = true;
+      looseEnd.visible = true;
+      for (const arm of arms) arm.rotation.z = 0;
       figure.rotation.set(0, 0, 0);
-      figure.position.set(0, 0, 0);
+      figure.position.set(0, STAND, 0);
     },
     update(dt) {
       if (!wound) return;
       wound.age += dt;
-      const winding = Math.min(1, wound.age / WIND_SECONDS);
-      cocoon.scale.set(1, Math.max(0.01, winding), 1);
-      cocoon.rotation.y = winding * 8;
-      if (winding >= 0.8) shuffle.visible = false;
-      const fallen = wound.age - WIND_SECONDS;
-      const topple = Math.min(1, Math.max(0, fallen / TOPPLE_SECONDS));
-      const landed = fallen - TOPPLE_SECONDS;
-      const settle = landed > 0 ? Math.sin(landed * 16) * Math.exp(-landed * 5) * 0.08 : 0;
-      figure.rotation.z = wound.side * (topple * topple * (Math.PI / 2 - 0.1) + settle);
-      figure.position.y = topple * build.radius * 1.3;
+      const { age, side } = wound;
+      const wrapped = Math.min(1, age / WIND_SECONDS);
+      winding.geometry.setDrawRange(0, winding.indicesUpTo(wrapped));
+      const fold = Math.min(1, age / FOLD_SECONDS);
+      for (const arm of arms) arm.rotation.z = -(Math.PI / 2 - 0.15) * fold;
+      if (wrapped > 0.85) looseEnd.visible = false;
+      if (wrapped >= 1) {
+        shuffle.visible = false;
+        knot.visible = true;
+      }
+      figure.rotation.z = side * tilt(age - WIND_SECONDS);
+      const topple = Math.min(
+        1,
+        Math.max(0, (age - WIND_SECONDS - WOBBLE_SECONDS) / TOPPLE_SECONDS),
+      );
+      figure.position.y = STAND + topple * cocoonRadius * MUMMY_SCALE;
     },
     dispose() {
       for (const geometry of geometries) geometry.dispose();
       for (const material of materials) material.dispose();
       for (const texture of textures) texture.dispose();
+      halo.dispose();
     },
+  };
+}
+
+/**
+ * How far the cocoon leans, `seconds` after the winding ends: a wobble that grows, as if the
+ * mummy were trying to keep its balance, then the fall, then a little bounce where it lands.
+ */
+function tilt(seconds: number): number {
+  if (seconds <= 0) return 0;
+  if (seconds < WOBBLE_SECONDS) {
+    const share = seconds / WOBBLE_SECONDS;
+    return Math.sin(share * Math.PI * 3) * 0.22 * share;
+  }
+  const falling = (seconds - WOBBLE_SECONDS) / TOPPLE_SECONDS;
+  if (falling < 1) return falling * falling * (Math.PI / 2 - 0.1);
+  const landed = (falling - 1) * TOPPLE_SECONDS;
+  return Math.PI / 2 - 0.1 + Math.sin(landed * 16) * Math.exp(-landed * 5) * 0.08;
+}
+
+/**
+ * The cocoon's bandage: one long band spiralling up round the mummy from its feet to its head, each
+ * turn lapping over the one below. Revealed a little at a time, it winds the mummy up.
+ */
+function windingGeometry(
+  height: number,
+  radius: number,
+): { geometry: BufferGeometry; indicesUpTo(share: number): number } {
+  const pitch = height / 9;
+  const band = pitch * 1.35;
+  const turns = (height - band / 2) / pitch;
+  const perTurn = 28;
+  const steps = Math.ceil(turns * perTurn);
+  const positions: number[] = [];
+  const uvs: number[] = [];
+  const indices: number[] = [];
+  let along = 0;
+  for (let step = 0; step <= steps; step++) {
+    const share = step / steps;
+    const angle = share * turns * Math.PI * 2;
+    const centre = band / 2 + share * (height - band);
+    // Narrower at the feet and the head, full at the middle, like a wrapped body.
+    const girth = radius * (0.72 + 0.28 * Math.sin(share * Math.PI));
+    // Each turn's lower edge stands a little proud of the turn below, the way wrapping laps.
+    const lower = girth * 1.02;
+    const upper = girth * 0.97;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    positions.push(cos * lower, centre - band / 2, sin * lower);
+    positions.push(cos * upper, centre + band / 2, sin * upper);
+    if (step > 0) along += (girth * Math.PI * 2) / perTurn;
+    const u = along / (band * 0.75);
+    uvs.push(u, 0, u, 1);
+    if (step < steps) {
+      const at = step * 2;
+      indices.push(at, at + 1, at + 2, at + 1, at + 3, at + 2);
+    }
+  }
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return {
+    geometry,
+    indicesUpTo: (share) => Math.floor(share * steps) * 6,
   };
 }
 

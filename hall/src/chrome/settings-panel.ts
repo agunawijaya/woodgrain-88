@@ -13,6 +13,7 @@ import {
   previewImport,
   rebind,
   SEATS,
+  SHARP_KIDS_NOTE,
   STANDARD_ACTIONS,
   validateBindings,
   type Bindings,
@@ -176,6 +177,12 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
         s.shareWithName,
         'Off: share lines carry no name at all',
       ) +
+      `<p class="settings-note">The Neighbourhood Kids</p>` +
+      `<div class="choices" role="radiogroup" aria-label="The Neighbourhood Kids">` +
+      radio('kids', 'human', 'Human', s.kids === 'human') +
+      radio('kids', 'sharp', 'Sharp (harder)', s.kids === 'sharp') +
+      `</div>` +
+      `<p class="settings-note">${escapeXml(SHARP_KIDS_NOTE)}</p>` +
       `<p class="settings-note">Versus Night series length</p>` +
       `<div class="choices" role="radiogroup" aria-label="Versus Night series length">` +
       radio('versusBestOf', '3', 'Best of 3', s.versusBestOf === 3) +
@@ -222,6 +229,7 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
         draft.reducedMotion = target.value as SettingsData['reducedMotion'];
       else if (name === 'versusBestOf') draft.versusBestOf = target.value === '5' ? 5 : 3;
       else if (name === 'runSound') draft.runSound = target.value as SettingsData['runSound'];
+      else if (name === 'kids') draft.kids = target.value === 'sharp' ? 'sharp' : 'human';
       else if (
         name === 'muted' ||
         name === 'screenShake' ||

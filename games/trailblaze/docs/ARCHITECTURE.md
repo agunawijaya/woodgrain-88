@@ -18,7 +18,7 @@ flowchart LR
     session[session/match-session + trap]
   end
   subgraph Picture
-    look[look/: trail-rig, sweep, swept-trail, crossing, remix-pieces, chase-camera]
+    look[look/: trail-rig, sweep, swept-trail, crossing, remix-pieces, chase-camera, crash-push, rider-halo, rider-portrait]
     looks[looks/: neon, trains, mummy, ice]
   end
   subgraph App
@@ -145,9 +145,13 @@ framing, light mood, finish and exposure, a background colour per appearance, an
 
 A view is built by `look/trail-rig.ts` from the look's parts (ADR-0013):
 
-- The rig animates each rider across its cell along a curve (`look/crossing.ts`) during the step
-  after the rules moved it.
-- It lays the crossed cell as trail when the next step comes, and plays crashes.
+- After each step the rig glides each rider from the middle of the cell it left to the middle of
+  the new one, along the curves in `look/crossing.ts`, so the picture is never more than one cell
+  behind the rules. The second half of that glide bends toward the turn the rules have queued
+  (`TrailView.steer`, fed every frame by the session from the engine's `upcomingHeading`); a
+  small jump when the queued turn changes is eased away over a few frames.
+- It draws the cell left behind as trail once the rider is past it, grows the trail up to the
+  rider, and plays crashes when the rider reaches what it hit.
 - It also handles the Remix walls and lanes and Ghost Trails.
 
 Where each visual lives:
@@ -156,10 +160,17 @@ Where each visual lives:
 | ------------ | -------------------------- | --------------------------------- | ----------- | -------------- | ------------------------------------ |
 | Neon Grid    | `looks/neon/arena.ts`      | `walls.ts` (swept ribbons)        | `bike.ts`   | `host.ts`      | `view.ts` (blast, shards, shockwave) |
 | Toy Trains   | `looks/trains/playroom.ts` | `track.ts` (bed, sleepers, rails) | `loco.ts`   | `conductor.ts` | `view.ts` (clonk star, headlamps)    |
-| Mummy's Wrap | `looks/mummy/tomb.ts`      | `bandage.ts` (linen strip)        | `mummy.ts`  | `priest.ts`    | `view.ts` (bow, lightning)           |
+| Mummy's Wrap | `looks/mummy/tomb.ts`      | `bandage.ts` (linen strip)        | `mummy.ts`  | `priest.ts`    | `view.ts` (bow, cocoon, staff glow)  |
 | Ice Trail    | `looks/ice/lake.ts`        | `ice-wall.ts` (ridge and core)    | `skater.ts` | `snowman.ts`   | `view.ts` (frost, crystals)          |
 
 To change a look's colours, edit its view and trail files. Seat colours are in `look/seats.ts`.
+Each look also names its two riders and how a card says it (`riders`, `ridesAs` in its `look.ts`).
+
+The riders are drawn up close where the whole-board camera is too far: on the pre-match cards and
+in the "Riders" card on the game menu. `look/rider-portrait.ts` builds the look's own figures in a
+small scene of their own, rides them slowly on the spot in a three-quarter view, frames each by
+its standing shape (not its floor shadow or ring), and copies every portrait from one renderer
+into its card's canvas. With reduced motion each is drawn once, standing still.
 To add a look, add a folder with a `LookDefinition` and register it in `look/looks.ts`.
 
 A view can be swapped mid-match (`MatchSession.setView`), which is how look and appearance changes

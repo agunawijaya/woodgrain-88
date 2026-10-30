@@ -130,6 +130,12 @@ engine runs on the same ticks.
 Our addition: a press made while the button is still asleep is kept until it wakes, as long as it
 is held and the explorer has not moved. In 1978 such a press was simply lost.
 
+**The picture never trails the rules (prompt 03a).** A step used to be drawn over the whole 16-tick
+step, while the rules let the explorer check its new square after 7. A player who pressed as soon
+as the button woke saw the explorer still sliding in. A step is now drawn within the 7-tick settle
+time, so the explorer stands on its square the moment a check is allowed, and a held direction
+reads as brisk steps with a short stand between them, as the 1978 explorer moved square by square.
+
 ## The Kids' memory
 
 The kit's `kids/memory` model is described in ADR-0011 and the game author's guide. These are the
@@ -160,6 +166,12 @@ values Hot & Cold uses, unchanged from the brief.
 - **In Notebook** the clues stay on the field, so memory does not limit what a Kid can see. It reads
   only as many clues per decision as its capacity: its own first, or the rival's first for Rosa and
   Benny.
+- **The Den's Kid setting (prompt 03a).** Human is the default and everything above. Sharp gives
+  every Kid the kit's perfect memory, no wrong steps (`fumble` 0), and half the time to think and to
+  stand between steps (`huntStyle` in `ai/styles.ts`, the kit's reflex rule applied to this game's
+  styles). The rest of each Kid's character stays. The setting is read when a match starts. The
+  game's records keep Sharp boards apart, and the Hall marks Sharp runs and share lines "Sharp
+  Kids". The balance numbers below are all Human.
 
 ## The Kids at play
 
@@ -278,7 +290,16 @@ Four AI bugs found by the simulations were fixed along the way:
   ticks and the flag's fanfare. The snowfield crunches and chimes, the tabletop clicks like wood,
   the radar pings.
 - **A Polar bomb** throws up a pale snow plume that clears in about a second. The arena's tank soot
-  hid the field for several seconds.
+  hid the field for several seconds. By day the plume is smaller and shadowed blue-grey (prompt
+  03a): at full size the white burst on white snow whited out the explorer it had just thrown.
+- **A Radar bomb** is a round patch of static that thins towards its rim and lies under the blip and
+  the bomb mark. The first square patch spilled over the plot's edge and hid the blip it hit.
+- **Channel groups (prompt 03a):** Race (1), Turns (2 to 7, hunt for hunt included, since its seats
+  take turns), Solo (8 to 10, the clock) and Remix, as the Hall's channel picker lists them.
+- **The pause menu's Look and Clues items (prompt 03a).** Look applies at once, on the running
+  match: the session moves its view to the new look and redraws what has been revealed. Clues
+  applies from the next match, and the item says so, because records are kept per clue mode and a
+  match must not change mode halfway.
 
 ## Open questions
 

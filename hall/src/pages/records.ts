@@ -9,6 +9,7 @@ import {
   blockLadder,
   KIDS,
   RUN_ROUNDS,
+  SHARP_KIDS_MARK,
   type GameManifest,
   type RunMode,
   type RunRecord,
@@ -101,7 +102,7 @@ export function createRecordsPage(options: {
             ? `<details class="records-boards"><summary>${perBoard.length} channels and modes</summary><ul>${perBoard
                 .map(
                   (board) =>
-                    `<li>${escapeXml(channelTitle(board.channel))} · ${MODE_NAMES[board.mode]}: <strong>${board.best.score.toLocaleString('en-GB')}</strong> (${day(board.best.at)})</li>`,
+                    `<li>${escapeXml(channelTitle(board.channel))} · ${MODE_NAMES[board.mode]}: <strong>${board.best.score.toLocaleString('en-GB')}</strong> <span class="records-board-date">(${day(board.best.at)})${board.best.kids === 'sharp' ? ` · ${SHARP_KIDS_MARK}` : ''}</span></li>`,
                 )
                 .join('')}</ul></details>`
             : '';

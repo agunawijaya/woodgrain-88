@@ -5,7 +5,7 @@
  * and tracks match statistics for results and sharing.
  */
 import { isBorderCell, startOf } from '../engine/grid.ts';
-import { createMatch, startMatch, stepMatch } from '../engine/match.ts';
+import { createMatch, startMatch, stepMatch, upcomingHeading } from '../engine/match.ts';
 import {
   BORDER,
   CELL_COUNT,
@@ -94,6 +94,13 @@ export function createMatchSession(options: MatchSessionOptions): MatchSession {
   let maxFinishedRoundTicks = 0;
   let accumulator = 0;
   let disposed = false;
+
+  /** Each rider's queued turn, so the picture bends toward it before the step that takes it. */
+  function aimRiders(): void {
+    for (const seat of ridingSeats) {
+      if (match.riders[seat]?.crashed === false) view?.steer(seat, upcomingHeading(match, seat));
+    }
+  }
 
   function dispatchEvents(events: readonly MatchEvent[]): void {
     for (const event of events) {
@@ -262,6 +269,7 @@ export function createMatchSession(options: MatchSessionOptions): MatchSession {
             break;
           }
         }
+        aimRiders();
       }
 
       view?.update(seconds);

@@ -5,6 +5,7 @@
  */
 import { emojiSummary } from '@woodgrain-88/kit';
 import { describe, expect, it } from 'vitest';
+import type { Seat } from '../../src/engine/types.ts';
 import type { PointTaker } from '../../src/session/match-session.ts';
 import { pointSymbols, shareLine } from '../../src/progress/share.ts';
 
@@ -89,5 +90,36 @@ describe('share', () => {
     const points: PointTaker[] = [1, 1, 0, 'both', 1];
     const line = shareLine(points, 1);
     expect(line).toBe('Trailblaze · 🟦🟦🟥⬜🟦 · 4–2');
+  });
+
+  describe("the score reads from the sharer's side", () => {
+    /** A match's points in order: `first` taken by one seat, then `then` by the other. */
+    const run = (first: Seat, firstCount: number, then: Seat, thenCount: number): PointTaker[] => [
+      ...Array.from({ length: firstCount }, () => first),
+      ...Array.from({ length: thenCount }, () => then),
+    ];
+
+    it('a sharer on seat 1 who wins 10–6 reads 10–6', () => {
+      expect(shareLine(run(0, 10, 1, 6), 0)).toMatch(/· 10–6$/);
+    });
+
+    it('a sharer on seat 1 who loses 6–10 still puts their own 6 first', () => {
+      expect(shareLine(run(0, 6, 1, 10), 0)).toMatch(/· 6–10$/);
+    });
+
+    it('a sharer on seat 2 who wins 10–4 reads 10–4, their points in blue', () => {
+      const line = shareLine(run(0, 4, 1, 10), 1);
+      expect(line).toMatch(/· 10–4$/);
+      expect(line).toContain('🟥🟦🟦');
+    });
+  });
+
+  it('counts a mutual crash point for both riders and shows ⬜', () => {
+    const points: PointTaker[] = ['both'];
+    const symbols = pointSymbols(points, 0);
+    expect(symbols).toBe('⬜');
+
+    const line = shareLine(points, 0);
+    expect(line).toBe('Trailblaze · ⬜ · 1–1');
   });
 });

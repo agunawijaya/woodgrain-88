@@ -37,14 +37,7 @@ import {
   type Seat,
   type SeatInput,
 } from '../engine/match.ts';
-import {
-  SLOW_STEP_TICKS,
-  slowsStepsOnA,
-  STEP_TICKS,
-  TICK_SECONDS,
-  type DifficultySwitch,
-  type Rules,
-} from '../engine/rules.ts';
+import { SETTLE_TICKS, TICK_SECONDS, type DifficultySwitch, type Rules } from '../engine/rules.ts';
 import { trackStories, type StoryTracker } from '../engine/solver.ts';
 import { squareCentre } from '../look/field-space.ts';
 import type { HeatPalette } from '../look/heat.ts';
@@ -115,15 +108,28 @@ export interface MatchSession {
   /** Ends live play and leaves the last picture standing, HUD gone (the results screen). */
   stand(): void;
   setAppearance(appearance: Appearance): void;
+  /**
+   * Live look change, mid-match: the field keeps playing on a fresh stage. The caller owns the
+   * old stage and disposes it once this returns.
+   */
+  setLook(next: { stage: Stage; look: LookDefinition }): void;
   readonly match: Match;
   dispose(): void;
 }
 
 /** The end of a match stays on screen this long (the missed flag shown) before the results. */
 const END_HOLD_SECONDS = 1.6;
+/**
+ * A step is drawn within the button's settle time, so the explorer always stands on its square by
+ * the moment the rules let it check there: the picture never trails the rules. A held direction
+ * walks in brisk steps with a short stand between them, as the 1978 explorer moved square by square.
+ */
+const WALK_SECONDS = SETTLE_TICKS * TICK_SECONDS;
 
 export function createMatchSession(options: MatchSessionOptions): MatchSession {
-  const { stage, look, rules, drivers } = options;
+  const { rules, drivers } = options;
+  let stage = options.stage;
+  let look = options.look;
   const alone = drivers[1].kind === 'empty';
   const match = createMatch({
     rules,
@@ -199,15 +205,6 @@ export function createMatchSession(options: MatchSessionOptions): MatchSession {
   }
 
   const name = (seat: Seat) => options.seats[seat].name;
-
-  /**
-   * A step's walk lasts until the next step may start, so a held direction walks on without a
-   * pause, at the seat's own pace (slower on switch A in the race).
-   */
-  function walkSeconds(seat: Seat): number {
-    const slow = slowsStepsOnA(rules) && options.switches[seat] === 'A';
-    return (slow ? SLOW_STEP_TICKS : STEP_TICKS) * TICK_SECONDS;
-  }
 
   // ——— Seats ———
 
@@ -318,7 +315,7 @@ export function createMatchSession(options: MatchSessionOptions): MatchSession {
           if (rules.style === 'hunts' && !alone) hud?.say(`${name(match.hunter)} hunts.`);
           break;
         case 'step':
-          view.walk(event.seat, event.from, event.to, walkSeconds(event.seat));
+          view.walk(event.seat, event.from, event.to, WALK_SECONDS);
           break;
         case 'blocked':
           view.nudge(event.seat, event.toward);
@@ -473,6 +470,15 @@ export function createMatchSession(options: MatchSessionOptions): MatchSession {
       view = buildView();
       redraw();
       hud?.setAppearance(next);
+    },
+    setLook(next) {
+      view.root.removeFromParent();
+      view.dispose();
+      stage = next.stage;
+      look = next.look;
+      view = buildView();
+      redraw();
+      sound?.setLook(look.id);
     },
     dispose() {
       loop.stop();

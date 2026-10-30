@@ -44,6 +44,8 @@ export interface NeonArena {
 export function createNeonArena(options: {
   readonly night: boolean;
   readonly seats: readonly SeatColours[];
+  /** Riders in this match; a start mark is etched only for a seat someone rides from. */
+  readonly players: number;
 }): NeonArena {
   const { night } = options;
   const root = new Group();
@@ -60,7 +62,7 @@ export function createNeonArena(options: {
     return material;
   };
 
-  const grid = gridTexture(night, options.seats);
+  const grid = gridTexture(night, options.seats.slice(0, options.players));
   textures.push(grid);
   const floor = new Mesh(
     keep(new PlaneGeometry(COLUMNS, ROWS)),
@@ -273,7 +275,7 @@ function createGates(
 }
 
 /**
- * The etched grid, with the two start cells marked by a chevron in their seat's colour. By night
+ * The etched grid, with each ridden start cell marked by a chevron in its seat's colour. By night
  * the lines are what glows; by day they are a pale engraving in white acrylic.
  */
 function gridTexture(night: boolean, seats: readonly SeatColours[]): CanvasTexture {
@@ -310,14 +312,15 @@ function gridTexture(night: boolean, seats: readonly SeatColours[]): CanvasTextu
   }
   context.stroke();
   START.forEach((start, seat) => {
+    const colours = seats[seat];
+    if (!colours) return;
     const centre = cellCentre(start.cell);
     const x = (centre.x + HALF_WIDTH) * TEXELS_PER_CELL;
     const y = (centre.z + HALF_DEPTH) * TEXELS_PER_CELL;
-    const colour = seats[seat]?.main ?? '#ffffff';
     context.save();
     context.translate(x, y);
     context.rotate(-headingYaw(start.heading));
-    context.strokeStyle = colour;
+    context.strokeStyle = colours.main;
     context.globalAlpha = night ? 0.9 : 0.75;
     context.lineWidth = 5;
     for (const offset of [-14, 0]) {

@@ -28,7 +28,7 @@ import type { TrailView, ViewOptions } from '../../look/look.ts';
 import { createTrailView, type LookParts } from '../../look/trail-rig.ts';
 import { actionPoint } from '../../look/watcher.ts';
 import { createNeonArena } from './arena.ts';
-import { createBike } from './bike.ts';
+import { BIKE_TAIL_BEHIND, createBike } from './bike.ts';
 import { createHost } from './host.ts';
 import { createNeonWalls, WALL_HEIGHT } from './walls.ts';
 
@@ -62,7 +62,7 @@ export function createNeonView(options: ViewOptions): TrailView {
   const rng = options.rng.fork('neon');
   const root = new Group();
   root.name = 'neon';
-  const arena = createNeonArena({ night, seats: options.seats });
+  const arena = createNeonArena({ night, seats: options.seats, players: options.players });
   root.add(arena.root);
   const walls = createNeonWalls({ seats: options.seats, night });
   for (const mesh of walls.meshes) root.add(mesh);
@@ -126,13 +126,13 @@ export function createNeonView(options: ViewOptions): TrailView {
   const blastGeometry = new SphereGeometry(1, 24, 16);
   const blasts: { mesh: Mesh; material: MeshBasicMaterial; age: number }[] = [];
 
-  /** The bike goes up in a ball of light that swells and burns out in a moment. */
+  /**
+   * A short pop of light in the bike's colour where it broke up. Kept small and coloured: the
+   * shards are the moment, and a white ball would bloom over the walls round the crash.
+   */
   function blowUp(at: Vector3, colour: Color): void {
     const material = new MeshBasicMaterial({
-      color: colour
-        .clone()
-        .lerp(new Color('#ffffff'), 0.5)
-        .multiplyScalar(night ? 3 : 1.4),
+      color: colour.clone().multiplyScalar(night ? 1 : 0.8),
       transparent: true,
       depthWrite: false,
       blending: AdditiveBlending,
@@ -147,7 +147,7 @@ export function createNeonView(options: ViewOptions): TrailView {
     for (const blast of [...blasts]) {
       blast.age += dt;
       const t = blast.age / 0.45;
-      blast.mesh.scale.setScalar(0.2 + Math.sqrt(Math.min(1, t)) * 1.6);
+      blast.mesh.scale.setScalar(0.15 + Math.sqrt(Math.min(1, t)) * 0.5);
       blast.material.opacity = Math.max(0, 1 - t);
       if (t >= 1) {
         blast.mesh.removeFromParent();
@@ -269,22 +269,24 @@ export function createNeonView(options: ViewOptions): TrailView {
     }
   }
 
+  /** Light streams off the tail, where the wall comes out, kept dim enough not to swallow the bike. */
   function streaks(): void {
     if (speedStage < 2 || options.reducedEffects) return;
     riders.forEach((rider, seat) => {
       if (!rider.root.visible || seat >= options.players) return;
       const at = rider.root.position;
+      const yaw = rider.root.rotation.y;
       glow.emit({
-        x: at.x,
-        y: 0.3,
-        z: at.z,
+        x: at.x - Math.cos(yaw) * BIKE_TAIL_BEHIND,
+        y: 0.5,
+        z: at.z + Math.sin(yaw) * BIKE_TAIL_BEHIND,
         life: 0.25,
-        size: 0.18,
-        sizeEnd: 0.05,
+        size: 0.14,
+        sizeEnd: 0.04,
         colour: colourOf(seat as Seat)
           .clone()
-          .multiplyScalar(night ? 2 : 1.2),
-        alpha: 0.6,
+          .multiplyScalar(night ? 1.2 : 1),
+        alpha: 0.5,
         alphaEnd: 0,
         fadeIn: 0,
       });
@@ -314,12 +316,13 @@ export function createNeonView(options: ViewOptions): TrailView {
       const colour = colourOf(crash.seat);
       if (!options.reducedEffects) {
         spawnShards(at, direction, colour);
-        burst(at, colour, 140, 6);
-        burst(at, new Color('#ffffff'), 40, 3);
+        burst(at, colour, 110, 6);
+        burst(at, new Color('#ffffff'), 12, 3);
         blowUp(at, colour);
       }
-      options.stage.lights.flash(at.clone().setY(0.8), colour, night ? 70 : 24, 0.7);
+      options.stage.lights.flash(at.clone().setY(0.8), colour, night ? 14 : 8, 0.5);
       host.react(crash, at);
+      walls.uncover(crash.seat);
       flickers.push({ seat: crash.seat, age: 0 });
     },
     trap(seat, cells, seal) {

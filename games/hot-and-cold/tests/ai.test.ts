@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createKidPlayer, type KidPlayer } from '../src/ai/kid.ts';
 import { nextMove, stepsBetween } from '../src/ai/path.ts';
-import { HUNT_STYLES } from '../src/ai/styles.ts';
+import { HUNT_STYLES, huntStyle } from '../src/ai/styles.ts';
 import { squareAt, stepFrom } from '../src/engine/grid.ts';
 import { createMatch, startMatch, stepMatch } from '../src/engine/match.ts';
 import { cartridgeRules, shortened, type Rules } from '../src/engine/rules.ts';
@@ -122,6 +122,21 @@ describe('the Kids at the table', () => {
     expect(HUNT_STYLES.lou.stepPause).toBe(Math.max(...pauses));
     const thinking = Object.values(HUNT_STYLES).map((style) => style.think);
     expect(HUNT_STYLES.dee.think).toBe(Math.min(...thinking));
+  });
+
+  it('makes Sharp Kids sure-footed and twice as quick, and otherwise themselves', () => {
+    const human = HUNT_STYLES.pip;
+    const sharp = huntStyle('pip', 'sharp');
+    expect(huntStyle('pip', 'human')).toBe(human);
+    expect(sharp.fumble).toBe(0);
+    expect(sharp.think).toBeCloseTo(human.think / 2);
+    expect(sharp.stepPause).toBeCloseTo(human.stepPause / 2);
+    expect({ ...sharp, think: 0, stepPause: 0, fumble: 0 }).toEqual({
+      ...human,
+      think: 0,
+      stepPause: 0,
+      fumble: 0,
+    });
   });
 
   it('waits for its turn in turns, and checks once a turn', () => {

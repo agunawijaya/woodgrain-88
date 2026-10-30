@@ -5,9 +5,15 @@
   "description": "Hot & Cold: hunt a hidden flag through distances, arrows and the odd bomb, for Woodgrain '88.",
   "license": "MIT",
   "type": "module",
+  "exports": {
+    "./manifest": "./src/manifest.ts",
+    "./module": "./src/module.ts"
+  },
   "scripts": {
     "dev": "vite",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "e2e": "playwright test -c playwright.config.ts --project=flows",
+    "shots": "cross-env SHOTS=1 playwright test -c playwright.config.ts --project=shots"
   },
   "dependencies": {
     "@woodgrain-88/arena": "workspace:*",

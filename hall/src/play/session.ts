@@ -27,6 +27,7 @@ import {
   copyText,
   dailyShareLine,
   downloadText,
+  withKidsMark,
   type GameContext,
   type GameEntry,
   type GameInstance,
@@ -346,14 +347,17 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
   /** The daily share line, with the player's name only when they asked for it. */
   const shareLineFor = (result: GameResult) => {
     const name = services.repos.profile.get().displayName.trim();
-    return dailyShareLine({
-      title: manifest.title,
-      date: new Date(),
-      channelNumber: channelNumber(manifest.channels, run.channel),
-      score: result.scoreLabel,
-      ...(result.emoji === undefined ? {} : { emoji: result.emoji }),
-      ...(services.settings.get().shareWithName && name !== '' ? { name } : {}),
-    });
+    return withKidsMark(
+      dailyShareLine({
+        title: manifest.title,
+        date: new Date(),
+        channelNumber: channelNumber(manifest.channels, run.channel),
+        score: result.scoreLabel,
+        ...(result.emoji === undefined ? {} : { emoji: result.emoji }),
+        ...(services.settings.get().shareWithName && name !== '' ? { name } : {}),
+      }),
+      result.kids,
+    );
   };
 
   // Each patch earned is stitched in on the results screen: the needle passes, the thread fills.
@@ -490,6 +494,7 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
       screenShake: () => settings.get().screenShake && !settings.reducedMotion(),
       crtEnabled: () => settings.crtEnabled(),
       colorBlindHints: () => settings.get().colorBlindHints,
+      kids: () => settings.kids(),
       game: settings.game(manifest.id),
     },
     difficulty: {
@@ -547,6 +552,7 @@ export async function startPlaySession(options: PlaySessionOptions): Promise<Pla
               durationMs,
               channel: run.channel,
               mode: run.mode,
+              ...(result.kids === 'sharp' ? { kids: 'sharp' as const } : {}),
             },
             manifest.scoreOrder,
           )

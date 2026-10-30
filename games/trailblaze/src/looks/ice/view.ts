@@ -32,7 +32,7 @@ import { coloursOf, rivalColours, type TrailView, type ViewOptions } from '../..
 import { createTrailView, type LookParts } from '../../look/trail-rig.ts';
 import { createIceWalls, ICE_TOP } from './ice-wall.ts';
 import { createLake } from './lake.ts';
-import { createSkater, type Skater } from './skater.ts';
+import { createSkater, FROST_SECONDS, type Skater } from './skater.ts';
 import { createSnowman } from './snowman.ts';
 import { actionPoint } from '../../look/watcher.ts';
 
@@ -105,6 +105,20 @@ export function createIceView(options: ViewOptions): TrailView {
         stretch: 0.03,
         fadeIn: 0,
       });
+    }
+  }
+
+  /** Crashes waiting for the frost to reach the skater's hat, when the ice cracks. */
+  const cracks: { at: Vector3; tint: string; in: number }[] = [];
+
+  function updateCracks(dt: number): void {
+    for (const crack of [...cracks]) {
+      crack.in -= dt;
+      if (crack.in > 0) continue;
+      cracks.splice(cracks.indexOf(crack), 1);
+      if (!options.reducedEffects) glint(crack.at.clone().setY(0.4), 40, 2.4, frostColour);
+      grow(crack.at, 'ring', new Color(crack.tint));
+      options.stage.lights.flash(crack.at.clone().setY(0.8), '#cfeaff', night ? 12 : 7, 0.45);
     }
   }
 
@@ -236,15 +250,17 @@ export function createIceView(options: ViewOptions): TrailView {
       pocket.hide();
       for (const growth of growths) growth.root.removeFromParent();
       growths.length = 0;
+      cracks.length = 0;
       glints.clear();
       breath.clear();
     },
     crash(crash, at) {
       snowman.react(crash, at);
-      const tint = new Color(coloursOf(options.seats, crash.seat).main);
-      if (!options.reducedEffects) glint(at.clone().setY(0.4), 40, 2.4, frostColour);
-      grow(at, 'ring', tint);
-      options.stage.lights.flash(at.clone().setY(0.8), '#cfeaff', night ? 12 : 7, 0.45);
+      cracks.push({
+        at: at.clone(),
+        tint: coloursOf(options.seats, crash.seat).main,
+        in: FROST_SECONDS,
+      });
     },
     trap(seat, cells, seal) {
       pocket.show(cells, '#f4fbff');
@@ -264,6 +280,7 @@ export function createIceView(options: ViewOptions): TrailView {
       );
       snowman.update(dt, clock);
       updateGrowths(dt);
+      updateCracks(dt);
       if (dt > 0) streamFrost(dt);
       pocket.update(dt);
       glints.update(dt, options.stage.camera);

@@ -50,11 +50,11 @@ export const manifest: GameManifest = {
   supports: { daily: true, challengeLinks: true, microChallenges: true },
   difficulty: {
     left: {
-      a: 'Slower steps in the race; in hunt for hunt every check counts twice',
+      a: 'Slower race steps; checks count twice in hunt for hunt',
       b: 'Full pace, checks count once',
     },
     right: {
-      a: 'Slower steps in the race; in hunt for hunt every check counts twice',
+      a: 'Slower race steps; checks count twice in hunt for hunt',
       b: 'Full pace, checks count once',
     },
     liveChange: false,

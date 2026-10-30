@@ -276,7 +276,10 @@ export function createRadarView(options: ViewOptions): FieldView {
     return group;
   }
 
-  /** A burst of static over a square: a flickering patch of noise that dies away. */
+  /**
+   * A burst of static over a square: a round patch of noise, thinning towards its rim, that dies
+   * away. It lies under the blip and the bomb mark, so the explorer caught in it stays in sight.
+   */
   function staticBurst(square: Square): void {
     const canvas = document.createElement('canvas');
     canvas.width = 64;
@@ -285,8 +288,11 @@ export function createRadarView(options: ViewOptions): FieldView {
     if (context) {
       for (let y = 0; y < 64; y += 2) {
         for (let x = 0; x < 64; x += 2) {
+          const rim = Math.hypot(x - 31, y - 31) / 32;
+          if (rim >= 1) continue;
           const value = Math.round(rng.next() * 255);
-          context.fillStyle = `rgb(${value}, ${value}, ${value})`;
+          const alpha = (1 - rim * rim).toFixed(2);
+          context.fillStyle = `rgba(${value}, ${value}, ${value}, ${alpha})`;
           context.fillRect(x, y, 2, 2);
         }
       }
@@ -297,10 +303,10 @@ export function createRadarView(options: ViewOptions): FieldView {
     material.map = texture;
     material.opacity = 0.9;
     const patch = new Mesh(
-      keep(new PlaneGeometry(SQUARE_SIZE * 1.6, SQUARE_SIZE * 1.6).rotateX(-Math.PI / 2)),
+      keep(new PlaneGeometry(SQUARE_SIZE * 1.5, SQUARE_SIZE * 1.5).rotateX(-Math.PI / 2)),
       material,
     );
-    patch.position.copy(squareCentre(square, LAYER + 0.03));
+    patch.position.copy(squareCentre(square, LAYER - 0.006));
     root.add(patch);
     pulses.push({ mesh: patch, material, from: 1, to: 1, seconds: 0.01, hold: 0.45, age: 0 });
   }

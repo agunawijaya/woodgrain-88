@@ -146,9 +146,11 @@ The Kids do not have perfect recall. A game whose Kids must remember things (clu
 the board) keeps those things in a `KidMemory` from `kids/memory` (ADR-0011), and its AI reasons
 only over what the memory gives back.
 
-1. **Choose a profile.** Use `memoryProfile(kid, mode)`. The mode is the player's Kid memory
-   setting: `'human'` (each Kid's own memory, from `KID_MEMORY`) or `'sharp'` (perfect recall,
-   offered as the harder option).
+1. **Choose a profile.** Use `memoryProfile(kid, mode)`. The mode is the Den's Kid setting,
+   `context.settings.kids()`, read when a match starts: `'human'` (each Kid's own memory, from
+   `KID_MEMORY`) or `'sharp'` (perfect recall, offered as the harder option). A match a Kid played
+   under Sharp reports `kids: 'sharp'` on its `GameResult`, and its share line goes through
+   `withKidsMark`, so the Hall can mark the record and the line "Sharp Kids".
 2. **Describe your facts** with a `FactAdapter`:
    - `key(fact)`: facts with the same key are the same fact, so seeing it again refreshes it.
    - `distort(fact, rng)`: a slightly wrong version, close to the truth. A distance off by one, an

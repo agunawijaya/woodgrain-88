@@ -14,9 +14,11 @@ describe('pre-match screen', () => {
     const onReady = vi.fn();
     const onBack = vi.fn();
 
+    const closeUps = [document.createElement('canvas'), document.createElement('canvas')];
     const screen = createPrematchScreen({
       host,
       look: 'neon',
+      portraits: closeUps,
       seats: [
         {
           name: 'You',
@@ -25,6 +27,7 @@ describe('pre-match screen', () => {
           colours: { main: '#ff8a2a', deep: '#b4501b' },
           switchPosition: 'B',
           keys: 'WASD · Space',
+          rides: 'Rides Lancer',
         },
         {
           name: 'Rosa',
@@ -34,6 +37,7 @@ describe('pre-match screen', () => {
           colours: { main: '#38a8ff', deep: '#1d68ad' },
           switchPosition: 'B',
           keys: 'Arrows · Enter',
+          rides: 'Rides Comet',
         },
       ],
       onReady,
@@ -52,6 +56,12 @@ describe('pre-match screen', () => {
     expect(cards[1]?.textContent).toContain('Rosa');
     expect(cards[1]?.textContent).toContain('Switch B');
     expect(cards[1]?.textContent).toContain('Arrows · Enter');
+
+    // Each card shows its seat's rider up close, and says who that is
+    expect(cards[0]?.querySelector('.tb-seat-ride canvas')).toBe(closeUps[0]);
+    expect(cards[1]?.querySelector('.tb-seat-ride canvas')).toBe(closeUps[1]);
+    expect(cards[0]?.textContent).toContain('Rides Lancer');
+    expect(cards[1]?.textContent).toContain('Rides Comet');
 
     // Prompt before countdown
     expect(host.querySelector('.tb-prompt-text')?.textContent).toBe('Press Enter or Space to ride');
@@ -73,6 +83,8 @@ describe('pre-match screen', () => {
 
     screen.setCount(1);
     expect(host.querySelector('.tb-countdown')?.textContent).toBe('1');
+    // The count must not rebuild the cards: the riders keep riding through it
+    expect(cards[0]?.querySelector('.tb-seat-ride canvas')).toBe(closeUps[0]);
 
     screen.dispose();
     host.remove();

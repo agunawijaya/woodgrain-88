@@ -22,6 +22,7 @@ import {
   type InputController,
   type KidId,
   type LoopOptions,
+  type MemoryMode,
   type PauseItem,
   type ResultReceipt,
   type Rng,
@@ -49,8 +50,12 @@ export interface FakeContextOptions {
   readonly appearance: 'light' | 'dark';
   readonly reducedMotion: boolean;
   readonly switches: DifficultySwitches;
+  readonly kids: MemoryMode;
   /** Simulation steps per loop step, for tests that need a whole match quickly. Default 1. */
   readonly speed?: number;
+  /** Seeds the game's own settings store (`hc.look`, say), as if the player had chosen them
+   *  before: a URL option for a test or a screenshot, never the game's own default. */
+  readonly initialGameSettings?: Readonly<Record<string, unknown>>;
   /** Called when the game asks for the pause menu, settings, How to play or the Hall. */
   readonly chrome: {
     openPause(): void;
@@ -91,7 +96,7 @@ export function createFakeContext(options: FakeContextOptions): FakeContext {
       : { seat: 2, kind: 'human', name: 'Player 2' },
   ];
 
-  const gameSettings = new Map<string, unknown>();
+  const gameSettings = new Map<string, unknown>(Object.entries(options.initialGameSettings ?? {}));
   const gameStore: GameSettingsStore = {
     get<T>(key: string, fallback: T): T {
       const stored = gameSettings.get(key);
@@ -175,6 +180,7 @@ export function createFakeContext(options: FakeContextOptions): FakeContext {
       screenShake: () => true,
       crtEnabled: () => false,
       colorBlindHints: () => false,
+      kids: () => options.kids,
       game: gameStore,
     },
     difficulty: {

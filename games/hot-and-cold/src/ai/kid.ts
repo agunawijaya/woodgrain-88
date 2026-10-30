@@ -40,7 +40,7 @@ import { believe, type Fact } from '../engine/solver.ts';
 import { FACT_ADAPTER, isStriking } from './facts.ts';
 import { nextMove } from './path.ts';
 import { chooseTarget } from './plan.ts';
-import { HUNT_STYLES, type HuntStyle } from './styles.ts';
+import { huntStyle, type HuntStyle } from './styles.ts';
 
 /** Notebook keeps every clue on the field; Classic Memory shows one only while reveal is held. */
 export type ClueMode = 'notebook' | 'classic';
@@ -79,7 +79,7 @@ const STUCK_SECONDS = 3;
 
 export function createKidPlayer(options: KidPlayerOptions): KidPlayer {
   const { kid, seat, clues } = options;
-  const style = options.style ?? HUNT_STYLES[kid];
+  const style = options.style ?? huntStyle(kid, options.memory);
   const profile = memoryProfile(kid, options.memory);
   const memory = createKidMemory(profile, FACT_ADAPTER);
   const rng: Rng = createRng(options.seed);

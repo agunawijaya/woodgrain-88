@@ -244,6 +244,9 @@ importers:
       '@fontsource/patrick-hand':
         specifier: ^5.3.0
         version: 5.3.0
+      '@woodgrain-88/hot-and-cold':
+        specifier: workspace:*
+        version: link:../games/hot-and-cold
       '@woodgrain-88/kit':
         specifier: workspace:*
         version: link:../packages/kit

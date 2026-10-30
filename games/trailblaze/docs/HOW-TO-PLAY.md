@@ -37,7 +37,9 @@ you pushed is kept until the step. While a turn is waiting, a small arrow by you
 
 ## Modes and channels
 
-From the game menu, pick a channel, then a mode:
+From the game menu, pick a channel, then a mode. The card at the top right shows the riders of
+the look you have chosen, up close; the pre-match cards show who rides which before the
+countdown.
 
 - **VS a Kid**: you against the Neighbourhood Kid you pick.
 - **Versus**: two people, one keyboard.
@@ -89,8 +91,9 @@ nearly 17. Open edges let you ride off one side and back in at the other.
 ## Scoring
 
 One point per crash, to the rider who did not crash; one point each when both crash together. First
-to 10 (or 5) wins, and 10–10 is a draw. Your records keep your wins, losses, best winning margin
-and longest ride for each channel, opponent and Kid setting.
+to 10 (or 5) wins, and 10–10 is a draw. The results name the winner and their score first, and
+show each rider's own count of cells laid and traps sprung. Your records keep your wins, losses,
+best winning margin and longest ride for each channel, opponent and Kid setting.
 
 ## Patches
 

@@ -26,16 +26,22 @@ import {
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { Crash, Seat } from '../../engine/types.ts';
 import type { SeatColours } from '../../look/look.ts';
+import { NOSE_AHEAD } from '../../look/board-space.ts';
+import { createRiderHalo } from '../../look/rider-halo.ts';
 import type { RiderFigure } from '../../look/trail-rig.ts';
 import { BED_HEIGHT, MAT_TOP } from './track.ts';
 
-/** The locomotives ride on their own track's rails. */
-const RIDE_HEIGHT = MAT_TOP + BED_HEIGHT + 0.06;
+/** Built to a cell and drawn about two cells long, so the engines read from overhead. */
+const LOCO_SCALE = 1.9;
+/** How far the wheels hang below an engine's own origin, as built. */
+const WHEEL_REACH = 0.09;
+/** The engines ride on their own track, the wheel rims just inside the bed. */
+const RIDE_HEIGHT = MAT_TOP + BED_HEIGHT - 0.06 + WHEEL_REACH * LOCO_SCALE;
+/** Half an engine's length as built, from the buffers to the cowcatcher. */
+const HALF_LENGTH = 0.48;
 /** A puff of steam every this many cells travelled. */
 const PUFF_EVERY = 0.5;
 const TIP_SECONDS = 0.55;
-/** Built to a cell and drawn a third larger, so the engines read on a full board. */
-const LOCO_SCALE = 1.3;
 
 export interface LocoOptions {
   readonly seat: Seat;
@@ -88,9 +94,21 @@ export function createLoco(options: LocoOptions): Loco {
 
   const root = new Group();
   root.name = `loco-${seat}`;
+  // Drawn back from the nose, so the engine's front is where the rules have it.
+  const back = HALF_LENGTH * LOCO_SCALE - NOSE_AHEAD;
   const body = new Group();
   body.scale.setScalar(LOCO_SCALE);
+  body.position.x = -back;
   root.add(body);
+  const halo = createRiderHalo({
+    colours: options.colours,
+    length: HALF_LENGTH * 2 * LOCO_SCALE + 0.2,
+    width: 0.44 * LOCO_SCALE + 0.3,
+    floor: MAT_TOP + BED_HEIGHT - RIDE_HEIGHT,
+    back,
+    night: options.night,
+  });
+  root.add(halo.root);
   const tilt = new Group();
   body.add(tilt);
   const parts = seat === 0 ? buildEmber(tilt, palette, keep) : buildBluebell(tilt, palette, keep);
@@ -142,7 +160,7 @@ export function createLoco(options: LocoOptions): Loco {
       derail = null;
       tilt.rotation.set(0, 0, 0);
       tilt.position.set(0, 0, 0);
-      body.position.set(0, 0, 0);
+      body.position.set(-back, 0, 0);
       hasLast = false;
     },
     update(dt) {
@@ -159,12 +177,13 @@ export function createLoco(options: LocoOptions): Loco {
               0.06;
       tilt.rotation.x = derail.side * fall * 1.45;
       body.position.y = Math.sin(t * Math.PI) * 0.18;
-      body.position.x = t * 0.12;
+      body.position.x = -back + t * 0.12;
       animateWheels(dt * 2.5);
     },
     dispose() {
       for (const geometry of geometries) geometry.dispose();
       for (const material of materials) material.dispose();
+      halo.dispose();
     },
   };
 }

@@ -22,6 +22,7 @@ import {
   type InputController,
   type KidId,
   type LoopOptions,
+  type MemoryMode,
   type PauseItem,
   type ResultReceipt,
   type Rng,
@@ -49,6 +50,7 @@ export interface FakeContextOptions {
   readonly appearance: 'light' | 'dark';
   readonly reducedMotion: boolean;
   readonly switches: DifficultySwitches;
+  readonly kids: MemoryMode;
   /** Simulation steps per loop step, for tests that need a whole match quickly. Default 1. */
   readonly speed?: number;
   /** Called when the game asks for the pause menu, settings, How to play or the Hall. */
@@ -175,6 +177,7 @@ export function createFakeContext(options: FakeContextOptions): FakeContext {
       screenShake: () => true,
       crtEnabled: () => false,
       colorBlindHints: () => false,
+      kids: () => options.kids,
       game: gameStore,
     },
     difficulty: {
