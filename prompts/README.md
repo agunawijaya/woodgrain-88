@@ -14,7 +14,8 @@ CLI (`tools/crew/`, built in 00); the owner never relays messages between them.
 | 04 | `04-trailblaze.md` — Trailblaze + kit human-like Kid reflexes; four looks (Neon Grid, Toy Trains, Mummy's Wrap, Ice Trail) | 03 committed | Done 2026-10-29 (`b666453`) |
 | 03a | `03a-hot-and-cold-finish.md` — finish Hot & Cold (Hall, e2e, docs, critique) + the Den's Kid setting (Human / Sharp) | 04 | Done 2026-10-30 (`48e7511`) |
 | 04a | `04a-trailblaze-polish.md` — readable riders, crash camera, Mummy cocoon crash, results fixes, one-cell lag | 04 | Done 2026-10-30 (`48e7511`) |
-| 05+ | One prompt per game, after each game's brief. The first game of each family builds that family's shared package (board, sport) | 02 | Not written yet |
+| 05 | `05-gravity-duel.md` — DeepSeek (OpenCode) joins the crew bridge; Gravity Duel with Kid pilots; four looks (Deep Space, Brass Orrery, Paper Sky, Whirlpool) | 04a | Ready to run (alone; owner checkpoint at stage 1) |
+| 06+ | One prompt per game, after each game's brief. The first game of each family builds that family's shared package (board, sport) | 02 | Not written yet |
 
 ## Conventions
 
